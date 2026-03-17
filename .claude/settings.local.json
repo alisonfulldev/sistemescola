@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"c:/Users/Home/Desktop/sistema escola/src/app/portaria\")",
+      "Bash(mkdir -p \"c:/Users/Home/Desktop/sistema escola/src/app/responsavel/[alunoId]\")",
+      "Bash(mkdir -p \"c:/Users/Home/Desktop/sistema escola/src/app/api/portaria/registrar-entrada\")",
+      "Bash(mkdir -p \"c:/Users/Home/Desktop/sistema escola/src/app/api/alunos/[id]/qrcode\")",
+      "Bash(mkdir -p \"c:/Users/Home/Desktop/sistema escola/src/app/api/admin/criar-usuario\")",
+      "Bash(ls -la src/app/*/)"
+    ]
+  }
+}
