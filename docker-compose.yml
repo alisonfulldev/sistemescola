@@ -141,6 +141,18 @@ services:
       - ./supabase/seed-users.sh:/seed.sh
     command: sh /seed.sh
 
+  seed-data:
+    image: supabase/postgres:15.1.1.78
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: postgres
+    volumes:
+      - ./supabase/seed-data.sql:/seed-data.sql
+    command: psql -h db -U postgres -f /seed-data.sql
+
 volumes:
   pgdata:
   storage_data:

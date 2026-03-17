@@ -13,7 +13,7 @@ create_user() {
   curl -sf -X POST "$AUTH_URL/admin/users" \
     -H "Authorization: Bearer $SERVICE_KEY" \
     -H "Content-Type: application/json" \
-    -d "{\"id\":\"$UUID\",\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"email_confirm\":true,\"user_metadata\":{\"nome\":\"$NOME\",\"perfil\":\"$PERFIL\"}}" \
+    -d "{\"id\":\"$UUID\",\"email\":\"$EMAIL\",\"password\":\"$PASS\",\"email_confirm\":true,\"role\":\"authenticated\",\"user_metadata\":{\"nome\":\"$NOME\",\"perfil\":\"$PERFIL\"}}" \
     > /dev/null 2>&1 \
     && echo "OK: $EMAIL" \
     || echo "JA EXISTE: $EMAIL"
