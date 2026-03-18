@@ -15,7 +15,33 @@ export default function ResponsaveisPage() {
   const [alunoSelecionado, setAlunoSelecionado] = useState('')
   const [salvandoVinculo, setSalvandoVinculo] = useState(false)
   const [linkCopiado, setLinkCopiado] = useState('')
+  const [editando, setEditando] = useState<any>(null)
+  const [editForm, setEditForm] = useState({ nome: '', senha: '' })
+  const [salvandoEdit, setSalvandoEdit] = useState(false)
+  const [erroEdit, setErroEdit] = useState('')
   const supabase = createClient()
+
+  function abrirEdicao(resp: any) {
+    setEditando(resp)
+    setEditForm({ nome: resp.nome, senha: '' })
+    setErroEdit('')
+  }
+
+  async function salvarEdicao() {
+    if (!editando) return
+    setSalvandoEdit(true)
+    setErroEdit('')
+    const res = await fetch('/api/admin/atualizar-usuario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: editando.id, nome: editForm.nome, senha: editForm.senha || undefined }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setErroEdit(data.error || 'Erro ao salvar'); setSalvandoEdit(false); return }
+    setEditando(null)
+    setSalvandoEdit(false)
+    carregar()
+  }
 
   function copiarLink(email: string) {
     const link = `${window.location.origin}/responsavel`
@@ -194,6 +220,12 @@ export default function ResponsaveisPage() {
                     {linkCopiado === resp.email ? '✓ Copiado!' : '🔗 Link'}
                   </button>
                   <button
+                    onClick={() => abrirEdicao(resp)}
+                    className="text-xs text-[#e3b341] border border-[#e3b341]/30 hover:bg-[#e3b341]/10 px-3 py-1.5 rounded-lg transition-all"
+                  >
+                    ✏️ Editar
+                  </button>
+                  <button
                     onClick={() => { setVinculando(resp); setAlunoSelecionado('') }}
                     className="text-xs text-[#39d353] border border-[#39d353]/30 hover:bg-[#39d353]/10 px-3 py-1.5 rounded-lg transition-all"
                   >
@@ -230,6 +262,56 @@ export default function ResponsaveisPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal editar responsável */}
+      {editando && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="font-bold text-white mb-1">Editar Responsável</h3>
+            <p className="text-gray-400 text-xs mb-4">{editando.email}</p>
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">Nome</label>
+                <input
+                  type="text"
+                  value={editForm.nome}
+                  onChange={e => setEditForm(p => ({ ...p, nome: e.target.value }))}
+                  className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#e3b341]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1.5">Nova senha <span className="text-gray-600">(deixe em branco para não alterar)</span></label>
+                <input
+                  type="password"
+                  value={editForm.senha}
+                  onChange={e => setEditForm(p => ({ ...p, senha: e.target.value }))}
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#e3b341]"
+                />
+              </div>
+            </div>
+
+            {erroEdit && <p className="text-[#f85149] text-xs mb-3">{erroEdit}</p>}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditando(null)}
+                className="flex-1 py-2.5 bg-[#30363d] text-gray-300 rounded-xl text-sm hover:bg-[#21262d] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={salvarEdicao}
+                disabled={salvandoEdit || !editForm.nome.trim()}
+                className="flex-1 py-2.5 bg-[#e3b341] hover:bg-yellow-400 disabled:opacity-50 text-black font-semibold rounded-xl text-sm transition-colors"
+              >
+                {salvandoEdit ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
