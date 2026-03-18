@@ -75,74 +75,29 @@ export default function ResponsavelDashboard() {
   const supabase = createClient()
 
   async function carregar() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    // Busca alunos vinculados ao responsável
-    const { data: vinculos } = await supabase
-      .from('responsaveis_alunos')
-      .select(`
-        aluno_id,
-        alunos (
-          id, nome_completo, foto_url, matricula,
-          turmas (id, nome, turno)
-        )
-      `)
-      .eq('responsavel_id', user.id)
-
-    if (!vinculos?.length) {
-      setLoading(false)
-      return
-    }
-
-    const hoje = new Date().toISOString().split('T')[0]
-
-    // Para cada aluno, busca status do dia
-    const alunosComStatus = await Promise.all((vinculos || []).map(async (v: any) => {
-      const aluno = v.alunos
-
-      // Entrada na escola
-      const { data: entrada } = await supabase
-        .from('entradas')
-        .select('hora')
-        .eq('aluno_id', aluno.id)
-        .eq('data', hoje)
-        .maybeSingle()
-
-      // Status na chamada
-      const { data: registro } = await supabase
-        .from('registros_chamada')
-        .select(`
-          status, registrado_em, observacao,
-          chamadas!inner (
-            aulas!inner (data)
-          )
-        `)
-        .eq('aluno_id', aluno.id)
-        .order('registrado_em', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-      // Verifica se o registro é de hoje
-      const registroHoje = registro?.chamadas?.aulas?.data === hoje ? registro : null
-
-      return { ...aluno, entrada, registro: registroHoje }
-    }))
-
-    setAlunos(alunosComStatus)
+    const res = await fetch('/api/responsavel/status')
+    if (!res.ok) { setLoading(false); return }
+    const { alunos: data } = await res.json()
+    setAlunos(data || [])
     setLoading(false)
   }
 
   useEffect(() => {
     carregar()
 
-    // Realtime: atualiza ao receber novo registro de chamada ou entrada
+    // Polling a cada 30s para garantir atualização mesmo sem realtime
+    const interval = setInterval(carregar, 30000)
+
+    // Realtime como bônus (pode não funcionar por RLS, mas tenta)
     const ch = supabase.channel('responsavel-rt')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registros_chamada' }, carregar)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'registros_chamada' }, carregar)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'entradas' }, carregar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'registros_chamada' }, carregar)
       .subscribe()
-    return () => { supabase.removeChannel(ch) }
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(ch)
+    }
   }, [])
 
   if (loading) return (

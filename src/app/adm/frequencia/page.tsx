@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 export default function FrequenciaPage() {
   const [dados, setDados] = useState<any[]>([])
@@ -10,39 +9,15 @@ export default function FrequenciaPage() {
     const d = new Date()
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
   })
-  const supabase = createClient()
 
   useEffect(() => {
     async function carregar() {
-      const [ano, mes] = mesAno.split('-')
-      const inicio = `${ano}-${mes}-01`
-      const fim = new Date(+ano, +mes, 0).toISOString().split('T')[0]
-
-      const { data: turmas } = await supabase.from('turmas').select('id, nome, turno').eq('ativo', true).order('nome')
-
-      const res = await Promise.all((turmas || []).map(async (t: any) => {
-        const { data: aulas } = await supabase.from('aulas')
-          .select('id, chamadas(id, status, registros_chamada(status))')
-          .eq('turma_id', t.id).gte('data', inicio).lte('data', fim)
-
-        let aulas_realizadas = 0, presentes = 0, faltas = 0, justificadas = 0, totalReg = 0
-        ;(aulas || []).forEach((a: any) => {
-          const c = a.chamadas?.[0]
-          if (c?.status === 'concluida') {
-            aulas_realizadas++
-            ;(c.registros_chamada || []).forEach((r: any) => {
-              totalReg++
-              if (r.status === 'presente') presentes++
-              else if (r.status === 'falta') faltas++
-              else if (r.status === 'justificada') justificadas++
-            })
-          }
-        })
-        const freq = totalReg > 0 ? Math.round((presentes / totalReg) * 100) : 0
-        return { ...t, aulas_realizadas, presentes, faltas, justificadas, freq }
-      }))
-
-      setDados(res)
+      setLoading(true)
+      const res = await fetch(`/api/adm/frequencia?mes=${mesAno}`)
+      if (res.ok) {
+        const { dados } = await res.json()
+        setDados(dados || [])
+      }
       setLoading(false)
     }
     carregar()

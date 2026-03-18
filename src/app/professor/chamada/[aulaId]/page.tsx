@@ -88,13 +88,16 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
     setAlunos(prev => prev.map(a => a.id === alunoId ? { ...a, status } : a))
     setSalvando(true)
     const aluno = alunos.find(a => a.id === alunoId)
-    await supabase.from('registros_chamada').upsert({
-      chamada_id: chamadaId,
-      aluno_id: alunoId,
-      status,
-      observacao: aluno?.observacao || null,
-      registrado_em: new Date().toISOString(),
-    }, { onConflict: 'chamada_id,aluno_id' })
+    await fetch('/api/professor/marcar-presenca', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chamada_id: chamadaId,
+        aluno_id: alunoId,
+        status,
+        observacao: aluno?.observacao || null,
+      }),
+    })
     setSalvando(false)
   }
 
@@ -102,25 +105,30 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
     setAlunos(prev => prev.map(a => a.id === alunoId ? { ...a, observacao: obs } : a))
     const aluno = alunos.find(a => a.id === alunoId)
     if (!aluno?.status) return
-    await supabase.from('registros_chamada').upsert({
-      chamada_id: chamadaId, aluno_id: alunoId, status: aluno.status, observacao: obs,
-    }, { onConflict: 'chamada_id,aluno_id' })
+    await fetch('/api/professor/marcar-presenca', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chamada_id: chamadaId,
+        aluno_id: alunoId,
+        status: aluno.status,
+        observacao: obs,
+      }),
+    })
   }
 
   async function confirmar() {
     setConfirmando(true)
-    await supabase.from('chamadas').update({
-      status: 'concluida', concluida_em: new Date().toISOString()
-    }).eq('id', chamadaId)
-
-    // Notifica responsáveis dos alunos presentes (sem bloquear)
-    fetch('/api/professor/notificar-presenca', {
+    const res = await fetch('/api/professor/confirmar-chamada', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chamada_id: chamadaId }),
-    }).catch(() => {})
-
-    router.push(`/professor/resumo/${chamadaId}`)
+    })
+    if (res.ok) {
+      router.push(`/professor/resumo/${chamadaId}`)
+    } else {
+      setConfirmando(false)
+    }
   }
 
   const marcados = alunos.filter(a => a.status !== null).length

@@ -36,45 +36,12 @@ export default function AdmDashboard() {
   const supabase = createClient()
 
   async function carregar() {
-    const hoje = new Date().toISOString().split('T')[0]
-
-    const [{ count: totalAlunos }, { count: totalPresentes }, { count: totalFaltas }] = await Promise.all([
-      supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('ativo', true),
-      supabase.from('registros_chamada')
-        .select('*, chamadas!inner(aulas!inner(data))', { count: 'exact', head: true })
-        .eq('status', 'presente'),
-      supabase.from('registros_chamada')
-        .select('*, chamadas!inner(aulas!inner(data))', { count: 'exact', head: true })
-        .eq('status', 'falta'),
-    ])
-
-    const { data: aulasHoje } = await supabase.from('aulas').select('id, chamadas(id)').eq('data', hoje)
-    const pendentes = (aulasHoje || []).filter((a: any) => !a.chamadas?.length).length
-
-    setKpis({ matriculados: totalAlunos || 0, presentes: totalPresentes || 0, faltas: totalFaltas || 0, pendentes })
-
-    const { data: chamadasData } = await supabase
-      .from('chamadas')
-      .select(`
-        id, status, iniciada_em, concluida_em,
-        aulas!inner (id, data, horario_inicio, horario_fim,
-          turmas(id, nome, turno), disciplinas(nome), usuarios(nome)
-        ),
-        registros_chamada (id, status, alunos(nome_completo, foto_url))
-      `)
-      .order('iniciada_em', { ascending: false })
-
-    const hoje2 = new Date().toISOString().split('T')[0]
-    setChamadas((chamadasData || []).filter((c: any) => c.aulas?.data === hoje2))
-
-    const { data: alertasData } = await supabase
-      .from('alertas')
-      .select('*, alunos(nome_completo), turmas(nome)')
-      .eq('lido', false)
-      .order('criado_em', { ascending: false })
-      .limit(6)
-
-    setAlertas(alertasData || [])
+    const res = await fetch('/api/adm/dashboard')
+    if (!res.ok) { setLoading(false); return }
+    const data = await res.json()
+    setKpis(data.kpis)
+    setChamadas(data.chamadas)
+    setAlertas(data.alertas)
     setLoading(false)
   }
 

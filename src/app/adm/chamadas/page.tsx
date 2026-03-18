@@ -1,29 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { formatTime } from '@/lib/utils'
 
 export default function ChamadasPage() {
   const [chamadas, setChamadas] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroData, setFiltroData] = useState(new Date().toISOString().split('T')[0])
-  const supabase = createClient()
 
   useEffect(() => {
     async function carregar() {
-      const { data } = await supabase
-        .from('chamadas')
-        .select(`id, status, iniciada_em, concluida_em,
-          aulas!inner(id, data, horario_inicio, horario_fim,
-            turmas(nome, turno), disciplinas(nome), usuarios(nome)
-          ),
-          registros_chamada(id, status)
-        `)
-        .order('iniciada_em', { ascending: false })
-
-      const filtradas = (data || []).filter((c: any) => c.aulas?.data === filtroData)
-      setChamadas(filtradas)
+      setLoading(true)
+      const res = await fetch(`/api/adm/chamadas?data=${filtroData}`)
+      if (res.ok) {
+        const { chamadas: data } = await res.json()
+        setChamadas(data || [])
+      }
       setLoading(false)
     }
     carregar()
