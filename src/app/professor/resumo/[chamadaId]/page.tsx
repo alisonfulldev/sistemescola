@@ -39,66 +39,74 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
   const aula = (chamada as any).aulas
 
   return (
-    <div className="animate-fade-in">
-      <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-4 flex items-center gap-3">
-        <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg">✓</div>
+    <div>
+      {/* Banner sucesso */}
+      <div className="bg-[#39d353]/10 border border-[#39d353]/30 rounded-2xl p-4 mb-4 flex items-center gap-3">
+        <div className="w-10 h-10 bg-[#39d353] rounded-full flex items-center justify-center text-black font-bold text-lg flex-shrink-0">✓</div>
         <div>
-          <p className="font-bold text-green-800">Chamada concluída!</p>
-          <p className="text-green-600 text-sm">
+          <p className="font-bold text-[#39d353]">Chamada concluída!</p>
+          <p className="text-[#39d353]/70 text-sm">
             {(chamada as any).concluida_em ? formatDate((chamada as any).concluida_em, "dd/MM 'às' HH:mm") : ''}
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-4">
-        <h2 className="font-semibold text-gray-800">{aula?.turmas?.nome}</h2>
-        <p className="text-gray-500 text-sm">{aula?.disciplinas?.nome}</p>
-        <p className="text-gray-400 text-xs font-mono mt-1">
+      {/* Info da aula */}
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-4 mb-4">
+        <h2 className="font-semibold text-white">{aula?.turmas?.nome}</h2>
+        <p className="text-gray-400 text-sm">{aula?.disciplinas?.nome}</p>
+        <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'DM Mono, monospace' }}>
           📅 {formatDate(aula?.data)} · {formatTime(aula?.horario_inicio)} – {formatTime(aula?.horario_fim)}
         </p>
       </div>
 
+      {/* KPIs */}
       <div className="grid grid-cols-4 gap-2 mb-4">
         {[
-          { n: total, label: 'Total', cls: 'bg-white border-slate-100 text-gray-800' },
-          { n: presentes.length, label: 'Presentes', cls: 'bg-green-50 border-green-100 text-green-700' },
-          { n: faltas.length, label: 'Faltas', cls: 'bg-red-50 border-red-100 text-red-700' },
-          { n: justificadas.length, label: 'Justif.', cls: 'bg-yellow-50 border-yellow-100 text-yellow-700' },
+          { n: total, label: 'Total', cls: 'bg-[#161b22] border-[#30363d] text-white' },
+          { n: presentes.length, label: 'Presentes', cls: 'bg-[#39d353]/10 border-[#39d353]/30 text-[#39d353]' },
+          { n: faltas.length, label: 'Faltas', cls: 'bg-[#f85149]/10 border-[#f85149]/30 text-[#f85149]' },
+          { n: justificadas.length, label: 'Justif.', cls: 'bg-[#e3b341]/10 border-[#e3b341]/30 text-[#e3b341]' },
         ].map(k => (
-          <div key={k.label} className={`rounded-xl border p-3 text-center shadow-sm ${k.cls}`}>
-            <div className="text-xl font-bold font-nums">{k.n}</div>
-            <div className="text-xs mt-0.5">{k.label}</div>
+          <div key={k.label} className={`rounded-xl border p-3 text-center ${k.cls}`}>
+            <div className="text-xl font-bold">{k.n}</div>
+            <div className="text-xs mt-0.5 opacity-80">{k.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-4">
+      {/* Frequência */}
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-4 mb-4">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700">Frequência da turma</span>
-          <span className={`text-lg font-bold font-nums ${freq >= 75 ? 'text-green-600' : 'text-red-600'}`}>{freq}%</span>
+          <span className="text-sm font-medium text-gray-300">Frequência da turma</span>
+          <span className={`text-lg font-bold ${freq >= 75 ? 'text-[#39d353]' : 'text-[#f85149]'}`}>{freq}%</span>
         </div>
-        <div className="w-full bg-slate-100 rounded-full h-3">
-          <div className={`h-3 rounded-full transition-all duration-500 ${freq >= 75 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${freq}%` }} />
+        <div className="w-full bg-[#0d1117] rounded-full h-3">
+          <div
+            className={`h-3 rounded-full transition-all duration-500 ${freq >= 75 ? 'bg-[#39d353]' : 'bg-[#f85149]'}`}
+            style={{ width: `${freq}%` }}
+          />
         </div>
-        {freq < 75 && <p className="text-xs text-red-500 mt-2">⚠ Frequência abaixo do mínimo (75%)</p>}
+        {freq < 75 && <p className="text-xs text-[#f85149] mt-2">⚠ Frequência abaixo do mínimo (75%)</p>}
       </div>
 
+      {/* Faltas */}
       {faltas.length > 0 && (
         <div className="mb-4">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Faltas registradas</h3>
           <div className="space-y-2">
             {faltas.map((r: any) => (
-              <div key={r.id} className="bg-red-50 border border-red-100 rounded-xl p-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-red-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+              <div key={r.id} className="bg-[#161b22] border border-[#f85149]/30 rounded-xl p-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#f85149]/20 overflow-hidden flex-shrink-0 flex items-center justify-center">
                   {r.alunos?.foto_url ? (
                     <Image src={r.alunos.foto_url} alt="" width={32} height={32} className="object-cover w-full h-full" />
                   ) : (
-                    <span className="text-xs font-bold text-red-400">{r.alunos?.nome_completo?.[0]}</span>
+                    <span className="text-xs font-bold text-[#f85149]">{r.alunos?.nome_completo?.[0]}</span>
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-red-800">{r.alunos?.nome_completo}</p>
-                  {r.observacao && <p className="text-xs text-red-600">{r.observacao}</p>}
+                  <p className="text-sm font-medium text-gray-200">{r.alunos?.nome_completo}</p>
+                  {r.observacao && <p className="text-xs text-gray-500 mt-0.5">{r.observacao}</p>}
                 </div>
               </div>
             ))}
@@ -107,12 +115,16 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
       )}
 
       <div className="flex gap-3 mt-6">
-        <Link href="/professor" className="flex-1 py-3 bg-slate-100 text-gray-700 rounded-xl font-medium text-center hover:bg-slate-200 transition-colors text-sm">
-          ← Dashboard
+        <Link href="/professor"
+          className="flex-1 py-3 bg-[#0d1117] border border-[#30363d] text-gray-400 rounded-xl font-medium text-center hover:bg-[#30363d] hover:text-gray-200 transition-colors text-sm"
+        >
+          ← Voltar
         </Link>
-        <button onClick={() => window.print()} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors text-sm">
-          🖨 Imprimir
-        </button>
+        <Link href={`/professor/chamada/${params.chamadaId}`}
+          className="flex-1 py-3 bg-[#161b22] border border-[#39d353]/40 text-[#39d353] rounded-xl font-medium text-center hover:bg-[#39d353]/10 transition-colors text-sm"
+        >
+          ✏️ Editar chamada
+        </Link>
       </div>
     </div>
   )

@@ -12,6 +12,7 @@ const nav = [
   { href: '/admin/professores', label: 'Professores', icon: '👨‍🏫' },
   { href: '/admin/disciplinas', label: 'Disciplinas', icon: '📚' },
   { href: '/admin/aulas', label: 'Aulas', icon: '🗓' },
+  { href: '/admin/responsaveis', label: 'Responsáveis', icon: '👨‍👩‍👧' },
   { href: '/adm', label: 'Painel ADM', icon: '📊' },
 ]
 

@@ -1,151 +1,225 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 import Link from 'next/link'
-import { formatDate, formatTime } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
+import { formatDate } from '@/lib/utils'
 
-export const revalidate = 0
-
-export default async function ProfessorDashboard() {
+export default function ProfessorDashboard() {
+  const [turmas, setTurmas] = useState<any[]>([])
+  const [turmaSelecionada, setTurmaSelecionada] = useState('')
+  const [alunos, setAlunos] = useState<any[]>([])
+  const [historico, setHistorico] = useState<any[]>([])
+  const [carregandoAlunos, setCarregandoAlunos] = useState(false)
+  const [iniciando, setIniciando] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [erro, setErro] = useState('')
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const router = useRouter()
 
-  const hoje = new Date().toISOString().split('T')[0]
+  useEffect(() => {
+    async function carregar() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return router.push('/login')
 
-  const { data: aulas } = await supabase
-    .from('aulas')
-    .select(`
-      id, data, horario_inicio, horario_fim,
-      turmas (id, nome, turno),
-      disciplinas (id, nome),
-      chamadas (id, status, iniciada_em, concluida_em)
-    `)
-    .eq('professor_id', user!.id)
-    .eq('data', hoje)
-    .order('horario_inicio')
+      const [{ data: aulasData }, histRes] = await Promise.all([
+        supabase.from('aulas').select('turmas(id, nome, turno)').eq('professor_id', user.id),
+        fetch('/api/professor/historico'),
+      ])
 
-  const { data: usuario } = await supabase.from('usuarios').select('nome').eq('id', user!.id).single()
+      const turmasMap = new Map<string, any>()
+      aulasData?.forEach((a: any) => {
+        if (a.turmas) turmasMap.set(a.turmas.id, a.turmas)
+      })
+      setTurmas(Array.from(turmasMap.values()).sort((a, b) => a.nome.localeCompare(b.nome)))
 
-  const agora = new Date()
-  const minutosAtual = agora.getHours() * 60 + agora.getMinutes()
+      if (histRes.ok) {
+        const { chamadas } = await histRes.json()
+        setHistorico(chamadas || [])
+      }
 
-  function getStatusAula(aula: any) {
-    const chamada = aula.chamadas?.[0]
-    if (chamada?.status === 'concluida') return 'concluida'
-    if (chamada?.status === 'em_andamento') return 'em_andamento'
-    const [h, m] = aula.horario_inicio.split(':').map(Number)
-    const inicioMin = h * 60 + m
-    if (minutosAtual >= inicioMin - 30 && minutosAtual <= inicioMin + 45) return 'disponivel'
-    if (minutosAtual < inicioMin - 30) return 'futura'
-    return 'atrasada'
+      setLoading(false)
+    }
+    carregar()
+  }, [])
+
+  async function selecionarTurma(turmaId: string) {
+    setTurmaSelecionada(turmaId)
+    setAlunos([])
+    if (!turmaId) return
+    setCarregandoAlunos(true)
+    const { data: alunosData } = await supabase
+      .from('alunos')
+      .select('id, nome_completo, foto_url, matricula')
+      .eq('turma_id', turmaId)
+      .eq('ativo', true)
+      .order('nome_completo')
+    setAlunos(alunosData || [])
+    setCarregandoAlunos(false)
   }
 
-  const concluidas = aulas?.filter((a: any) => a.chamadas?.[0]?.status === 'concluida').length || 0
-  const pendentes = aulas?.filter((a: any) => !a.chamadas?.[0]).length || 0
+  async function iniciarChamada() {
+    if (!turmaSelecionada) return
+    setIniciando(true)
+    setErro('')
+    try {
+      const res = await fetch('/api/professor/iniciar-chamada', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ turma_id: turmaSelecionada }),
+      })
+      const data = await res.json()
+      if (data.chamada_id) {
+        router.push(`/professor/chamada/${data.chamada_id}`)
+      } else {
+        setErro(data.error || 'Erro ao iniciar chamada')
+        setIniciando(false)
+      }
+    } catch {
+      setErro('Erro de conexão')
+      setIniciando(false)
+    }
+  }
+
+  const turmaSel = turmas.find(t => t.id === turmaSelecionada)
+  const hoje = new Date().toISOString().split('T')[0]
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin w-8 h-8 border-4 border-[#39d353] border-t-transparent rounded-full" />
+    </div>
+  )
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">
-          Olá, {usuario?.nome?.split(' ')[0] || 'Professor'}! 👋
-        </h1>
+        <h1 className="text-xl font-bold text-white">Chamada</h1>
         <p className="text-gray-500 text-sm mt-1 capitalize">
-          {formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}
+          {formatDate(new Date(), "EEEE, dd 'de' MMMM")}
         </p>
       </div>
 
-      {/* Mini KPIs */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {[
-          { label: 'Aulas hoje', value: aulas?.length || 0, color: 'text-indigo-600' },
-          { label: 'Concluídas', value: concluidas, color: 'text-green-600' },
-          { label: 'Pendentes', value: pendentes, color: 'text-orange-500' },
-        ].map(k => (
-          <div key={k.label} className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm text-center">
-            <div className={`text-2xl font-bold font-nums ${k.color}`}>{k.value}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{k.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <h2 className="font-semibold text-gray-600 mb-3 text-xs uppercase tracking-widest">Aulas do dia</h2>
-
-      {!aulas?.length ? (
-        <div className="bg-white rounded-2xl border border-slate-100 p-10 text-center shadow-sm">
-          <div className="text-4xl mb-3">📅</div>
-          <p className="text-gray-500 font-medium">Nenhuma aula hoje</p>
-          <p className="text-gray-400 text-sm mt-1">Entre em contato com o administrador</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {aulas.map((aula: any) => {
-            const status = getStatusAula(aula)
-            const chamada = aula.chamadas?.[0]
-            const statusConfig: Record<string, { label: string; cls: string }> = {
-              concluida: { label: '✓ Concluída', cls: 'bg-green-100 text-green-700' },
-              em_andamento: { label: '⏳ Em curso', cls: 'bg-blue-100 text-blue-700' },
-              disponivel: { label: '● Disponível', cls: 'bg-indigo-100 text-indigo-700' },
-              futura: { label: '◷ Aguardando', cls: 'bg-gray-100 text-gray-500' },
-              atrasada: { label: '⚠ Atrasada', cls: 'bg-red-100 text-red-600' },
-            }
-            const sc = statusConfig[status]
-
-            return (
-              <div key={aula.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-900">{aula.turmas?.nome}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          aula.turmas?.turno === 'matutino' ? 'bg-yellow-100 text-yellow-700' :
-                          aula.turmas?.turno === 'vespertino' ? 'bg-orange-100 text-orange-700' : 'bg-purple-100 text-purple-700'
-                        }`}>{aula.turmas?.turno}</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-0.5">{aula.disciplinas?.nome}</p>
-                      <p className="text-xs text-gray-400 mt-1 font-mono">
-                        🕐 {formatTime(aula.horario_inicio)} – {formatTime(aula.horario_fim)}
+      {/* Histórico — primeira tela */}
+      {historico.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Histórico de chamadas</h2>
+          <div className="space-y-2">
+            {historico.map(c => {
+              const freq = c.total > 0 ? Math.round(((c.presentes + c.justificadas) / c.total) * 100) : 0
+              const isHoje = c.data === hoje
+              return (
+                <Link
+                  key={c.id}
+                  href={`/professor/resumo/${c.id}`}
+                  className="block bg-[#161b22] border border-[#30363d] rounded-xl px-4 py-3 hover:border-[#39d353]/40 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-gray-200 font-medium">
+                        {c.turma}
+                        {isHoje && <span className="ml-2 text-xs text-[#39d353]">hoje</span>}
                       </p>
-                    </div>
-                    <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold flex-shrink-0 ${sc.cls}`}>{sc.label}</span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="mt-3 pt-3 border-t border-slate-50">
-                    {status === 'em_andamento' && chamada && (
-                      <Link href={`/professor/chamada/${aula.id}`}
-                        className="w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
-                      >
-                        ⏳ Continuar Chamada
-                      </Link>
-                    )}
-                    {(status === 'disponivel' || status === 'atrasada') && !chamada && (
-                      <Link href={`/professor/chamada/${aula.id}`}
-                        className="w-full py-2.5 px-4 bg-indigo-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
-                        </svg>
-                        Iniciar Chamada
-                      </Link>
-                    )}
-                    {status === 'concluida' && chamada && (
-                      <Link href={`/professor/resumo/${chamada.id}`}
-                        className="w-full py-2.5 px-4 bg-slate-100 text-gray-600 text-sm font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
-                      >
-                        👁 Ver Resumo
-                      </Link>
-                    )}
-                    {status === 'futura' && (
-                      <div className="text-center text-xs text-gray-400 py-1">
-                        Disponível às {formatTime(aula.horario_inicio)} (30 min antes)
+                      <p className="text-xs text-gray-600 mb-1">{formatDate(c.data, "dd/MM/yyyy")}</p>
+                      <div className="flex gap-3 text-xs">
+                        <span className="text-[#39d353]">{c.presentes}P</span>
+                        <span className="text-[#f85149]">{c.faltas}F</span>
+                        {c.justificadas > 0 && <span className="text-[#e3b341]">{c.justificadas}J</span>}
+                        <span className="text-gray-600">· {c.total} alunos</span>
                       </div>
-                    )}
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className={`text-sm font-bold ${freq >= 75 ? 'text-[#39d353]' : 'text-[#f85149]'}`}>{freq}%</p>
+                      <p className="text-xs text-gray-600">frequência</p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )
-          })}
+                </Link>
+              )
+            })}
+          </div>
         </div>
       )}
+
+      {/* Seletor de turma */}
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5 mb-4">
+        <label className="block text-xs text-gray-400 mb-2 uppercase tracking-wide">Selecione a turma</label>
+        {turmas.length === 0 ? (
+          <p className="text-gray-600 text-sm py-2">Nenhuma turma vinculada. Contate o administrador.</p>
+        ) : (
+          <select
+            value={turmaSelecionada}
+            onChange={e => selecionarTurma(e.target.value)}
+            className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#39d353] transition-colors"
+          >
+            <option value="">-- Selecione uma turma --</option>
+            {turmas.map(t => (
+              <option key={t.id} value={t.id}>{t.nome} · {t.turno}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Lista de alunos */}
+      {turmaSelecionada && (
+        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden mb-4">
+          <div className="px-5 py-4 border-b border-[#30363d] flex items-center justify-between">
+            <div>
+              <p className="text-white font-semibold">{turmaSel?.nome}</p>
+              <p className="text-gray-500 text-xs">{alunos.length} aluno(s) matriculado(s)</p>
+            </div>
+            <span className="text-xs text-gray-500 capitalize">{turmaSel?.turno}</span>
+          </div>
+          {carregandoAlunos ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin w-6 h-6 border-2 border-[#39d353] border-t-transparent rounded-full" />
+            </div>
+          ) : alunos.length === 0 ? (
+            <div className="py-8 text-center text-gray-600 text-sm">Nenhum aluno matriculado</div>
+          ) : (
+            <div className="divide-y divide-[#30363d]">
+              {alunos.map((aluno, idx) => (
+                <div key={aluno.id} className="flex items-center gap-3 px-5 py-3">
+                  <span className="text-xs text-gray-600 w-5 text-right flex-shrink-0">{idx + 1}</span>
+                  <div className="w-8 h-8 rounded-full bg-[#30363d] overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    {aluno.foto_url ? (
+                      <Image src={aluno.foto_url} alt="" width={32} height={32} className="object-cover w-full h-full" />
+                    ) : (
+                      <span className="text-xs font-bold text-gray-400">
+                        {aluno.nome_completo.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-200 truncate">{aluno.nome_completo}</p>
+                    <p className="text-xs text-gray-600" style={{ fontFamily: 'DM Mono, monospace' }}>{aluno.matricula}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {erro && (
+        <div className="mb-4 p-3 bg-[#f85149]/10 border border-[#f85149]/30 rounded-xl text-[#f85149] text-sm">
+          ⚠ {erro}
+        </div>
+      )}
+
+      {/* Botão iniciar chamada */}
+      {turmaSelecionada && alunos.length > 0 && (
+        <button
+          onClick={iniciarChamada}
+          disabled={iniciando}
+          className="w-full py-4 bg-[#39d353] hover:bg-green-400 disabled:opacity-60 text-black font-bold rounded-2xl transition-colors flex items-center justify-center gap-2 mb-6"
+        >
+          {iniciando ? (
+            <><div className="animate-spin w-4 h-4 border-2 border-black border-t-transparent rounded-full" />Iniciando...</>
+          ) : '📋 Iniciar Chamada'}
+        </button>
+      )}
+
     </div>
   )
 }

@@ -42,51 +42,45 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
+    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center p-4" style={{ fontFamily: 'Sora, sans-serif' }}>
+      <div className="w-full max-w-sm">
+
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-4 shadow-lg shadow-indigo-200">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-[#39d353]/10 border border-[#39d353]/30 rounded-2xl mb-4">
+            <span className="text-2xl">🏫</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Sora, sans-serif' }}>
-            Chamada Escolar
-          </h1>
+          <h1 className="text-2xl font-bold text-white">Chamada Escolar</h1>
           <p className="text-gray-500 mt-1 text-sm">Sistema digital de frequência com QR Code</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 p-8 border border-slate-100">
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">Entrar no sistema</h2>
+        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6">
 
           {erro && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
+            <div className="mb-4 p-3 bg-[#f85149]/10 border border-[#f85149]/30 rounded-xl text-[#f85149] text-sm flex items-center gap-2">
               <span>⚠</span> {erro}
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <label className="block text-xs text-gray-400 mb-1.5">Email</label>
               <input
                 type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="seu@email.com" required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-all text-sm"
+                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 placeholder-gray-600 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#39d353] transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Senha</label>
+              <label className="block text-xs text-gray-400 mb-1.5">Senha</label>
               <input
                 type="password" value={senha} onChange={e => setSenha(e.target.value)}
                 placeholder="••••••••" required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-all text-sm"
+                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 placeholder-gray-600 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#39d353] transition-colors"
               />
             </div>
             <button
               type="submit" disabled={loading}
-              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              className="w-full py-3 bg-[#39d353] hover:bg-green-400 disabled:opacity-50 text-black font-bold rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
             >
               {loading ? (
                 <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Entrando...</>
@@ -94,26 +88,24 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo accounts */}
-          <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Contas de demonstração</p>
-            <div className="space-y-1.5 text-xs text-slate-600 font-mono">
-              <div className="flex items-center gap-2"><span>👨‍💼</span><span>admin@escola.com</span><span className="text-slate-400">/ Admin@123456</span></div>
-              <div className="flex items-center gap-2"><span>👩‍💼</span><span>secretaria@escola.com</span><span className="text-slate-400">/ Secr@123456</span></div>
-              <div className="flex items-center gap-2"><span>👨‍🏫</span><span>prof.carlos@escola.com</span><span className="text-slate-400">/ Prof@123456</span></div>
-              <div className="flex items-center gap-2"><span>👨‍👩‍👦</span><span>resp.roberto@escola.com</span><span className="text-slate-400">/ Resp@123456</span></div>
+          <div className="mt-5 pt-5 border-t border-[#30363d]">
+            <p className="text-xs text-gray-600 uppercase tracking-wide mb-3">Contas de demonstração</p>
+            <div className="space-y-1.5 text-xs text-gray-500" style={{ fontFamily: 'DM Mono, monospace' }}>
+              <div className="flex gap-2"><span>👨‍💼</span><span>admin@escola.com</span><span className="text-gray-700">/ Escola@123</span></div>
+              <div className="flex gap-2"><span>👩‍💼</span><span>secretaria@escola.com</span><span className="text-gray-700">/ Escola@123</span></div>
+              <div className="flex gap-2"><span>👨‍🏫</span><span>prof.carlos@escola.com</span><span className="text-gray-700">/ Escola@123</span></div>
+              <div className="flex gap-2"><span>👨‍👩‍👦</span><span>resp.roberto@escola.com</span><span className="text-gray-700">/ Escola@123</span></div>
             </div>
           </div>
 
-          {/* Portaria link */}
           <div className="mt-4 text-center">
-            <a href="/portaria" className="text-xs text-indigo-500 hover:text-indigo-700 transition-colors">
+            <a href="/portaria" className="text-xs text-gray-600 hover:text-[#39d353] transition-colors">
               📱 Acessar leitor da portaria
             </a>
           </div>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">© 2026 Sistema de Chamada Escolar</p>
+        <p className="text-center text-xs text-gray-700 mt-6">© 2026 Sistema de Chamada Escolar</p>
       </div>
     </div>
   )

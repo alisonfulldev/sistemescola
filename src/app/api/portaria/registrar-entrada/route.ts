@@ -98,6 +98,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Erro ao registrar entrada' }, { status: 500 })
     }
 
+    // Envia push para os responsáveis do aluno (sem bloquear a resposta)
+    enviarPushResponsaveis(supabase, aluno.id, aluno.nome_completo, hora).catch(() => {})
+
     return NextResponse.json(
       {
         aluno: {
@@ -114,4 +117,42 @@ export async function POST(req: NextRequest) {
     console.error('Erro na portaria:', err)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
+}
+
+async function enviarPushResponsaveis(supabase: any, alunoId: string, nomeAluno: string, hora: string) {
+  // Busca responsáveis vinculados ao aluno
+  const { data: vinculos } = await supabase
+    .from('responsaveis_alunos')
+    .select('responsavel_id')
+    .eq('aluno_id', alunoId)
+
+  if (!vinculos?.length) return
+
+  const responsavelIds = vinculos.map((v: any) => v.responsavel_id)
+
+  // Busca subscriptions desses responsáveis
+  const { data: subs } = await supabase
+    .from('push_subscriptions')
+    .select('subscription')
+    .in('responsavel_id', responsavelIds)
+
+  if (!subs?.length) return
+
+  const webpush = await import('web-push')
+  webpush.default.setVapidDetails(
+    process.env.VAPID_SUBJECT!,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  )
+
+  const payload = JSON.stringify({
+    title: '🏫 Chegada na escola',
+    body: `${nomeAluno} chegou às ${hora.slice(0, 5)}`,
+    tag: `entrada-${alunoId}`,
+    url: '/responsavel',
+  })
+
+  await Promise.allSettled(
+    subs.map((s: any) => webpush.default.sendNotification(s.subscription, payload))
+  )
 }
