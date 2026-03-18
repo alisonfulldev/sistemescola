@@ -119,6 +119,17 @@ export default function ResponsaveisPage() {
     carregar()
   }
 
+  async function reparar() {
+    const res = await fetch('/api/admin/reparar-usuarios', { method: 'POST' })
+    const data = await res.json()
+    if (data.total > 0) {
+      alert(`${data.total} usuário(s) reparado(s): ${data.inseridos.join(', ')}`)
+      carregar()
+    } else {
+      alert('Nenhum usuário precisava de reparo.')
+    }
+  }
+
   // Alunos que o responsável ainda não tem vínculo
   function alunosDisponiveis(resp: any) {
     const vinculados = resp.responsaveis_alunos?.map((v: any) => v.aluno_id) || []
@@ -132,12 +143,21 @@ export default function ResponsaveisPage() {
           <h1 className="text-xl font-bold text-white">Responsáveis</h1>
           <p className="text-gray-400 text-sm">{responsaveis.length} cadastrado(s)</p>
         </div>
-        <button
-          onClick={() => { setShowForm(true); setErroForm('') }}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          + Novo Responsável
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={reparar}
+            className="px-3 py-2 bg-[#30363d] hover:bg-[#21262d] text-gray-400 text-xs font-medium rounded-lg transition-colors"
+            title="Sincroniza usuários que foram criados mas não apareceram na lista"
+          >
+            🔧 Reparar
+          </button>
+          <button
+            onClick={() => { setShowForm(true); setErroForm('') }}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            + Novo Responsável
+          </button>
+        </div>
       </div>
 
       {/* Formulário de cadastro */}
