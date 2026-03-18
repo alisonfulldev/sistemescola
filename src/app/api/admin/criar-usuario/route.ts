@@ -58,6 +58,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    // Insere na tabela public.usuarios (necessário para o sistema funcionar)
+    const { error: erroInsert } = await adminClient
+      .from('usuarios')
+      .insert({ id: data.user.id, nome: nome.trim(), email: email.trim(), perfil: novoPerfil })
+
+    if (erroInsert) {
+      // Reverte criação no auth se falhar o insert
+      await adminClient.auth.admin.deleteUser(data.user.id)
+      return NextResponse.json({ error: 'Erro ao salvar usuário: ' + erroInsert.message }, { status: 500 })
+    }
+
     return NextResponse.json({ id: data.user.id, email: data.user.email }, { status: 201 })
   } catch (err) {
     console.error('Erro ao criar usuário:', err)

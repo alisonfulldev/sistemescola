@@ -26,9 +26,13 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Rotas públicas
-  if (pathname === '/login' || pathname === '/' || pathname.startsWith('/portaria')) {
-    if (user && (pathname === '/login' || pathname === '/')) {
+  // Rotas públicas e API — deixa passar sem redirect
+  if (pathname.startsWith('/api/') || pathname.startsWith('/portaria')) {
+    return supabaseResponse
+  }
+
+  if (pathname === '/login' || pathname === '/') {
+    if (user) {
       const { data: profile } = await supabase
         .from('usuarios')
         .select('perfil')
@@ -41,8 +45,9 @@ export async function middleware(request: NextRequest) {
         admin: '/admin',
         responsavel: '/responsavel',
       }
-      const dest = redirectMap[profile?.perfil || ''] || '/professor'
-      return NextResponse.redirect(new URL(dest, request.url))
+      // Só redireciona se encontrar um perfil válido — evita loop se usuário não existe na tabela
+      const dest = redirectMap[profile?.perfil || '']
+      if (dest) return NextResponse.redirect(new URL(dest, request.url))
     }
     return supabaseResponse
   }
