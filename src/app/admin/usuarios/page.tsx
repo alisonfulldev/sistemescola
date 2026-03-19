@@ -10,11 +10,20 @@ export default function UsuariosPage() {
   const [form, setForm] = useState({ nome: '', email: '', senha: '', perfil: 'professor' })
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+
+  // Edição
+  const [editando, setEditando] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ nome: '', email: '', perfil: '' })
+  const [salvandoEdit, setSalvandoEdit] = useState(false)
+  const [erroEdit, setErroEdit] = useState('')
+
+  // Link reset
   const [linkAberto, setLinkAberto] = useState<string | null>(null)
   const [linkGerado, setLinkGerado] = useState('')
   const [gerandoLink, setGerandoLink] = useState(false)
   const [erroLink, setErroLink] = useState('')
   const [copiado, setCopiado] = useState(false)
+
   const supabase = createClient()
 
   async function carregar() {
@@ -45,12 +54,38 @@ export default function UsuariosPage() {
     setSalvando(false)
   }
 
+  function abrirEdicao(u: any) {
+    setEditando(u.id)
+    setEditForm({ nome: u.nome, email: u.email, perfil: u.perfil })
+    setErroEdit('')
+    setLinkAberto(null)
+  }
+
+  async function salvarEdicao() {
+    setSalvandoEdit(true)
+    setErroEdit('')
+    const res = await fetch('/api/admin/atualizar-usuario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: editando, ...editForm }),
+    })
+    if (!res.ok) {
+      const d = await res.json()
+      setErroEdit(d.error || 'Erro ao salvar')
+    } else {
+      setEditando(null)
+      carregar()
+    }
+    setSalvandoEdit(false)
+  }
+
   async function gerarLink(userId: string, email: string) {
     setLinkAberto(userId)
     setLinkGerado('')
     setErroLink('')
     setCopiado(false)
     setGerandoLink(true)
+    setEditando(null)
     const res = await fetch('/api/admin/gerar-link-reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -172,12 +207,18 @@ export default function UsuariosPage() {
                       </span>
                     </td>
                     <td className="p-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                        <button
+                          onClick={() => editando === u.id ? setEditando(null) : abrirEdicao(u)}
+                          className="text-xs px-2 py-1 rounded-lg border text-blue-400 border-blue-400/30 hover:bg-blue-400/10 transition-all"
+                        >
+                          {editando === u.id ? 'Fechar' : 'Editar'}
+                        </button>
                         <button
                           onClick={() => linkAberto === u.id ? setLinkAberto(null) : gerarLink(u.id, u.email)}
                           className="text-xs px-2 py-1 rounded-lg border text-yellow-400 border-yellow-400/30 hover:bg-yellow-400/10 transition-all"
                         >
-                          {linkAberto === u.id ? 'Fechar' : '🔑 Redefinir Senha'}
+                          {linkAberto === u.id ? 'Fechar' : '🔑 Senha'}
                         </button>
                         <button
                           onClick={() => toggleAtivo(u)}
@@ -188,6 +229,62 @@ export default function UsuariosPage() {
                       </div>
                     </td>
                   </tr>
+
+                  {editando === u.id && (
+                    <tr key={`${u.id}-edit`} className="border-b border-[#30363d]/50 bg-blue-500/5">
+                      <td colSpan={5} className="px-4 py-4">
+                        {erroEdit && <p className="text-xs text-red-400 mb-3">{erroEdit}</p>}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Nome</label>
+                            <input
+                              type="text"
+                              value={editForm.nome}
+                              onChange={e => setEditForm(p => ({ ...p, nome: e.target.value }))}
+                              className="w-full bg-[#0d1117] border border-blue-400/30 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Email</label>
+                            <input
+                              type="email"
+                              value={editForm.email}
+                              onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))}
+                              className="w-full bg-[#0d1117] border border-blue-400/30 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-500 mb-1">Perfil</label>
+                            <select
+                              value={editForm.perfil}
+                              onChange={e => setEditForm(p => ({ ...p, perfil: e.target.value }))}
+                              className="w-full bg-[#0d1117] border border-blue-400/30 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400"
+                            >
+                              <option value="professor">Professor</option>
+                              <option value="secretaria">Secretaria</option>
+                              <option value="responsavel">Responsável</option>
+                              <option value="admin">Administrador</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={salvarEdicao}
+                            disabled={salvandoEdit}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors"
+                          >
+                            {salvandoEdit ? 'Salvando...' : 'Salvar'}
+                          </button>
+                          <button
+                            onClick={() => setEditando(null)}
+                            className="px-3 py-1.5 bg-[#30363d] text-gray-300 text-xs rounded-lg hover:bg-[#21262d] transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
 
                   {linkAberto === u.id && (
                     <tr key={`${u.id}-link`} className="border-b border-[#30363d]/50 bg-yellow-500/5">
