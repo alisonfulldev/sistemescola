@@ -3,7 +3,7 @@ import Link from 'next/link'
 const cards = [
   { href: '/admin/turmas', icon: '🏫', label: 'Turmas', desc: 'Gerenciar turmas e turnos' },
   { href: '/admin/alunos', icon: '👥', label: 'Alunos', desc: 'Cadastrar e gerenciar alunos' },
-  { href: '/admin/professores', icon: '👨‍🏫', label: 'Professores', desc: 'Usuários professores e secretaria' },
+  { href: '/admin/usuarios', icon: '👤', label: 'Usuários', desc: 'Gerenciar usuários e senhas' },
   { href: '/admin/disciplinas', icon: '📚', label: 'Disciplinas', desc: 'Disciplinas e vínculos' },
   { href: '/admin/aulas', icon: '🗓', label: 'Aulas', desc: 'Programar grade de aulas' },
   { href: '/adm', icon: '📊', label: 'Painel ADM', desc: 'Ver painel da secretaria' },
