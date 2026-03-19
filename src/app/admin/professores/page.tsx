@@ -13,7 +13,7 @@ export default function ProfessoresPage() {
   const supabase = createClient()
 
   async function carregar() {
-    const { data } = await supabase.from('usuarios').select('*').in('perfil', ['professor', 'secretaria', 'responsavel']).order('nome')
+    const { data } = await supabase.from('usuarios').select('*').in('perfil', ['professor', 'secretaria']).order('nome')
     setUsuarios(data || [])
     setLoading(false)
   }
