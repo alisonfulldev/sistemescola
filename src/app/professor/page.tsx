@@ -24,16 +24,12 @@ export default function ProfessorDashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return router.push('/login')
 
-      const [{ data: aulasData }, histRes] = await Promise.all([
-        supabase.from('aulas').select('turmas(id, nome, turno)').eq('professor_id', user.id),
+      const [{ data: turmasData }, histRes] = await Promise.all([
+        supabase.from('turmas').select('id, nome, turno').eq('ativo', true).order('nome'),
         fetch('/api/professor/historico'),
       ])
 
-      const turmasMap = new Map<string, any>()
-      aulasData?.forEach((a: any) => {
-        if (a.turmas) turmasMap.set(a.turmas.id, a.turmas)
-      })
-      setTurmas(Array.from(turmasMap.values()).sort((a, b) => a.nome.localeCompare(b.nome)))
+      setTurmas(turmasData || [])
 
       if (histRes.ok) {
         const { chamadas } = await histRes.json()
