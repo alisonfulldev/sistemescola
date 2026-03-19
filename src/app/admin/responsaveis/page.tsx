@@ -244,7 +244,7 @@ export default function ResponsaveisPage() {
                     <p className="text-xs text-gray-400 truncate">{resp.email}</p>
                   </div>
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex flex-wrap gap-2 flex-shrink-0">
                   <button
                     onClick={() => copiarLink(resp.email)}
                     className="text-xs text-[#58a6ff] border border-[#58a6ff]/30 hover:bg-[#58a6ff]/10 px-3 py-1.5 rounded-lg transition-all"

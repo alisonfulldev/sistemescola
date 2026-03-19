@@ -105,7 +105,8 @@ export default function TurmasPage() {
       )}
 
       <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-[#30363d]">
               {['Nome', 'Turno', 'Ano Letivo', 'Status', 'Ações'].map(h => (
@@ -143,6 +144,7 @@ export default function TurmasPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

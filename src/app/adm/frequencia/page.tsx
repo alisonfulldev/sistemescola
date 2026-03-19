@@ -37,7 +37,8 @@ export default function FrequenciaPage() {
       </div>
 
       <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-[#30363d]">
               {['Turma', 'Aulas', 'Presentes', 'Faltas', 'Justif.', 'Frequência'].map(h => (
@@ -72,6 +73,7 @@ export default function FrequenciaPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

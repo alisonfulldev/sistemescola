@@ -11,7 +11,7 @@ function KPI({ label, value, color, icon, sub }: { label: string; value: number 
         <p className="text-sm text-gray-400">{label}</p>
         <span className="text-xl">{icon}</span>
       </div>
-      <p className={`text-3xl font-bold ${color}`} style={{ fontFamily: 'DM Mono, monospace' }}>{value}</p>
+      <p className={`text-2xl sm:text-3xl font-bold ${color}`} style={{ fontFamily: 'DM Mono, monospace' }}>{value}</p>
       {sub && <p className="text-xs text-gray-500 mt-1">{sub}</p>}
     </div>
   )
@@ -67,7 +67,7 @@ export default function AdmDashboard() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-white">Visão Geral</h1>
-          <p className="text-gray-400 text-sm capitalize">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
+          <p className="text-gray-400 text-sm capitalize hidden sm:block">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-[#39d353]">
           <span className="w-2 h-2 bg-[#39d353] rounded-full live-dot" />

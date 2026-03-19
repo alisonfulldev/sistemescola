@@ -39,7 +39,8 @@ export default function ChamadasPage() {
       </div>
 
       <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-[#30363d] text-left">
               {['Turma', 'Disciplina', 'Professor', 'Horário', 'P / F / J', 'Status'].map(h => (
@@ -83,6 +84,7 @@ export default function ChamadasPage() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

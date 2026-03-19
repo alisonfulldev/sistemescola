@@ -53,7 +53,8 @@ export default function AlunosAdmPage() {
       </div>
 
       <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-[#30363d]">
               <th className="p-4 text-gray-400 font-medium text-left">Aluno</th>
@@ -95,6 +96,7 @@ export default function AlunosAdmPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )
