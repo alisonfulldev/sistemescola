@@ -72,11 +72,3 @@ export function getTurnoBadge(turno: string): string {
   }
 }
 
-export function gerarQRCodeData(alunoId: string): string {
-  return `escola_aluno_${alunoId}`
-}
-
-export function extrairAlunoIdDoQR(qrData: string): string | null {
-  const match = qrData.match(/^escola_aluno_(.+)$/)
-  return match ? match[1] : null
-}

@@ -119,6 +119,18 @@ export default function ResponsaveisPage() {
     carregar()
   }
 
+  async function excluirResponsavel(resp: any) {
+    if (!confirm(`Excluir ${resp.nome} (${resp.email})? Esta ação não pode ser desfeita.`)) return
+    const res = await fetch('/api/admin/excluir-usuario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: resp.id }),
+    })
+    const data = await res.json()
+    if (!res.ok) { alert(data.error || 'Erro ao excluir'); return }
+    carregar()
+  }
+
   async function reparar() {
     const res = await fetch('/api/admin/reparar-usuarios', { method: 'POST' })
     const data = await res.json()
@@ -244,6 +256,12 @@ export default function ResponsaveisPage() {
                     className="text-xs text-[#e3b341] border border-[#e3b341]/30 hover:bg-[#e3b341]/10 px-3 py-1.5 rounded-lg transition-all"
                   >
                     ✏️ Editar
+                  </button>
+                  <button
+                    onClick={() => excluirResponsavel(resp)}
+                    className="text-xs text-[#f85149] border border-[#f85149]/30 hover:bg-[#f85149]/10 px-3 py-1.5 rounded-lg transition-all"
+                  >
+                    🗑 Excluir
                   </button>
                   <button
                     onClick={() => { setVinculando(resp); setAlunoSelecionado('') }}

@@ -127,7 +127,6 @@ export default function ResponsavelDashboard() {
         <div className="space-y-4">
           {alunos.map(aluno => {
             const status = aluno.registro?.status
-            const temEntrada = !!aluno.entrada
 
             return (
               <div key={aluno.id} className="bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden">
@@ -150,21 +149,6 @@ export default function ResponsavelDashboard() {
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    {/* Entrada */}
-                    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
-                      temEntrada ? 'bg-[#39d353]/10 border-[#39d353]/30' : 'bg-[#0d1117] border-[#30363d]'
-                    }`}>
-                      <span className="text-lg">{temEntrada ? '🏫' : '⏳'}</span>
-                      <div>
-                        <p className={`text-sm font-medium ${temEntrada ? 'text-[#39d353]' : 'text-gray-500'}`}>
-                          {temEntrada ? 'Chegou na escola' : 'Aguardando chegada'}
-                        </p>
-                        {temEntrada && (
-                          <p className="text-xs text-[#39d353]/70" style={{ fontFamily: 'DM Mono, monospace' }}>{aluno.entrada.hora.slice(0,5)}</p>
-                        )}
-                      </div>
-                    </div>
-
                     {/* Chamada */}
                     <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
                       status === 'presente' ? 'bg-[#39d353]/10 border-[#39d353]/30' :

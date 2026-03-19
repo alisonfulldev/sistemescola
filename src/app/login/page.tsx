@@ -17,7 +17,7 @@ export default function LoginPage() {
     setLoading(true)
     setErro('')
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
 
     if (error) {
       setErro('Email ou senha incorretos.')
@@ -25,11 +25,9 @@ export default function LoginPage() {
       return
     }
 
-    const { data: usuario } = await supabase
-      .from('usuarios')
-      .select('perfil')
-      .eq('id', data.user.id)
-      .single()
+    // Busca perfil via API (service_role bypassa RLS)
+    const res = await fetch('/api/auth/perfil')
+    const { perfil } = res.ok ? await res.json() : {}
 
     const rotas: Record<string, string> = {
       professor: '/professor',
@@ -37,7 +35,7 @@ export default function LoginPage() {
       admin: '/admin',
       responsavel: '/responsavel',
     }
-    router.push(rotas[usuario?.perfil || ''] || '/professor')
+    router.push(rotas[perfil || ''] || '/professor')
     router.refresh()
   }
 
@@ -50,7 +48,7 @@ export default function LoginPage() {
             <span className="text-2xl">🏫</span>
           </div>
           <h1 className="text-2xl font-bold text-white">Chamada Escolar</h1>
-          <p className="text-gray-500 mt-1 text-sm">Sistema digital de frequência com QR Code</p>
+          <p className="text-gray-500 mt-1 text-sm">Sistema digital de frequência escolar</p>
         </div>
 
         <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6">
@@ -98,11 +96,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="mt-4 text-center">
-            <a href="/portaria" className="text-xs text-gray-600 hover:text-[#39d353] transition-colors">
-              📱 Acessar leitor da portaria
-            </a>
-          </div>
         </div>
 
         <p className="text-center text-xs text-gray-700 mt-6">© 2026 Sistema de Chamada Escolar</p>

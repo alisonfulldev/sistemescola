@@ -14,8 +14,6 @@ export default function AlunosAdminPage() {
   const [salvando, setSalvando] = useState(false)
   const [busca, setBusca] = useState('')
   const [uploadFoto, setUploadFoto] = useState<File | null>(null)
-  const [alunoQR, setAlunoQR] = useState<any>(null)
-  const [qrUrl, setQrUrl] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
@@ -74,15 +72,6 @@ export default function AlunosAdminPage() {
     setUploadFoto(null)
     setSalvando(false)
     carregar()
-  }
-
-  async function verQRCode(aluno: any) {
-    setAlunoQR(aluno)
-    const res = await fetch(`/api/alunos/${aluno.id}/qrcode`)
-    if (res.ok) {
-      const blob = await res.blob()
-      setQrUrl(URL.createObjectURL(blob))
-    }
   }
 
   const filtrados = alunos.filter(a =>
@@ -189,7 +178,6 @@ export default function AlunosAdminPage() {
                 <td className="p-4">
                   <div className="flex items-center justify-center gap-2">
                     <button onClick={() => iniciarEditar(a)} className="text-xs text-[#58a6ff] border border-[#58a6ff]/30 hover:bg-[#58a6ff]/10 px-2 py-1 rounded-lg transition-all">Editar</button>
-                    <button onClick={() => verQRCode(a)} className="text-xs text-[#39d353] border border-[#39d353]/30 hover:bg-[#39d353]/10 px-2 py-1 rounded-lg transition-all">QR Code</button>
                   </div>
                 </td>
               </tr>
@@ -198,33 +186,6 @@ export default function AlunosAdminPage() {
         </table>
       </div>
 
-      {/* Modal QR Code */}
-      {alunoQR && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-6 w-full max-w-sm text-center animate-slide-up">
-            <h3 className="font-bold text-white text-lg mb-1">{alunoQR.nome_completo}</h3>
-            <p className="text-gray-400 text-sm mb-4">{alunoQR.matricula} · {alunoQR.turmas?.nome}</p>
-            {qrUrl ? (
-              <>
-                <div className="bg-white p-4 rounded-xl inline-block mb-4">
-                  <img src={qrUrl} alt="QR Code" className="w-48 h-48" />
-                </div>
-                <p className="text-xs text-gray-500 mb-4">Use este QR Code no cartão do aluno</p>
-                <div className="flex gap-3">
-                  <button onClick={() => { setAlunoQR(null); setQrUrl('') }}
-                    className="flex-1 py-2.5 bg-[#30363d] text-gray-300 rounded-xl text-sm hover:bg-[#21262d] transition-colors"
-                  >Fechar</button>
-                  <a href={qrUrl} download={`qrcode-${alunoQR.matricula}.png`}
-                    className="flex-1 py-2.5 bg-[#39d353] text-black font-semibold rounded-xl text-sm hover:bg-green-400 transition-colors"
-                  >⬇ Download</a>
-                </div>
-              </>
-            ) : (
-              <div className="py-8"><div className="animate-spin w-6 h-6 border-4 border-[#39d353] border-t-transparent rounded-full mx-auto" /></div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

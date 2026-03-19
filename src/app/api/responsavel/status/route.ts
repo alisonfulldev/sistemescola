@@ -26,21 +26,12 @@ export async function GET() {
   const alunos = vinculos.map((v: any) => v.alunos).filter(Boolean)
   const alunoIds = alunos.map((a: any) => a.id)
 
-  // Entradas de hoje
-  const { data: entradas } = await admin
-    .from('entradas')
-    .select('aluno_id, hora')
-    .in('aluno_id', alunoIds)
-    .eq('data', hoje)
-
   // Último registro de chamada de hoje para cada aluno
   const { data: registros } = await admin
     .from('registros_chamada')
     .select('aluno_id, status, registrado_em, observacao, chamadas(aulas(data))')
     .in('aluno_id', alunoIds)
     .order('registrado_em', { ascending: false })
-
-  const entradaMap = new Map((entradas || []).map((e: any) => [e.aluno_id, e]))
 
   // Pega o registro mais recente de HOJE por aluno
   const registroMap = new Map<string, any>()
@@ -52,7 +43,6 @@ export async function GET() {
 
   const resultado = alunos.map((aluno: any) => ({
     ...aluno,
-    entrada: entradaMap.get(aluno.id) || null,
     registro: registroMap.get(aluno.id) || null,
   }))
 

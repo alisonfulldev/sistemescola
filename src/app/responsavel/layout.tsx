@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 
 export default async function ResponsavelLayout({ children }: { children: React.ReactNode }) {
@@ -6,7 +7,13 @@ export default async function ResponsavelLayout({ children }: { children: React.
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: usuario } = await supabase
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  const { data: usuario } = await admin
     .from('usuarios')
     .select('nome, perfil')
     .eq('id', user.id)

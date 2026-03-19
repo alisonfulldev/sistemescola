@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     // Insere na tabela public.usuarios (necessário para o sistema funcionar)
     const { error: erroInsert } = await adminClient
       .from('usuarios')
-      .insert({ id: data.user.id, nome: nome.trim(), email: email.trim(), perfil: novoPerfil })
+      .upsert({ id: data.user.id, nome: nome.trim(), email: email.trim(), perfil: novoPerfil })
 
     if (erroInsert) {
       // Reverte criação no auth se falhar o insert
