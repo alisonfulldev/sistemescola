@@ -5,7 +5,6 @@ import { cookies } from 'next/headers'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/professor'
 
   if (code) {
     const cookieStore = cookies()
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+      return NextResponse.redirect(`${origin}/redefinir-senha`)
     }
   }
 
