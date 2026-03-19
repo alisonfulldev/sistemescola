@@ -86,16 +86,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-5 pt-5 border-t border-[#30363d]">
-            <p className="text-xs text-gray-600 uppercase tracking-wide mb-3">Contas de demonstração</p>
-            <div className="space-y-1.5 text-xs text-gray-500" style={{ fontFamily: 'DM Mono, monospace' }}>
-              <div className="flex gap-2"><span>👨‍💼</span><span>admin@escola.com</span><span className="text-gray-700">/ Escola@123</span></div>
-              <div className="flex gap-2"><span>👩‍💼</span><span>secretaria@escola.com</span><span className="text-gray-700">/ Escola@123</span></div>
-              <div className="flex gap-2"><span>👨‍🏫</span><span>prof.carlos@escola.com</span><span className="text-gray-700">/ Escola@123</span></div>
-              <div className="flex gap-2"><span>👨‍👩‍👦</span><span>resp.roberto@escola.com</span><span className="text-gray-700">/ Escola@123</span></div>
-            </div>
-          </div>
-
         </div>
 
         <p className="text-center text-xs text-gray-700 mt-6">© 2026 Sistema de Chamada Escolar</p>
