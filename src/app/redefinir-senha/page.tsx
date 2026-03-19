@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 
 export default function RedefinirSenhaPage() {
@@ -15,23 +15,43 @@ export default function RedefinirSenhaPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const supabase = createClient()
+    async function processarToken() {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
 
-    // Supabase dispara PASSWORD_RECOVERY quando detecta o hash #access_token=...&type=recovery na URL
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setPronto(true)
-        setVerificando(false)
+      // Tenta hash fragment (#access_token=...&type=recovery)
+      const hash = window.location.hash.substring(1)
+      const hashParams = new URLSearchParams(hash)
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      const type = hashParams.get('type')
+
+      if (accessToken && refreshToken && type === 'recovery') {
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+        if (!error) {
+          setPronto(true)
+          setVerificando(false)
+          return
+        }
       }
-    })
 
-    // Timeout: se em 4s não chegou o evento, link inválido/expirado
-    const timeout = setTimeout(() => setVerificando(false), 4000)
+      // Tenta PKCE code (?code=...)
+      const code = new URLSearchParams(window.location.search).get('code')
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (!error) {
+          setPronto(true)
+          setVerificando(false)
+          return
+        }
+      }
 
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timeout)
+      setVerificando(false)
     }
+
+    processarToken()
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -48,7 +68,10 @@ export default function RedefinirSenhaPage() {
     }
 
     setLoading(true)
-    const supabase = createClient()
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
     const { error } = await supabase.auth.updateUser({ password: senha })
 
     if (error) {
