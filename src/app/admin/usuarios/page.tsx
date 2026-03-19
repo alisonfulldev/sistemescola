@@ -72,7 +72,11 @@ export default function UsuariosPage() {
   }
 
   async function toggleAtivo(u: any) {
-    await supabase.from('usuarios').update({ ativo: !u.ativo }).eq('id', u.id)
+    await fetch('/api/admin/toggle-ativo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: u.id, ativo: !u.ativo }),
+    })
     carregar()
   }
 
