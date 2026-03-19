@@ -10,18 +10,15 @@ export default function UsuariosPage() {
   const [form, setForm] = useState({ nome: '', email: '', senha: '', perfil: 'professor' })
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
-  const [editandoSenha, setEditandoSenha] = useState<string | null>(null)
-  const [novaSenha, setNovaSenha] = useState('')
-  const [salvandoSenha, setSalvandoSenha] = useState(false)
-  const [erroSenha, setErroSenha] = useState('')
-  const [okSenha, setOkSenha] = useState('')
+  const [linkAberto, setLinkAberto] = useState<string | null>(null)
+  const [linkGerado, setLinkGerado] = useState('')
+  const [gerandoLink, setGerandoLink] = useState(false)
+  const [erroLink, setErroLink] = useState('')
+  const [copiado, setCopiado] = useState(false)
   const supabase = createClient()
 
   async function carregar() {
-    const { data } = await supabase
-      .from('usuarios')
-      .select('*')
-      .order('nome')
+    const { data } = await supabase.from('usuarios').select('*').order('nome')
     setUsuarios(data || [])
     setLoading(false)
   }
@@ -48,40 +45,35 @@ export default function UsuariosPage() {
     setSalvando(false)
   }
 
-  async function alterarSenha(userId: string) {
-    if (!novaSenha.trim()) return
-    setSalvandoSenha(true)
-    setErroSenha('')
-    setOkSenha('')
-    const res = await fetch('/api/admin/atualizar-usuario', {
+  async function gerarLink(userId: string, email: string) {
+    setLinkAberto(userId)
+    setLinkGerado('')
+    setErroLink('')
+    setCopiado(false)
+    setGerandoLink(true)
+    const res = await fetch('/api/admin/gerar-link-reset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, senha: novaSenha }),
+      body: JSON.stringify({ email }),
     })
+    const data = await res.json()
     if (!res.ok) {
-      const d = await res.json()
-      setErroSenha(d.error || 'Erro ao alterar senha')
+      setErroLink(data.error || 'Erro ao gerar link')
     } else {
-      setOkSenha('Senha alterada com sucesso!')
-      setTimeout(() => {
-        setEditandoSenha(null)
-        setNovaSenha('')
-        setOkSenha('')
-      }, 1500)
+      setLinkGerado(data.link)
     }
-    setSalvandoSenha(false)
+    setGerandoLink(false)
+  }
+
+  function copiarLink() {
+    navigator.clipboard.writeText(linkGerado)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
   }
 
   async function toggleAtivo(u: any) {
     await supabase.from('usuarios').update({ ativo: !u.ativo }).eq('id', u.id)
     carregar()
-  }
-
-  function abrirEdicaoSenha(userId: string) {
-    setEditandoSenha(userId)
-    setNovaSenha('')
-    setErroSenha('')
-    setOkSenha('')
   }
 
   const perfilBadge = (p: string) => ({
@@ -122,7 +114,7 @@ export default function UsuariosPage() {
                 className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Senha (mín. 8 caracteres) *</label>
+              <label className="block text-xs text-gray-400 mb-1.5">Senha inicial (mín. 8 caracteres) *</label>
               <input type="password" value={form.senha} onChange={e => setForm(p => ({ ...p, senha: e.target.value }))}
                 className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
             </div>
@@ -178,10 +170,10 @@ export default function UsuariosPage() {
                     <td className="p-4 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => editandoSenha === u.id ? setEditandoSenha(null) : abrirEdicaoSenha(u.id)}
+                          onClick={() => linkAberto === u.id ? setLinkAberto(null) : gerarLink(u.id, u.email)}
                           className="text-xs px-2 py-1 rounded-lg border text-yellow-400 border-yellow-400/30 hover:bg-yellow-400/10 transition-all"
                         >
-                          {editandoSenha === u.id ? 'Cancelar' : 'Alterar Senha'}
+                          {linkAberto === u.id ? 'Fechar' : '🔑 Redefinir Senha'}
                         </button>
                         <button
                           onClick={() => toggleAtivo(u)}
@@ -192,28 +184,38 @@ export default function UsuariosPage() {
                       </div>
                     </td>
                   </tr>
-                  {editandoSenha === u.id && (
-                    <tr key={`${u.id}-senha`} className="border-b border-[#30363d]/50 bg-yellow-500/5">
-                      <td colSpan={5} className="px-4 py-3">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className="text-xs text-gray-400">Nova senha para <span className="text-white font-medium">{u.nome}</span>:</span>
-                          <input
-                            type="password"
-                            value={novaSenha}
-                            onChange={e => setNovaSenha(e.target.value)}
-                            placeholder="mín. 6 caracteres"
-                            className="bg-[#0d1117] border border-yellow-400/30 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-yellow-400 w-48"
-                          />
-                          <button
-                            onClick={() => alterarSenha(u.id)}
-                            disabled={salvandoSenha || novaSenha.length < 6}
-                            className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black text-xs font-bold rounded-lg transition-colors"
-                          >
-                            {salvandoSenha ? 'Salvando...' : 'Salvar'}
-                          </button>
-                          {erroSenha && <span className="text-xs text-red-400">{erroSenha}</span>}
-                          {okSenha && <span className="text-xs text-[#39d353]">{okSenha}</span>}
-                        </div>
+
+                  {linkAberto === u.id && (
+                    <tr key={`${u.id}-link`} className="border-b border-[#30363d]/50 bg-yellow-500/5">
+                      <td colSpan={5} className="px-4 py-4">
+                        {gerandoLink ? (
+                          <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <div className="animate-spin w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full" />
+                            Gerando link...
+                          </div>
+                        ) : erroLink ? (
+                          <p className="text-sm text-red-400">{erroLink}</p>
+                        ) : linkGerado ? (
+                          <div>
+                            <p className="text-xs text-gray-400 mb-2">
+                              Link de redefinição para <span className="text-white font-medium">{u.nome}</span> — válido por 1 hora:
+                            </p>
+                            <div className="flex gap-2 items-center">
+                              <input
+                                readOnly
+                                value={linkGerado}
+                                className="flex-1 bg-[#0d1117] border border-yellow-400/30 text-gray-300 text-xs rounded-lg px-3 py-2 font-mono truncate focus:outline-none"
+                              />
+                              <button
+                                onClick={copiarLink}
+                                className={`px-3 py-2 text-xs font-bold rounded-lg transition-all flex-shrink-0 ${copiado ? 'bg-[#39d353] text-black' : 'bg-yellow-500 hover:bg-yellow-400 text-black'}`}
+                              >
+                                {copiado ? '✓ Copiado!' : 'Copiar'}
+                              </button>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-2">Envie este link para o usuário. Ao acessar, ele poderá definir uma nova senha.</p>
+                          </div>
+                        ) : null}
                       </td>
                     </tr>
                   )}

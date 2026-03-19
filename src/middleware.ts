@@ -32,6 +32,11 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Rotas públicas de auth — deixa passar
+  if (pathname === '/redefinir-senha' || pathname.startsWith('/auth/')) {
+    return supabaseResponse
+  }
+
   if (pathname === '/login' || pathname === '/') {
     if (user) {
       const adminClient = createAdmin(
