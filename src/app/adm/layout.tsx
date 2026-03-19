@@ -75,6 +75,16 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
             )}
           </Link>
         ))}
+        {usuario?.perfil === 'admin' && (
+          <div className="pt-3 mt-3 border-t border-[#30363d]">
+            <Link href="/admin" onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm text-gray-500 hover:bg-[#21262d] hover:text-purple-300"
+            >
+              <span>⚙</span>
+              <span>Administração</span>
+            </Link>
+          </div>
+        )}
       </nav>
       <div className="p-4 border-t border-[#30363d]">
         <div className="flex items-center gap-3">
