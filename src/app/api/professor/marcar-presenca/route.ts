@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   // Valida que a chamada pertence a uma aula deste professor
   const { data: chamada } = await admin
     .from('chamadas')
-    .select('id, aulas(professor_id)')
+    .select('id, aulas(professor_id, turmas(nome))')
     .eq('id', chamada_id)
     .single()
 
@@ -44,5 +44,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Notifica responsáveis quando é falta
+  if (status === 'falta') {
+    notificarFalta(admin, chamada_id, aluno_id, (chamada as any).aulas?.turmas?.nome || 'aula').catch(() => {})
+  }
+
   return NextResponse.json({ ok: true })
+}
+
+async function notificarFalta(admin: any, chamada_id: string, aluno_id: string, turmaNome: string) {
+  const { data: aluno } = await admin.from('alunos').select('nome_completo').eq('id', aluno_id).single()
+  const { data: vinculos } = await admin.from('responsaveis_alunos').select('responsavel_id').eq('aluno_id', aluno_id)
+  if (!vinculos?.length) return
+
+  const responsavelIds = vinculos.map((v: any) => v.responsavel_id)
+  const { data: subs } = await admin.from('push_subscriptions').select('subscription').in('responsavel_id', responsavelIds)
+  if (!subs?.length) return
+
+  const webpush = await import('web-push')
+  webpush.default.setVapidDetails(
+    process.env.VAPID_SUBJECT!,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  )
+
+  const payload = JSON.stringify({
+    title: '❌ Falta registrada',
+    body: `${aluno?.nome_completo} teve falta registrada em ${turmaNome}`,
+    tag: `falta-${aluno_id}-${chamada_id}`,
+    url: '/responsavel',
+  })
+
+  await Promise.allSettled(subs.map((s: any) => webpush.default.sendNotification(s.subscription, payload)))
 }

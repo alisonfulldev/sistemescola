@@ -15,7 +15,6 @@ export async function GET() {
 
   const hoje = new Date().toISOString().split('T')[0]
 
-  // Busca alunos vinculados ao responsável
   const { data: vinculos } = await admin
     .from('responsaveis_alunos')
     .select('aluno_id, alunos(id, nome_completo, foto_url, matricula, turmas(nome))')
@@ -26,10 +25,10 @@ export async function GET() {
   const alunos = vinculos.map((v: any) => v.alunos).filter(Boolean)
   const alunoIds = alunos.map((a: any) => a.id)
 
-  // Último registro de chamada de hoje para cada aluno
+  // Registros de hoje com ID incluído
   const { data: registros } = await admin
     .from('registros_chamada')
-    .select('aluno_id, status, registrado_em, observacao, chamadas(aulas(data))')
+    .select('id, aluno_id, status, registrado_em, observacao, chamadas(aulas(data))')
     .in('aluno_id', alunoIds)
     .order('registrado_em', { ascending: false })
 
@@ -41,10 +40,28 @@ export async function GET() {
     if (!registroMap.has(r.aluno_id)) registroMap.set(r.aluno_id, r)
   }
 
-  const resultado = alunos.map((aluno: any) => ({
-    ...aluno,
-    registro: registroMap.get(aluno.id) || null,
-  }))
+  // Busca justificativas para os registros de hoje
+  const registroIds = Array.from(registroMap.values()).map((r: any) => r.id)
+  const justificativaMap = new Map<string, any>()
+  if (registroIds.length > 0) {
+    const { data: justificativas } = await admin
+      .from('justificativas_falta')
+      .select('id, registro_id, motivo, status, professor_resposta')
+      .in('registro_id', registroIds)
+      .eq('responsavel_id', user.id)
+    for (const j of justificativas || []) {
+      justificativaMap.set(j.registro_id, j)
+    }
+  }
+
+  const resultado = alunos.map((aluno: any) => {
+    const reg = registroMap.get(aluno.id) || null
+    return {
+      ...aluno,
+      registro: reg,
+      justificativa: reg ? (justificativaMap.get(reg.id) || null) : null,
+    }
+  })
 
   return NextResponse.json({ alunos: resultado })
 }
