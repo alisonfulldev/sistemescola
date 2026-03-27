@@ -9,7 +9,7 @@ export default function DisciplinasPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editando, setEditando] = useState<any>(null)
-  const [form, setForm] = useState({ nome: '', professor_id: '' })
+  const [form, setForm] = useState({ nome: '', professor_id: '', curso: '', codigo_disciplina: '' })
   const [salvando, setSalvando] = useState(false)
   const supabase = createClient()
 
@@ -28,13 +28,25 @@ export default function DisciplinasPage() {
   async function salvar() {
     if (!form.nome.trim() || !form.professor_id) return
     setSalvando(true)
-    if (editando) await supabase.from('disciplinas').update(form).eq('id', editando.id)
-    else await supabase.from('disciplinas').insert(form)
+    const payload = {
+      nome: form.nome,
+      professor_id: form.professor_id,
+      curso: form.curso || null,
+      codigo_disciplina: form.codigo_disciplina || null,
+    }
+    if (editando) await supabase.from('disciplinas').update(payload).eq('id', editando.id)
+    else await supabase.from('disciplinas').insert(payload)
     setShowForm(false)
     setEditando(null)
-    setForm({ nome: '', professor_id: '' })
+    setForm({ nome: '', professor_id: '', curso: '', codigo_disciplina: '' })
     setSalvando(false)
     carregar()
+  }
+
+  function abrirEditar(d: any) {
+    setEditando(d)
+    setForm({ nome: d.nome, professor_id: d.professor_id, curso: d.curso || '', codigo_disciplina: d.codigo_disciplina || '' })
+    setShowForm(true)
   }
 
   return (
@@ -44,13 +56,13 @@ export default function DisciplinasPage() {
           <h1 className="text-xl font-bold text-white">Disciplinas</h1>
           <p className="text-gray-400 text-sm">{disciplinas.length} disciplina(s)</p>
         </div>
-        <button onClick={() => { setShowForm(true); setEditando(null); setForm({ nome: '', professor_id: professores[0]?.id || '' }) }}
+        <button onClick={() => { setShowForm(true); setEditando(null); setForm({ nome: '', professor_id: professores[0]?.id || '', curso: '', codigo_disciplina: '' }) }}
           className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
         >+ Nova Disciplina</button>
       </div>
 
       {showForm && (
-        <div className="bg-[#161b22] border border-purple-500/30 rounded-xl p-5 mb-6 animate-slide-up">
+        <div className="bg-[#161b22] border border-purple-500/30 rounded-xl p-5 mb-6">
           <h3 className="font-semibold text-white mb-4">{editando ? 'Editar Disciplina' : 'Nova Disciplina'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -67,6 +79,17 @@ export default function DisciplinasPage() {
                 {professores.map((p: any) => <option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Curso</label>
+              <input type="text" placeholder="Ex: Ensino Fundamental" value={form.curso} onChange={e => setForm(p => ({ ...p, curso: e.target.value }))}
+                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Código da Disciplina <span className="text-gray-600">(opcional)</span></label>
+              <input type="text" placeholder="Ex: MAT-01" value={form.codigo_disciplina} onChange={e => setForm(p => ({ ...p, codigo_disciplina: e.target.value }))}
+                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+                style={{ fontFamily: 'DM Mono, monospace' }} />
+            </div>
           </div>
           <div className="flex gap-3">
             <button onClick={salvar} disabled={salvando || !form.nome.trim() || !form.professor_id}
@@ -79,30 +102,34 @@ export default function DisciplinasPage() {
 
       <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[480px]">
-          <thead>
-            <tr className="border-b border-[#30363d]">
-              <th className="p-4 text-gray-400 font-medium text-left">Disciplina</th>
-              <th className="p-4 text-gray-400 font-medium text-left">Professor</th>
-              <th className="p-4 text-gray-400 font-medium text-center">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? <tr><td colSpan={3} className="text-center py-8 text-gray-500">Carregando...</td></tr>
-            : disciplinas.length === 0 ? <tr><td colSpan={3} className="text-center py-8 text-gray-500">Nenhuma disciplina</td></tr>
-            : disciplinas.map(d => (
-              <tr key={d.id} className="border-b border-[#30363d]/50 hover:bg-[#21262d] transition-colors">
-                <td className="p-4 text-white font-medium">{d.nome}</td>
-                <td className="p-4 text-gray-300">{d.usuarios?.nome}</td>
-                <td className="p-4 text-center">
-                  <button onClick={() => { setEditando(d); setForm({ nome: d.nome, professor_id: d.professor_id }); setShowForm(true) }}
-                    className="text-xs text-[#58a6ff] border border-[#58a6ff]/30 hover:bg-[#58a6ff]/10 px-2 py-1 rounded-lg transition-all"
-                  >Editar</button>
-                </td>
+          <table className="w-full text-sm min-w-[480px]">
+            <thead>
+              <tr className="border-b border-[#30363d]">
+                <th className="p-4 text-gray-400 font-medium text-left">Disciplina</th>
+                <th className="p-4 text-gray-400 font-medium text-left hidden md:table-cell">Curso</th>
+                <th className="p-4 text-gray-400 font-medium text-left hidden lg:table-cell">Código</th>
+                <th className="p-4 text-gray-400 font-medium text-left">Professor</th>
+                <th className="p-4 text-gray-400 font-medium text-center">Ações</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? <tr><td colSpan={5} className="text-center py-8 text-gray-500">Carregando...</td></tr>
+              : disciplinas.length === 0 ? <tr><td colSpan={5} className="text-center py-8 text-gray-500">Nenhuma disciplina</td></tr>
+              : disciplinas.map(d => (
+                <tr key={d.id} className="border-b border-[#30363d]/50 hover:bg-[#21262d] transition-colors">
+                  <td className="p-4 text-white font-medium">{d.nome}</td>
+                  <td className="p-4 text-gray-400 text-xs hidden md:table-cell">{d.curso || '—'}</td>
+                  <td className="p-4 text-gray-400 text-xs hidden lg:table-cell" style={{ fontFamily: 'DM Mono, monospace' }}>{d.codigo_disciplina || '—'}</td>
+                  <td className="p-4 text-gray-300">{d.usuarios?.nome}</td>
+                  <td className="p-4 text-center">
+                    <button onClick={() => abrirEditar(d)}
+                      className="text-xs text-[#58a6ff] border border-[#58a6ff]/30 hover:bg-[#58a6ff]/10 px-2 py-1 rounded-lg transition-all"
+                    >Editar</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

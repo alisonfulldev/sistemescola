@@ -27,21 +27,55 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${m[status] || 'bg-gray-500/15 text-gray-400'}`}>{l[status] || status}</span>
 }
 
+function calcDiasLetivos(inicio: string, fim: string, especiais: Record<string, string>): number {
+  const start = new Date(inicio + 'T12:00:00')
+  const end   = new Date(fim   + 'T12:00:00')
+  let count = 0
+  const d = new Date(start)
+  while (d <= end) {
+    const dw = d.getDay()
+    if (dw !== 0 && dw !== 6) {
+      const key = d.toISOString().split('T')[0]
+      const tipo = especiais[key]
+      if (!tipo || tipo === 'letivo' || tipo === 'evento_escolar') count++
+    }
+    d.setDate(d.getDate() + 1)
+  }
+  return count
+}
+
 export default function AdmDashboard() {
   const [kpis, setKpis] = useState({ matriculados: 0, presentes: 0, faltas: 0, pendentes: 0 })
   const [chamadas, setChamadas] = useState<any[]>([])
   const [alertas, setAlertas] = useState<any[]>([])
   const [selecionada, setSelecionada] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [bimestres, setBimestres] = useState<any[]>([])
+  const [diasEspeciais, setDiasEspeciais] = useState<Record<string, string>>({})
+  const [relatorio, setRelatorio] = useState<any[]>([])
   const supabase = createClient()
 
   async function carregar() {
-    const res = await fetch('/api/adm/dashboard')
+    const [res, relRes, { data: anoAtivo }] = await Promise.all([
+      fetch('/api/adm/dashboard'),
+      fetch('/api/adm/relatorio'),
+      supabase.from('anos_letivos').select('id, bimestres(numero, data_inicio, data_fim)').eq('ativo', true).limit(1).single(),
+    ])
     if (!res.ok) { setLoading(false); return }
     const data = await res.json()
     setKpis(data.kpis)
     setChamadas(data.chamadas)
     setAlertas(data.alertas)
+    if (relRes.ok) { const rel = await relRes.json(); setRelatorio(rel.turmas || []) }
+
+    if (anoAtivo?.id) {
+      const bims = [...((anoAtivo as any).bimestres || [])].sort((a: any, b: any) => a.numero - b.numero)
+      setBimestres(bims)
+      const { data: cal } = await supabase.from('calendario_escolar').select('data, tipo_dia').eq('ano_letivo_id', anoAtivo.id)
+      const map: Record<string, string> = {}
+      for (const c of cal || []) map[c.data] = c.tipo_dia
+      setDiasEspeciais(map)
+    }
     setLoading(false)
   }
 
@@ -66,7 +100,7 @@ export default function AdmDashboard() {
     <div className="animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Visão Geral</h1>
+          <h1 className="text-xl font-bold text-white">Acesso Rápido</h1>
           <p className="text-gray-400 text-sm capitalize hidden sm:block">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-[#39d353]">
@@ -74,6 +108,29 @@ export default function AdmDashboard() {
           <span>Ao vivo</span>
         </div>
       </div>
+
+      {/* Dias letivos por bimestre */}
+      {bimestres.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+          {bimestres.map((b: any) => {
+            const dl = calcDiasLetivos(b.data_inicio, b.data_fim, diasEspeciais)
+            return (
+              <div key={b.numero} className="bg-[#161b22] border border-[#30363d] rounded-xl p-3 text-center">
+                <p className="text-xs text-purple-400 font-semibold mb-1">{b.numero}º Bimestre</p>
+                <p className="text-xl font-bold text-white font-mono">{dl}</p>
+                <p className="text-xs text-gray-600">dias letivos</p>
+              </div>
+            )
+          })}
+          <div className="bg-[#161b22] border border-[#39d353]/30 rounded-xl p-3 text-center">
+            <p className="text-xs text-[#39d353] font-semibold mb-1">Total</p>
+            <p className="text-xl font-bold text-[#39d353] font-mono">
+              {bimestres.reduce((acc: number, b: any) => acc + calcDiasLetivos(b.data_inicio, b.data_fim, diasEspeciais), 0)}
+            </p>
+            <p className="text-xs text-gray-600">no ano</p>
+          </div>
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -174,6 +231,63 @@ export default function AdmDashboard() {
         </div>
       </div>
 
+      {/* Relatório por turma */}
+      {relatorio.length > 0 && (
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden mb-4">
+          <div className="px-5 py-3 border-b border-[#30363d]">
+            <h2 className="font-semibold text-white text-sm">📊 Situação por Turma</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs min-w-[700px]">
+              <thead>
+                <tr className="border-b border-[#30363d] text-gray-500">
+                  <th className="px-4 py-2.5 text-left font-medium">Turma</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Alunos</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Aulas</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Conteúdos</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Notas</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Freq.</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Recuperação</th>
+                  <th className="px-3 py-2.5 text-center font-medium">Diário</th>
+                </tr>
+              </thead>
+              <tbody>
+                {relatorio.map((t: any) => (
+                  <tr key={t.id} className="border-b border-[#30363d]/50 hover:bg-[#21262d] transition-colors">
+                    <td className="px-4 py-2.5">
+                      <p className="text-white font-medium">{t.nome}</p>
+                      {t.turno && <p className="text-gray-600 text-xs">{t.turno}</p>}
+                    </td>
+                    <td className="px-3 py-2.5 text-center text-gray-300 font-mono">{t.total_alunos}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      <span className="font-mono text-gray-300">{t.aulas_realizadas}</span>
+                      {t.aulas_previstas > 0 && <span className="text-gray-600">/{t.aulas_previstas}</span>}
+                    </td>
+                    <td className="px-3 py-2.5 text-center font-mono text-gray-300">{t.conteudos_registrados}</td>
+                    <td className="px-3 py-2.5 text-center font-mono text-gray-300">{t.notas_lancadas}</td>
+                    <td className="px-3 py-2.5 text-center">
+                      {t.freq_geral !== null ? (
+                        <span className={`font-mono font-bold ${t.freq_geral >= 75 ? 'text-[#39d353]' : 'text-[#f85149]'}`}>{t.freq_geral}%</span>
+                      ) : <span className="text-gray-600">—</span>}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      {t.alunos_recuperacao > 0
+                        ? <span className="text-yellow-400 font-mono font-bold">{t.alunos_recuperacao}</span>
+                        : <span className="text-gray-600">—</span>}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      {t.pdf_pronto
+                        ? <span className="text-[#39d353]">✓ Pronto</span>
+                        : <span className="text-gray-600">Pendente</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Detalhe chamada selecionada */}
       {selecionada && (
         <div className="bg-[#161b22] border border-[#58a6ff]/30 rounded-xl p-5 animate-slide-up">
@@ -181,16 +295,21 @@ export default function AdmDashboard() {
             <h3 className="font-semibold text-white text-sm">👁 Detalhe: {selecionada.aulas?.turmas?.nome}</h3>
             <button onClick={() => setSelecionada(null)} className="text-gray-400 hover:text-white transition-colors text-lg leading-none">×</button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-1.5">
             {(selecionada.registros_chamada || []).map((r: any) => (
-              <span key={r.id} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${
+              <div key={r.id} className={`flex items-start gap-2 px-3 py-2 rounded-xl text-xs border ${
                 r.status === 'presente' ? 'bg-[#39d353]/10 text-[#39d353] border-[#39d353]/25' :
                 r.status === 'falta' ? 'bg-[#f85149]/10 text-[#f85149] border-[#f85149]/25' :
                 r.status === 'justificada' ? 'bg-[#e3b341]/10 text-[#e3b341] border-[#e3b341]/25' :
                 'bg-gray-500/10 text-gray-400 border-gray-500/25'
               }`}>
-                {r.alunos?.nome_completo}
-              </span>
+                <span className="font-medium flex-1">{r.alunos?.nome_completo}</span>
+                {r.motivo_alteracao && (
+                  <span className="text-gray-400 italic truncate max-w-[200px]">
+                    {r.horario_evento ? `🕐 ${r.horario_evento.slice(0,5)} · ` : ''}{r.motivo_alteracao}
+                  </span>
+                )}
+              </div>
             ))}
             {(selecionada.registros_chamada || []).length === 0 && (
               <p className="text-gray-500 text-sm">Nenhum registro ainda</p>

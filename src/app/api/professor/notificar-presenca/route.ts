@@ -1,8 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
+    const supabaseAuth = createServerClient()
+    const { data: { user } } = await supabaseAuth.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
     const { chamada_id } = await req.json()
     if (!chamada_id) return NextResponse.json({ ok: true })
 
@@ -33,7 +38,7 @@ export async function POST(req: NextRequest) {
     const webpush = await import('web-push')
     webpush.default.setVapidDetails(
       process.env.VAPID_SUBJECT!,
-      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+      (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim().replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
       process.env.VAPID_PRIVATE_KEY!
     )
 

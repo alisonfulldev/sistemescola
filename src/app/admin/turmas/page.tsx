@@ -8,7 +8,7 @@ export default function TurmasPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editando, setEditando] = useState<any>(null)
-  const [form, setForm] = useState({ nome: '', turno: 'matutino', ano_letivo: new Date().getFullYear().toString() })
+  const [form, setForm] = useState({ nome: '', turno: 'matutino', ano_letivo: new Date().getFullYear().toString(), serie: '', turma_letra: '', grau: '', aulas_previstas: '' })
   const [salvando, setSalvando] = useState(false)
   const supabase = createClient()
 
@@ -22,23 +22,32 @@ export default function TurmasPage() {
 
   function novaForm() {
     setEditando(null)
-    setForm({ nome: '', turno: 'matutino', ano_letivo: new Date().getFullYear().toString() })
+    setForm({ nome: '', turno: 'matutino', ano_letivo: new Date().getFullYear().toString(), serie: '', turma_letra: '', grau: '', aulas_previstas: '' })
     setShowForm(true)
   }
 
   function editarForm(t: any) {
     setEditando(t)
-    setForm({ nome: t.nome, turno: t.turno, ano_letivo: t.ano_letivo })
+    setForm({ nome: t.nome, turno: t.turno, ano_letivo: t.ano_letivo, serie: t.serie?.toString() || '', turma_letra: t.turma_letra || '', grau: t.grau || '', aulas_previstas: t.aulas_previstas?.toString() || '' })
     setShowForm(true)
   }
 
   async function salvar() {
     if (!form.nome.trim()) return
     setSalvando(true)
+    const payload = {
+      nome: form.nome,
+      turno: form.turno,
+      ano_letivo: form.ano_letivo,
+      serie: form.serie ? Number(form.serie) : null,
+      turma_letra: form.turma_letra || null,
+      grau: form.grau || null,
+      aulas_previstas: form.aulas_previstas ? Number(form.aulas_previstas) : null,
+    }
     if (editando) {
-      await supabase.from('turmas').update(form).eq('id', editando.id)
+      await supabase.from('turmas').update(payload).eq('id', editando.id)
     } else {
-      await supabase.from('turmas').insert(form)
+      await supabase.from('turmas').insert(payload)
     }
     setShowForm(false)
     setEditando(null)
@@ -67,7 +76,7 @@ export default function TurmasPage() {
         <div className="bg-[#161b22] border border-purple-500/30 rounded-xl p-5 mb-6 animate-slide-up">
           <h3 className="font-semibold text-white mb-4">{editando ? 'Editar Turma' : 'Nova Turma'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-xs text-gray-400 mb-1.5">Nome da Turma *</label>
               <input type="text" placeholder="Ex: 9º Ano A" value={form.nome}
                 onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
@@ -83,6 +92,37 @@ export default function TurmasPage() {
                 <option value="vespertino">Vespertino</option>
                 <option value="noturno">Noturno</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Grau</label>
+              <select value={form.grau} onChange={e => setForm(p => ({ ...p, grau: e.target.value }))}
+                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+              >
+                <option value="">Selecione</option>
+                <option value="EF">Ensino Fundamental (EF)</option>
+                <option value="EM">Ensino Médio (EM)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Série</label>
+              <input type="number" min={1} max={9} placeholder="Ex: 9" value={form.serie}
+                onChange={e => setForm(p => ({ ...p, serie: e.target.value }))}
+                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Turma (letra)</label>
+              <input type="text" maxLength={1} placeholder="Ex: A" value={form.turma_letra}
+                onChange={e => setForm(p => ({ ...p, turma_letra: e.target.value.toUpperCase() }))}
+                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1.5">Aulas previstas no ano</label>
+              <input type="number" min={1} placeholder="Ex: 200" value={form.aulas_previstas}
+                onChange={e => setForm(p => ({ ...p, aulas_previstas: e.target.value }))}
+                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+              />
             </div>
             <div>
               <label className="block text-xs text-gray-400 mb-1.5">Ano Letivo</label>
@@ -109,8 +149,8 @@ export default function TurmasPage() {
         <table className="w-full text-sm min-w-[480px]">
           <thead>
             <tr className="border-b border-[#30363d]">
-              {['Nome', 'Turno', 'Ano Letivo', 'Status', 'Ações'].map(h => (
-                <th key={h} className={`p-4 text-gray-400 font-medium text-left ${['Status','Ações'].includes(h) ? 'text-center' : ''}`}>{h}</th>
+              {['Nome', 'Grau / Série', 'Turno', 'Aulas prev.', 'Status', 'Ações'].map(h => (
+                <th key={h} className={`p-4 text-gray-400 font-medium text-left ${['Status','Ações','Aulas prev.'].includes(h) ? 'text-center' : ''} ${['Grau / Série','Aulas prev.'].includes(h) ? 'hidden md:table-cell' : ''}`}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -120,13 +160,17 @@ export default function TurmasPage() {
             : turmas.map(t => (
               <tr key={t.id} className="border-b border-[#30363d]/50 hover:bg-[#21262d] transition-colors">
                 <td className="p-4 text-white font-medium">{t.nome}</td>
+                <td className="p-4 hidden md:table-cell text-gray-300 text-xs">
+                  {t.grau && <span className="mr-1 px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300">{t.grau}</span>}
+                  {t.serie && `${t.serie}º`}{t.turma_letra && ` ${t.turma_letra}`}
+                </td>
                 <td className="p-4">
                   <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
                     t.turno === 'matutino' ? 'bg-yellow-500/15 text-yellow-400' :
                     t.turno === 'vespertino' ? 'bg-orange-500/15 text-orange-400' : 'bg-purple-500/15 text-purple-400'
                   }`}>{t.turno}</span>
                 </td>
-                <td className="p-4 text-gray-300" style={{ fontFamily: 'DM Mono, monospace' }}>{t.ano_letivo}</td>
+                <td className="p-4 text-center text-gray-400 text-xs hidden md:table-cell">{t.aulas_previstas || '—'}</td>
                 <td className="p-4 text-center">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${t.ativo ? 'bg-[#39d353]/15 text-[#39d353]' : 'bg-red-500/15 text-red-400'}`}>
                     {t.ativo ? 'Ativa' : 'Inativa'}

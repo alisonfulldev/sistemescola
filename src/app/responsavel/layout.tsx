@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
+import LogoutButton from './LogoutButton'
 
 export default async function ResponsavelLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -21,13 +22,6 @@ export default async function ResponsavelLayout({ children }: { children: React.
 
   if (usuario?.perfil !== 'responsavel') redirect('/login')
 
-  async function logout() {
-    'use server'
-    const sb = createClient()
-    await sb.auth.signOut()
-    redirect('/login')
-  }
-
   return (
     <div className="min-h-screen bg-[#0d1117]" style={{ fontFamily: 'Sora, sans-serif' }}>
       <header className="bg-[#161b22] border-b border-[#30363d] sticky top-0 z-10">
@@ -38,11 +32,7 @@ export default async function ResponsavelLayout({ children }: { children: React.
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-500 hidden sm:block">{usuario?.nome}</span>
-            <form action={logout}>
-              <button type="submit" className="text-xs text-gray-500 hover:text-[#f85149] transition-colors px-2 py-1 rounded">
-                Sair
-              </button>
-            </form>
+            <LogoutButton email={user.email} />
           </div>
         </div>
       </header>

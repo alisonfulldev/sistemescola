@@ -7,9 +7,17 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { registro_id, motivo } = await req.json()
-  if (!registro_id || !motivo?.trim()) {
+  const body = await req.json()
+  const { registro_id } = body
+  const motivo = typeof body.motivo === 'string' ? body.motivo.trim().slice(0, 1000) : ''
+
+  if (!registro_id || !motivo) {
     return NextResponse.json({ error: 'registro_id e motivo obrigatórios' }, { status: 400 })
+  }
+
+  const { isValidUUID } = await import('@/lib/validate')
+  if (!isValidUUID(registro_id)) {
+    return NextResponse.json({ error: 'registro_id inválido' }, { status: 400 })
   }
 
   const admin = createAdmin(

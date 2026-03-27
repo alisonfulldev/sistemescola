@@ -29,7 +29,8 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
       ),
       registros_chamada (
         id, status, observacao,
-        alunos (id, nome_completo, foto_url)
+        alunos (id, nome_completo, foto_url),
+        justificativas_falta (motivo, responsavel_id, usuarios!responsavel_id(nome), criada_em)
       )
     `)
     .eq('id', params.chamadaId)
@@ -135,16 +136,28 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
             Justificadas ({justificadas.length})
           </h3>
           <div className="space-y-2">
-            {justificadas.map((r: any) => (
-              <div key={r.id} className="bg-[#161b22] border border-[#e3b341]/30 rounded-xl p-3 flex items-center gap-3">
-                <Avatar r={r} cor="bg-[#e3b341]/20 text-[#e3b341]" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-200 truncate">{r.alunos?.nome_completo}</p>
-                  {r.observacao && <p className="text-xs text-gray-500 mt-0.5 italic">"{r.observacao}"</p>}
+            {justificadas.map((r: any) => {
+              const just = r.justificativas_falta?.[0]
+              return (
+                <div key={r.id} className="bg-[#161b22] border border-[#e3b341]/30 rounded-xl p-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar r={r} cor="bg-[#e3b341]/20 text-[#e3b341]" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-200 truncate">{r.alunos?.nome_completo}</p>
+                      {just?.usuarios?.nome && (
+                        <p className="text-xs text-gray-500 mt-0.5">por {just.usuarios.nome}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-[#e3b341] font-bold flex-shrink-0">J</span>
+                  </div>
+                  {just?.motivo && (
+                    <div className="mt-2 bg-[#0d1117] rounded-lg px-3 py-2">
+                      <p className="text-xs text-gray-300 italic">"{just.motivo}"</p>
+                    </div>
+                  )}
                 </div>
-                <span className="text-xs text-[#e3b341] font-bold flex-shrink-0">J</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

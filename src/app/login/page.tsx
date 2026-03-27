@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -11,6 +11,11 @@ export default function LoginPage() {
   const [erro, setErro] = useState('')
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('responsavel_email')
+    if (savedEmail) setEmail(savedEmail)
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -29,11 +34,16 @@ export default function LoginPage() {
     const res = await fetch('/api/auth/perfil')
     const { perfil } = res.ok ? await res.json() : {}
 
+    if (perfil === 'responsavel') {
+      localStorage.setItem('responsavel_email', email)
+    }
+
     const rotas: Record<string, string> = {
       professor: '/professor',
       secretaria: '/adm',
       admin: '/admin',
       responsavel: '/responsavel',
+      cozinha: '/cozinha',
     }
     router.push(rotas[perfil || ''] || '/professor')
     router.refresh()

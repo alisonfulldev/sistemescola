@@ -3,13 +3,22 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+const POR_PAGINA = 20
+
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [escola, setEscola] = useState<any>(null)
   const [form, setForm] = useState({ nome: '', email: '', senha: '', perfil: 'professor' })
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
+  const [pagina, setPagina] = useState(1)
+
+  // Edição
+  const [busca, setBusca] = useState('')
+  const [filtroPerfil, setFiltroPerfil] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('')
 
   // Edição
   const [editando, setEditando] = useState<string | null>(null)
@@ -27,8 +36,12 @@ export default function UsuariosPage() {
   const supabase = createClient()
 
   async function carregar() {
-    const { data } = await supabase.from('usuarios').select('*').order('nome')
-    setUsuarios(data || [])
+    const [{ data: u }, { data: e }] = await Promise.all([
+      supabase.from('usuarios').select('*').order('nome'),
+      supabase.from('escola').select('codigo, nome_oficial').limit(1).single(),
+    ])
+    setUsuarios(u || [])
+    if (e) setEscola(e)
     setLoading(false)
   }
 
@@ -115,11 +128,27 @@ export default function UsuariosPage() {
     carregar()
   }
 
+  const usuariosFiltrados = usuarios.filter(u => {
+    const termo = busca.toLowerCase()
+    const matchBusca = !termo || u.nome.toLowerCase().includes(termo) || u.email.toLowerCase().includes(termo)
+    const matchPerfil = !filtroPerfil || u.perfil === filtroPerfil
+    const matchStatus = !filtroStatus || (filtroStatus === 'ativo' ? u.ativo : !u.ativo)
+    return matchBusca && matchPerfil && matchStatus
+  })
+
+  const totalPaginas = Math.max(1, Math.ceil(usuariosFiltrados.length / POR_PAGINA))
+  const paginaAtual = Math.min(pagina, totalPaginas)
+  const usuariosPaginados = usuariosFiltrados.slice((paginaAtual - 1) * POR_PAGINA, paginaAtual * POR_PAGINA)
+
+  function handleFiltro(fn: () => void) { fn(); setPagina(1) }
+
   const perfilBadge = (p: string) => ({
-    admin: 'bg-purple-500/20 text-purple-300',
+    admin:      'bg-purple-500/20 text-purple-300',
+    diretor:    'bg-indigo-500/20 text-indigo-300',
     secretaria: 'bg-blue-500/20 text-blue-300',
-    professor: 'bg-gray-500/20 text-gray-300',
-    responsavel: 'bg-green-500/20 text-green-300',
+    professor:  'bg-gray-500/20 text-gray-300',
+    responsavel:'bg-green-500/20 text-green-300',
+    cozinha:    'bg-orange-500/20 text-orange-300',
   }[p] || 'bg-gray-500/20 text-gray-400')
 
   return (
@@ -127,7 +156,8 @@ export default function UsuariosPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-white">Usuários</h1>
-          <p className="text-gray-400 text-sm">{usuarios.length} usuário(s)</p>
+          <p className="text-gray-400 text-sm">{usuariosFiltrados.length} de {usuarios.length} usuário(s)</p>
+
         </div>
         <button
           onClick={() => { setShowForm(true); setErro('') }}
@@ -135,6 +165,50 @@ export default function UsuariosPage() {
         >
           + Novo Usuário
         </button>
+      </div>
+
+      {/* Busca e filtros */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-5">
+        <div className="relative flex-1">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+          <input
+            type="text"
+            value={busca}
+            onChange={e => handleFiltro(() => setBusca(e.target.value))}
+            placeholder="Buscar por nome ou email..."
+            className="w-full bg-[#161b22] border border-[#30363d] text-gray-200 text-sm rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-purple-500"
+          />
+        </div>
+        <select
+          value={filtroPerfil}
+          onChange={e => handleFiltro(() => setFiltroPerfil(e.target.value))}
+          className="bg-[#161b22] border border-[#30363d] text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+        >
+          <option value="">Todos os perfis</option>
+          <option value="professor">Professor</option>
+          <option value="secretaria">Secretaria</option>
+          <option value="diretor">Diretor</option>
+          <option value="responsavel">Responsável</option>
+          <option value="cozinha">Cozinha</option>
+          <option value="admin">Administrador</option>
+        </select>
+        <select
+          value={filtroStatus}
+          onChange={e => handleFiltro(() => setFiltroStatus(e.target.value))}
+          className="bg-[#161b22] border border-[#30363d] text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+        >
+          <option value="">Todos os status</option>
+          <option value="ativo">Ativos</option>
+          <option value="inativo">Inativos</option>
+        </select>
+        {(busca || filtroPerfil || filtroStatus) && (
+          <button
+            onClick={() => { setBusca(''); setFiltroPerfil(''); setFiltroStatus(''); setPagina(1) }}
+            className="px-3 py-2 bg-[#30363d] text-gray-400 text-xs rounded-lg hover:bg-[#21262d] transition-colors whitespace-nowrap"
+          >
+            Limpar
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -159,14 +233,27 @@ export default function UsuariosPage() {
             </div>
             <div>
               <label className="block text-xs text-gray-400 mb-1.5">Perfil *</label>
-              <select value={form.perfil} onChange={e => setForm(p => ({ ...p, perfil: e.target.value }))}
+              <select value={form.perfil} onChange={e => {
+                const perfil = e.target.value
+                const novoForm: typeof form = { ...form, perfil }
+                if (perfil === 'diretor' && escola?.codigo) {
+                  novoForm.email = `${escola.codigo}@narandiba.sp.gov.br`
+                  novoForm.nome = novoForm.nome || escola.nome_oficial || ''
+                }
+                setForm(novoForm)
+              }}
                 className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
               >
                 <option value="professor">Professor</option>
                 <option value="secretaria">Secretaria</option>
+                <option value="diretor">Diretor</option>
                 <option value="responsavel">Responsável</option>
+                <option value="cozinha">Cozinha</option>
                 <option value="admin">Administrador</option>
               </select>
+              {form.perfil === 'diretor' && escola?.codigo && (
+                <p className="text-xs text-blue-400 mt-1">🏫 Login gerado pelo INEP: <span className="font-mono">{escola.codigo}</span></p>
+              )}
             </div>
           </div>
           <div className="flex gap-3">
@@ -193,7 +280,9 @@ export default function UsuariosPage() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={5} className="text-center py-8 text-gray-500">Carregando...</td></tr>
-              ) : usuarios.map(u => (
+              ) : usuariosFiltrados.length === 0 ? (
+                <tr><td colSpan={5} className="text-center py-8 text-gray-500 text-sm">Nenhum usuário encontrado.</td></tr>
+              ) : usuariosPaginados.map(u => (
                 <>
                   <tr key={u.id} className="border-b border-[#30363d]/50 hover:bg-[#21262d] transition-colors">
                     <td className="p-4 text-white">{u.nome}</td>
@@ -222,7 +311,9 @@ export default function UsuariosPage() {
                         </button>
                         <button
                           onClick={() => toggleAtivo(u)}
-                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.ativo ? 'text-red-400 border-red-400/30 hover:bg-red-400/10' : 'text-[#39d353] border-[#39d353]/30 hover:bg-[#39d353]/10'}`}
+                          disabled={u.perfil === 'admin'}
+                          title={u.perfil === 'admin' ? 'Usuários admin não podem ser desativados' : undefined}
+                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.perfil === 'admin' ? 'opacity-30 cursor-not-allowed text-gray-500 border-gray-500/20' : u.ativo ? 'text-red-400 border-red-400/30 hover:bg-red-400/10' : 'text-[#39d353] border-[#39d353]/30 hover:bg-[#39d353]/10'}`}
                         >
                           {u.ativo ? 'Desativar' : 'Ativar'}
                         </button>
@@ -263,6 +354,7 @@ export default function UsuariosPage() {
                               <option value="professor">Professor</option>
                               <option value="secretaria">Secretaria</option>
                               <option value="responsavel">Responsável</option>
+                              <option value="cozinha">Cozinha</option>
                               <option value="admin">Administrador</option>
                             </select>
                           </div>
@@ -325,6 +417,28 @@ export default function UsuariosPage() {
             </tbody>
           </table>
         </div>
+        {totalPaginas > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#30363d]">
+            <span className="text-xs text-gray-500">
+              {(paginaAtual - 1) * POR_PAGINA + 1}–{Math.min(paginaAtual * POR_PAGINA, usuariosFiltrados.length)} de {usuariosFiltrados.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setPagina(1)} disabled={paginaAtual === 1} className="px-2 py-1 text-xs rounded text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">«</button>
+              <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaAtual === 1} className="px-2 py-1 text-xs rounded text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">‹</button>
+              {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
+                const start = Math.max(1, Math.min(paginaAtual - 2, totalPaginas - 4))
+                const p = start + i
+                return (
+                  <button key={p} onClick={() => setPagina(p)}
+                    className={`w-7 h-7 text-xs rounded transition-colors ${p === paginaAtual ? 'bg-purple-600 text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-[#21262d]'}`}
+                  >{p}</button>
+                )
+              })}
+              <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={paginaAtual === totalPaginas} className="px-2 py-1 text-xs rounded text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">›</button>
+              <button onClick={() => setPagina(totalPaginas)} disabled={paginaAtual === totalPaginas} className="px-2 py-1 text-xs rounded text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">»</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

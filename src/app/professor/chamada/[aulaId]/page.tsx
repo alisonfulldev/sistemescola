@@ -12,12 +12,21 @@ interface AlunoRow {
   foto_url?: string
   status: StatusPresenca | null
   observacao: string
+  motivo_alteracao?: string
+  horario_evento?: string
   entrada?: { hora: string } | null
+}
+
+interface ModalAlteracao {
+  alunoId: string
+  alunoNome: string
+  statusAtual: StatusPresenca | null
+  novoStatus: StatusPresenca
 }
 
 // Rota: /professor/chamada/[aulaId] onde aulaId é na verdade o chamadaId
 export default function ChamadaPage({ params }: { params: { aulaId: string } }) {
-  const chamadaId = params.aulaId // renomeado na rota futuramente; por ora reutiliza o param
+  const chamadaId = params.aulaId
 
   const [alunos, setAlunos] = useState<AlunoRow[]>([])
   const [aula, setAula] = useState<any>(null)
@@ -29,6 +38,16 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
   const [confirmando, setConfirmando] = useState(false)
   const [erro, setErro] = useState('')
   const [expandObs, setExpandObs] = useState<string | null>(null)
+  const [conteudo, setConteudo] = useState('')
+  const [atividades, setAtividades] = useState('')
+  const [salvandoConteudo, setSalvandoConteudo] = useState(false)
+
+  // Modal de alteração (edição de chamada concluída)
+  const [modalAlteracao, setModalAlteracao] = useState<ModalAlteracao | null>(null)
+  const [motivoAlteracao, setMotivoAlteracao] = useState('')
+  const [horarioEvento, setHorarioEvento] = useState('')
+  const [salvandoAlteracao, setSalvandoAlteracao] = useState(false)
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -46,6 +65,8 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
     setAula(chamada.aulas)
     setTurmaId(chamada.aulas?.turma_id)
     setJaConcluida(chamada.status === 'concluida')
+    setConteudo(chamada.aulas?.conteudo_programatico || '')
+    setAtividades(chamada.aulas?.atividades_desenvolvidas || '')
 
     const registroMap = new Map(registros.map((r: any) => [r.aluno_id, r]))
     const entradaMap = new Map(entradas.map((e: any) => [e.aluno_id, e]))
@@ -56,11 +77,13 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
         ...a,
         status: reg?.status || null,
         observacao: reg?.observacao || '',
+        motivo_alteracao: reg?.motivo_alteracao || '',
+        horario_evento: reg?.horario_evento || '',
         entrada: entradaMap.get(a.id) || null,
       }
     }))
     setLoading(false)
-  }, [chamadaId, router])
+  }, [chamadaId])
 
   useEffect(() => { load() }, [load])
 
@@ -84,11 +107,30 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
     return () => { supabase.removeChannel(channel) }
   }, [turmaId, supabase])
 
-  async function marcar(alunoId: string, status: StatusPresenca) {
-    setAlunos(prev => prev.map(a => a.id === alunoId ? { ...a, status } : a))
-    setSalvando(true)
+  // Ao clicar num status: se chamada concluída, abre modal de motivo; senão, marca direto
+  function handleClickStatus(aluno: AlunoRow, novoStatus: StatusPresenca) {
+    if (aluno.status === novoStatus) return // Sem mudança
+    if (jaConcluida) {
+      const agora = new Date()
+      const hh = String(agora.getHours()).padStart(2, '0')
+      const mm = String(agora.getMinutes()).padStart(2, '0')
+      setHorarioEvento(`${hh}:${mm}`)
+      setMotivoAlteracao('')
+      setModalAlteracao({ alunoId: aluno.id, alunoNome: aluno.nome_completo, statusAtual: aluno.status, novoStatus })
+    } else {
+      marcar(aluno.id, novoStatus)
+    }
+  }
+
+  async function marcar(alunoId: string, status: StatusPresenca, motivo?: string, horario?: string) {
     const aluno = alunos.find(a => a.id === alunoId)
-    await fetch('/api/professor/marcar-presenca', {
+    setAlunos(prev => prev.map(a => a.id === alunoId ? {
+      ...a, status,
+      motivo_alteracao: motivo ?? a.motivo_alteracao,
+      horario_evento: horario ?? a.horario_evento,
+    } : a))
+    setSalvando(true)
+    const res = await fetch('/api/professor/marcar-presenca', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -96,9 +138,55 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
         aluno_id: alunoId,
         status,
         observacao: aluno?.observacao || null,
+        motivo_alteracao: motivo || null,
+        horario_evento: horario || null,
+        status_anterior: aluno?.status || null,
+        chamada_concluida: jaConcluida,
       }),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      setErro(`Erro ao salvar: ${err.error || res.status}`)
+    }
     setSalvando(false)
+  }
+
+  async function confirmarAlteracao() {
+    if (!modalAlteracao || !motivoAlteracao.trim()) return
+    setSalvandoAlteracao(true)
+    setErro('')
+    const aluno = alunos.find(a => a.id === modalAlteracao.alunoId)
+    const statusAnterior = aluno?.status || null
+    setAlunos(prev => prev.map(a => a.id === modalAlteracao.alunoId ? {
+      ...a,
+      status: modalAlteracao.novoStatus,
+      motivo_alteracao: motivoAlteracao.trim(),
+      horario_evento: horarioEvento,
+    } : a))
+    const res = await fetch('/api/professor/marcar-presenca', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chamada_id: chamadaId,
+        aluno_id: modalAlteracao.alunoId,
+        status: modalAlteracao.novoStatus,
+        observacao: aluno?.observacao || null,
+        motivo_alteracao: motivoAlteracao.trim(),
+        horario_evento: horarioEvento || null,
+        status_anterior: statusAnterior,
+        chamada_concluida: true,
+      }),
+    })
+    setSalvandoAlteracao(false)
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      setErro(`Erro ao salvar: ${err.error || res.status}`)
+      // Reverte a alteração visual
+      setAlunos(prev => prev.map(a => a.id === modalAlteracao.alunoId ? { ...a, status: statusAnterior } : a))
+      return
+    }
+    setModalAlteracao(null)
+    router.push(`/professor/resumo/${chamadaId}`)
   }
 
   async function salvarObs(alunoId: string, obs: string) {
@@ -115,6 +203,16 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
         observacao: obs,
       }),
     })
+  }
+
+  async function salvarConteudo() {
+    if (!aula?.id) return
+    setSalvandoConteudo(true)
+    await supabase.from('aulas').update({
+      conteudo_programatico: conteudo || null,
+      atividades_desenvolvidas: atividades || null,
+    }).eq('id', aula.id)
+    setSalvandoConteudo(false)
   }
 
   async function confirmar() {
@@ -137,6 +235,12 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
   const presentes = alunos.filter(a => a.status === 'presente').length
   const faltas = alunos.filter(a => a.status === 'falta').length
   const justificadas = alunos.filter(a => a.status === 'justificada').length
+
+  const labelStatus = (s: StatusPresenca) =>
+    s === 'presente' ? '✅ Presente' : s === 'falta' ? '❌ Falta' : '📝 Justif.'
+
+  const corStatus = (s: StatusPresenca) =>
+    s === 'presente' ? 'text-[#39d353]' : s === 'falta' ? 'text-[#f85149]' : 'text-[#e3b341]'
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -163,10 +267,42 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
             <h1 className="font-bold text-white">{aula?.turmas?.nome}</h1>
             <p className="text-gray-400 text-sm">{aula?.disciplinas?.nome}</p>
           </div>
-          <span className="text-xs text-gray-600" style={{ fontFamily: 'DM Mono, monospace' }}>
-            {aula?.horario_inicio?.slice(0, 5)} – {aula?.horario_fim?.slice(0, 5)}
-          </span>
+          <div className="text-right">
+            <span className="text-xs text-gray-600" style={{ fontFamily: 'DM Mono, monospace' }}>
+              {aula?.horario_inicio?.slice(0, 5)} – {aula?.horario_fim?.slice(0, 5)}
+            </span>
+            {jaConcluida && (
+              <p className="text-xs text-[#e3b341] mt-0.5">✏ Modo edição</p>
+            )}
+          </div>
         </div>
+      </div>
+
+      {/* Conteúdo programático + Atividades */}
+      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-4 mb-4 space-y-3">
+        <div>
+          <label className="block text-xs text-gray-400 mb-2 font-medium">📋 Conteúdo programático</label>
+          <textarea
+            value={conteudo}
+            onChange={e => setConteudo(e.target.value)}
+            onBlur={salvarConteudo}
+            placeholder="Ex: Números naturais — revisão e ordenação"
+            rows={2}
+            className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#39d353] resize-none placeholder-gray-600"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-2 font-medium">✏️ Atividades desenvolvidas</label>
+          <textarea
+            value={atividades}
+            onChange={e => setAtividades(e.target.value)}
+            onBlur={salvarConteudo}
+            placeholder="Ex: Exercícios em sala e resolução de problemas"
+            rows={2}
+            className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#39d353] resize-none placeholder-gray-600"
+          />
+        </div>
+        {salvandoConteudo && <p className="text-xs text-gray-600 italic">Salvando...</p>}
       </div>
 
       {/* Progresso */}
@@ -233,7 +369,7 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
                 {(['presente', 'falta', 'justificada'] as StatusPresenca[]).map(s => (
                   <button
                     key={s}
-                    onClick={() => marcar(aluno.id, s)}
+                    onClick={() => handleClickStatus(aluno, s)}
                     className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       aluno.status === s
                         ? s === 'presente' ? 'bg-[#39d353] text-black'
@@ -246,6 +382,17 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
                   </button>
                 ))}
               </div>
+
+              {/* Motivo de alteração (edição pós-conclusão) */}
+              {jaConcluida && aluno.motivo_alteracao && (
+                <div className="mt-2 px-3 py-2 bg-[#e3b341]/10 border border-[#e3b341]/20 rounded-xl">
+                  <p className="text-xs text-[#e3b341] font-medium">Alteração registrada</p>
+                  <p className="text-xs text-gray-400 mt-0.5">"{aluno.motivo_alteracao}"</p>
+                  {aluno.horario_evento && (
+                    <p className="text-xs text-gray-600 mt-0.5">🕐 {aluno.horario_evento.slice(0, 5)}</p>
+                  )}
+                </div>
+              )}
 
               {/* Observação */}
               {(aluno.status === 'falta' || aluno.status === 'justificada') && (
@@ -296,6 +443,65 @@ export default function ChamadaPage({ params }: { params: { aulaId: string } }) 
             : `Marque todos os alunos (${total - marcados} restantes)`}
         </button>
       </div>
+
+      {/* Modal de motivo de alteração */}
+      {modalAlteracao && (
+        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-5 w-full max-w-sm">
+            <h3 className="font-bold text-white mb-1">Alterar presença</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              <span className="font-medium text-gray-200">{modalAlteracao.alunoNome}</span>
+              {modalAlteracao.statusAtual && (
+                <> · <span className={corStatus(modalAlteracao.statusAtual)}>{labelStatus(modalAlteracao.statusAtual)}</span></>
+              )}
+              {' → '}
+              <span className={corStatus(modalAlteracao.novoStatus)}>{labelStatus(modalAlteracao.novoStatus)}</span>
+            </p>
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Motivo da alteração *</label>
+                <input
+                  type="text"
+                  value={motivoAlteracao}
+                  onChange={e => setMotivoAlteracao(e.target.value)}
+                  placeholder={
+                    modalAlteracao.novoStatus === 'falta'
+                      ? 'Ex: Aluno precisou ir embora às 10h'
+                      : 'Ex: Aluno chegou atrasado'
+                  }
+                  className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#e3b341]"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Horário do evento</label>
+                <input
+                  type="time"
+                  value={horarioEvento}
+                  onChange={e => setHorarioEvento(e.target.value)}
+                  className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#e3b341]"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => setModalAlteracao(null)}
+                className="flex-1 py-2.5 bg-[#0d1117] border border-[#30363d] text-gray-400 rounded-xl text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarAlteracao}
+                disabled={!motivoAlteracao.trim() || salvandoAlteracao}
+                className="flex-1 py-2.5 bg-[#e3b341] text-black font-bold rounded-xl text-sm disabled:opacity-50"
+              >
+                {salvandoAlteracao ? 'Salvando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal confirmação */}
       {showConfirm && (

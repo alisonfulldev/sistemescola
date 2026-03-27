@@ -38,7 +38,7 @@ export async function GET() {
     .from('registros_chamada')
     .select('id, aluno_id, chamada_id, chamadas(aulas(data, turmas(nome)))')
     .in('chamada_id', chamadaIds)
-    .eq('status', 'falta')
+    .in('status', ['falta', 'justificada'])
 
   if (!registros?.length) return NextResponse.json({ justificativas: [] })
 
@@ -55,7 +55,7 @@ export async function GET() {
 
   // Enriquece com dados do aluno e da chamada
   const registroMap = new Map(registros.map((r: any) => [r.id, r]))
-  const alunoIds = [...new Set(registros.map((r: any) => r.aluno_id))]
+  const alunoIds = Array.from(new Set(registros.map((r: any) => r.aluno_id)))
   const { data: alunos } = await admin.from('alunos').select('id, nome_completo').in('id', alunoIds)
   const alunoMap = new Map((alunos || []).map((a: any) => [a.id, a]))
 

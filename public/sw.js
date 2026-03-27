@@ -1,3 +1,8 @@
+// Obrigatório para o Chrome permitir instalação como PWA
+self.addEventListener('fetch', function (event) {
+  event.respondWith(fetch(event.request))
+})
+
 self.addEventListener('push', function (event) {
   if (!event.data) return
   const data = event.data.json()

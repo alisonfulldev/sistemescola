@@ -7,16 +7,23 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  // Verifica se é admin
+  // Verifica se é admin ou secretaria
   const { data: usuario } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (!['admin', 'secretaria'].includes(usuario?.perfil)) {
+  const isAdmin = usuario?.perfil === 'admin'
+  const isSecretaria = usuario?.perfil === 'secretaria'
+  if (!isAdmin && !isSecretaria) {
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
   const { user_id, nome, email, perfil, senha } = await req.json()
   if (!user_id) return NextResponse.json({ error: 'user_id obrigatório' }, { status: 400 })
 
-  const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin']
+  // Secretaria não pode alterar perfis — apenas admin pode
+  if (perfil && !isAdmin) {
+    return NextResponse.json({ error: 'Apenas administradores podem alterar perfis' }, { status: 403 })
+  }
+
+  const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin', 'cozinha', 'diretor']
   if (perfil && !perfisValidos.includes(perfil)) {
     return NextResponse.json({ error: 'Perfil inválido' }, { status: 400 })
   }

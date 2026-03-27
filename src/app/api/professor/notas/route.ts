@@ -62,8 +62,8 @@ async function notificarNotas(admin: any, prova_id: string, prova: any) {
   const webpush = await import('web-push')
   webpush.default.setVapidDetails(
     process.env.VAPID_SUBJECT!,
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
+    (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim().replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
+    (process.env.VAPID_PRIVATE_KEY || '').trim()
   )
 
   const turmaNome = (prova as any).turmas?.nome || ''

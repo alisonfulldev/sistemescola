@@ -6,11 +6,13 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 const nav = [
-  { href: '/adm', label: 'Visão Geral', icon: '⊞', exact: true },
+  { href: '/adm', label: 'Acesso Rápido', icon: '⊞', exact: true },
   { href: '/adm/chamadas', label: 'Chamadas', icon: '📋' },
   { href: '/adm/frequencia', label: 'Frequência', icon: '📊' },
+  { href: '/adm/notas', label: 'Notas', icon: '🎓' },
   { href: '/adm/alunos', label: 'Alunos', icon: '👥' },
   { href: '/adm/alertas', label: 'Alertas', icon: '🔔' },
+  { href: '/adm/justificativas', label: 'Justificativas', icon: '📝' },
 ]
 
 export default function AdmLayout({ children }: { children: React.ReactNode }) {

@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { formatDate } from '@/lib/utils'
 
-type Aba = 'geral' | 'nova' | 'justificativas' | 'provas'
+type Aba = 'geral' | 'nova'
 
 export default function ProfessorDashboard() {
   const [turmas, setTurmas] = useState<any[]>([])
@@ -16,52 +16,51 @@ export default function ProfessorDashboard() {
   const [historico, setHistorico] = useState<any[]>([])
   const [visaoGeral, setVisaoGeral] = useState<any>(null)
   const [justificativas, setJustificativas] = useState<any[]>([])
-  const [provas, setProvas] = useState<any[]>([])
   const [carregandoAlunos, setCarregandoAlunos] = useState(false)
   const [iniciando, setIniciando] = useState(false)
   const [loading, setLoading] = useState(true)
   const [aba, setAba] = useState<Aba>('geral')
   const [erro, setErro] = useState('')
 
-  // Provas
-  const [provaAtiva, setProvaAtiva] = useState<any>(null)
-  const [alunosProva, setAlunosProva] = useState<any[]>([])
-  const [notasForm, setNotasForm] = useState<Record<string, string>>({})
-  const [salvandoNotas, setSalvandoNotas] = useState(false)
-  const [showNovaProva, setShowNovaProva] = useState(false)
-  const [novaProvaForm, setNovaProvaForm] = useState({ titulo: '', turma_id: '', data: '', nota_maxima: '10' })
-  const [criandoProva, setCriandoProva] = useState(false)
-
   // Justificativas
-  const [respondendo, setRespondendo] = useState<string | null>(null)
-  const [respostaText, setRespostaText] = useState('')
+  const [showJustificativas, setShowJustificativas] = useState(false)
 
   const supabase = createClient()
   const router = useRouter()
 
   const hoje = new Date().toISOString().split('T')[0]
 
+  async function carregarJustificativas() {
+    const res = await fetch('/api/professor/justificativas')
+    if (res.ok) { const { justificativas: j } = await res.json(); setJustificativas(j || []) }
+  }
+
   useEffect(() => {
     async function carregar() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return router.push('/login')
 
-      const [{ data: turmasData }, histRes, geralRes, justRes, provasRes] = await Promise.all([
+      const [{ data: turmasData }, histRes, geralRes, justRes] = await Promise.all([
         supabase.from('turmas').select('id, nome, turno').eq('ativo', true).order('nome'),
         fetch('/api/professor/historico'),
         fetch('/api/professor/visao-geral'),
         fetch('/api/professor/justificativas'),
-        fetch('/api/professor/provas'),
       ])
 
       setTurmas(turmasData || [])
       if (histRes.ok) { const { chamadas } = await histRes.json(); setHistorico(chamadas || []) }
       if (geralRes.ok) setVisaoGeral(await geralRes.json())
       if (justRes.ok) { const { justificativas: j } = await justRes.json(); setJustificativas(j || []) }
-      if (provasRes.ok) { const { provas: p } = await provasRes.json(); setProvas(p || []) }
       setLoading(false)
     }
     carregar()
+
+    // Atualiza justificativas a cada 20s e via realtime
+    const interval = setInterval(carregarJustificativas, 20000)
+    const ch = supabase.channel('just-prof')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'justificativas_falta' }, carregarJustificativas)
+      .subscribe()
+    return () => { clearInterval(interval); supabase.removeChannel(ch) }
   }, [])
 
   async function selecionarTurma(turmaId: string) {
@@ -86,67 +85,6 @@ export default function ProfessorDashboard() {
     } catch { setErro('Erro de conexão'); setIniciando(false) }
   }
 
-  async function responderJustificativa(id: string, status: 'aprovada' | 'rejeitada') {
-    await fetch('/api/professor/justificativas/responder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ justificativa_id: id, status, professor_resposta: respostaText }),
-    })
-    setRespondendo(null)
-    setRespostaText('')
-    const res = await fetch('/api/professor/justificativas')
-    if (res.ok) { const { justificativas: j } = await res.json(); setJustificativas(j || []) }
-  }
-
-  async function abrirProva(prova: any) {
-    setProvaAtiva(prova)
-    setNotasForm({})
-    const { data } = await supabase.from('alunos').select('id, nome_completo').eq('turma_id', prova.turma_id).eq('ativo', true).order('nome_completo')
-    const alns = data || []
-    setAlunosProva(alns)
-    // Carrega notas existentes
-    const res = await fetch(`/api/professor/provas?prova_id=${prova.id}`)
-    if (res.ok) {
-      const { notas } = await res.json()
-      const m: Record<string, string> = {}
-      for (const n of notas || []) m[n.aluno_id] = n.nota !== null ? String(n.nota) : ''
-      setNotasForm(m)
-    }
-  }
-
-  async function salvarNotas(publicar: boolean) {
-    if (!provaAtiva) return
-    setSalvandoNotas(true)
-    const notas = alunosProva.map(a => ({ aluno_id: a.id, nota: notasForm[a.id] ?? null }))
-    const res = await fetch('/api/professor/notas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prova_id: provaAtiva.id, notas, publicar }),
-    })
-    if (res.ok) {
-      const provasRes = await fetch('/api/professor/provas')
-      if (provasRes.ok) { const { provas: p } = await provasRes.json(); setProvas(p || []) }
-      if (publicar) setProvaAtiva(null)
-    }
-    setSalvandoNotas(false)
-  }
-
-  async function criarProva() {
-    if (!novaProvaForm.titulo.trim() || !novaProvaForm.turma_id || !novaProvaForm.data) return
-    setCriandoProva(true)
-    const res = await fetch('/api/professor/provas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...novaProvaForm, nota_maxima: parseFloat(novaProvaForm.nota_maxima) || 10 }),
-    })
-    if (res.ok) {
-      setShowNovaProva(false)
-      setNovaProvaForm({ titulo: '', turma_id: '', data: '', nota_maxima: '10' })
-      const provasRes = await fetch('/api/professor/provas')
-      if (provasRes.ok) { const { provas: p } = await provasRes.json(); setProvas(p || []) }
-    }
-    setCriandoProva(false)
-  }
 
   const turmaSel = turmas.find(t => t.id === turmaSelecionada)
   const pendentes = justificativas.filter(j => j.status === 'pendente').length
@@ -159,28 +97,31 @@ export default function ProfessorDashboard() {
 
   return (
     <div>
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-white">Chamada Escolar</h1>
-        <p className="text-gray-500 text-sm mt-0.5 capitalize">{formatDate(new Date(), "EEEE, dd 'de' MMMM")}</p>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-white">Chamada Escolar</h1>
+          <p className="text-gray-500 text-sm mt-0.5 capitalize">{formatDate(new Date(), "EEEE, dd 'de' MMMM")}</p>
+        </div>
+        <button onClick={() => setShowJustificativas(true)} className="relative p-2.5 bg-[#161b22] border border-[#30363d] rounded-xl hover:border-[#39d353]/50 transition-colors">
+          <span className="text-xl">🔔</span>
+          {pendentes > 0 && (
+            <span className="absolute -top-1 -right-1 bg-[#f85149] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
+              {pendentes > 9 ? '9+' : pendentes}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Abas */}
-      <div className="grid grid-cols-4 gap-1 bg-[#161b22] border border-[#30363d] rounded-xl p-1 mb-5">
+      <div className="grid grid-cols-2 gap-1 bg-[#161b22] border border-[#30363d] rounded-xl p-1 mb-5">
         {([
           { id: 'geral', label: 'Geral' },
           { id: 'nova', label: 'Chamada' },
-          { id: 'justificativas', label: 'Justif.', badge: pendentes },
-          { id: 'provas', label: 'Provas' },
-        ] as { id: Aba; label: string; badge?: number }[]).map(t => (
+        ] as { id: Aba; label: string }[]).map(t => (
           <button key={t.id} onClick={() => setAba(t.id)}
             className={`relative py-2 text-xs font-medium rounded-lg transition-all ${aba === t.id ? 'bg-[#39d353] text-black' : 'text-gray-400 hover:text-gray-200'}`}
           >
             {t.label}
-            {t.badge ? (
-              <span className="absolute -top-1 -right-1 bg-[#f85149] text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                {t.badge > 9 ? '9+' : t.badge}
-              </span>
-            ) : null}
           </button>
         ))}
       </div>
@@ -343,176 +284,39 @@ export default function ProfessorDashboard() {
         </div>
       )}
 
-      {/* ABA: Justificativas */}
-      {aba === 'justificativas' && (
-        <div>
-          {justificativas.length === 0 ? (
-            <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-8 text-center">
-              <p className="text-gray-500 text-sm">Nenhuma justificativa recebida.</p>
+      {/* Painel de Justificativas (abre ao clicar no sininho) */}
+      {showJustificativas && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex flex-col justify-end sm:items-center sm:justify-center p-4">
+          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl w-full max-w-sm max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#30363d]">
+              <h3 className="font-bold text-white">🔔 Justificativas</h3>
+              <button onClick={() => setShowJustificativas(false)} className="text-gray-500 hover:text-gray-300 text-xl leading-none">×</button>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {justificativas.map(j => (
-                <div key={j.id} className={`bg-[#161b22] border rounded-xl p-4 ${j.status === 'pendente' ? 'border-yellow-500/30' : j.status === 'aprovada' ? 'border-[#39d353]/30' : 'border-[#f85149]/30'}`}>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div>
-                      <p className="text-sm font-semibold text-white">{j.aluno_nome}</p>
-                      <p className="text-xs text-gray-500">{j.turma} · {j.data ? new Date(j.data + 'T12:00:00').toLocaleDateString('pt-BR') : ''}</p>
-                    </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${j.status === 'pendente' ? 'bg-yellow-500/15 text-yellow-400' : j.status === 'aprovada' ? 'bg-[#39d353]/15 text-[#39d353]' : 'bg-[#f85149]/15 text-[#f85149]'}`}>
-                      {j.status}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-300 mb-1">"{j.motivo}"</p>
-                  <p className="text-xs text-gray-600">Responsável: {j.responsavel_nome}</p>
-
-                  {j.professor_resposta && <p className="text-xs text-gray-500 mt-1 italic">Resposta: {j.professor_resposta}</p>}
-
-                  {j.status === 'pendente' && (
-                    <div className="mt-3">
-                      {respondendo === j.id ? (
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={respostaText}
-                            onChange={e => setRespostaText(e.target.value)}
-                            placeholder="Observação (opcional)"
-                            className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-yellow-400"
-                          />
-                          <div className="flex gap-2">
-                            <button onClick={() => responderJustificativa(j.id, 'aprovada')} className="flex-1 py-1.5 bg-[#39d353] text-black text-xs font-bold rounded-lg">Aprovar</button>
-                            <button onClick={() => responderJustificativa(j.id, 'rejeitada')} className="flex-1 py-1.5 bg-[#f85149] text-white text-xs font-bold rounded-lg">Rejeitar</button>
-                            <button onClick={() => setRespondendo(null)} className="px-3 py-1.5 bg-[#30363d] text-gray-300 text-xs rounded-lg">Cancelar</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button onClick={() => { setRespondendo(j.id); setRespostaText('') }} className="text-xs px-3 py-1.5 border border-yellow-400/30 text-yellow-400 rounded-lg hover:bg-yellow-400/10 transition-all">
-                          Responder
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ABA: Provas */}
-      {aba === 'provas' && (
-        <div>
-          {provaAtiva ? (
-            // Lançar notas
-            <div>
-              <button onClick={() => setProvaAtiva(null)} className="text-gray-500 hover:text-gray-300 text-sm mb-4 transition-colors">← Voltar</button>
-              <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-4 mb-4">
-                <h2 className="font-bold text-white">{provaAtiva.titulo}</h2>
-                <p className="text-xs text-gray-500 mt-0.5">{(provaAtiva as any).turmas?.nome} · {provaAtiva.data ? new Date(provaAtiva.data + 'T12:00:00').toLocaleDateString('pt-BR') : ''} · Máx: {provaAtiva.nota_maxima}</p>
-              </div>
-
-              <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden mb-4">
-                {alunosProva.map((aluno, idx) => (
-                  <div key={aluno.id} className={`flex items-center gap-3 px-4 py-3 ${idx < alunosProva.length - 1 ? 'border-b border-[#30363d]/50' : ''}`}>
-                    <p className="flex-1 text-sm text-gray-200 truncate">{aluno.nome_completo}</p>
-                    <input
-                      type="number"
-                      min="0"
-                      max={provaAtiva.nota_maxima}
-                      step="0.1"
-                      value={notasForm[aluno.id] ?? ''}
-                      onChange={e => setNotasForm(p => ({ ...p, [aluno.id]: e.target.value }))}
-                      placeholder="—"
-                      className="w-20 bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-1.5 text-center focus:outline-none focus:border-[#39d353]"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <button onClick={() => salvarNotas(false)} disabled={salvandoNotas}
-                  className="flex-1 py-3 bg-[#161b22] border border-[#30363d] text-gray-300 font-medium rounded-xl text-sm hover:bg-[#21262d] disabled:opacity-50 transition-colors"
-                >
-                  {salvandoNotas ? 'Salvando...' : 'Salvar rascunho'}
-                </button>
-                <button onClick={() => salvarNotas(true)} disabled={salvandoNotas || provaAtiva.publicada}
-                  className="flex-1 py-3 bg-[#39d353] hover:bg-green-400 disabled:opacity-50 text-black font-bold rounded-xl text-sm transition-colors"
-                >
-                  {provaAtiva.publicada ? 'Publicada' : '📤 Publicar'}
-                </button>
-              </div>
-              {provaAtiva.publicada && <p className="text-xs text-[#39d353] text-center mt-2">Notas já publicadas — responsáveis foram notificados.</p>}
-            </div>
-          ) : (
-            // Lista de provas
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-sm font-semibold text-gray-300">{provas.length} prova(s)</h2>
-                <button onClick={() => setShowNovaProva(true)} className="px-3 py-1.5 bg-[#39d353] text-black text-xs font-bold rounded-lg">+ Nova Prova</button>
-              </div>
-
-              {showNovaProva && (
-                <div className="bg-[#161b22] border border-[#39d353]/30 rounded-xl p-4 mb-4">
-                  <h3 className="font-semibold text-white mb-3 text-sm">Nova Prova</h3>
-                  <div className="space-y-3">
-                    <input type="text" placeholder="Título da prova *" value={novaProvaForm.titulo} onChange={e => setNovaProvaForm(p => ({ ...p, titulo: e.target.value }))}
-                      className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#39d353]" />
-                    <select value={novaProvaForm.turma_id} onChange={e => setNovaProvaForm(p => ({ ...p, turma_id: e.target.value }))}
-                      className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#39d353]"
-                    >
-                      <option value="">Selecione a turma *</option>
-                      {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
-                    </select>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">Data *</label>
-                        <input type="date" value={novaProvaForm.data} onChange={e => setNovaProvaForm(p => ({ ...p, data: e.target.value }))}
-                          className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#39d353]" />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1">Nota máxima</label>
-                        <input type="number" value={novaProvaForm.nota_maxima} onChange={e => setNovaProvaForm(p => ({ ...p, nota_maxima: e.target.value }))}
-                          className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#39d353]" />
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={criarProva} disabled={criandoProva || !novaProvaForm.titulo.trim() || !novaProvaForm.turma_id || !novaProvaForm.data}
-                        className="flex-1 py-2 bg-[#39d353] text-black text-sm font-bold rounded-lg disabled:opacity-50"
-                      >{criandoProva ? 'Criando...' : 'Criar'}</button>
-                      <button onClick={() => setShowNovaProva(false)} className="px-3 py-2 bg-[#30363d] text-gray-300 text-sm rounded-lg">Cancelar</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {provas.length === 0 ? (
-                <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-8 text-center">
-                  <p className="text-gray-500 text-sm">Nenhuma prova cadastrada ainda.</p>
-                </div>
+            <div className="overflow-y-auto flex-1 p-4 space-y-3">
+              {justificativas.length === 0 ? (
+                <p className="text-gray-500 text-sm text-center py-6">Nenhuma justificativa recebida.</p>
               ) : (
-                <div className="space-y-2">
-                  {provas.map(p => (
-                    <div key={p.id} className="bg-[#161b22] border border-[#30363d] rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">{p.titulo}</p>
-                        <p className="text-xs text-gray-500">{(p as any).turmas?.nome} · {p.data ? new Date(p.data + 'T12:00:00').toLocaleDateString('pt-BR') : ''}</p>
+                justificativas.map(j => (
+                  <div key={j.id} className="bg-[#0d1117] border border-[#30363d] rounded-xl p-3">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{j.aluno_nome}</p>
+                        <p className="text-xs text-gray-500">{j.turma} · {j.data ? new Date(j.data + 'T12:00:00').toLocaleDateString('pt-BR') : ''}</p>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${p.publicada ? 'bg-[#39d353]/15 text-[#39d353]' : 'bg-gray-500/15 text-gray-400'}`}>
-                          {p.publicada ? 'Publicada' : 'Rascunho'}
-                        </span>
-                        <button onClick={() => abrirProva(p)} className="text-xs px-2 py-1 border border-[#30363d] text-gray-400 rounded-lg hover:bg-[#21262d] transition-all">
-                          {p.publicada ? 'Ver' : 'Lançar Notas'}
-                        </button>
-                      </div>
+                      <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0 bg-[#e3b341]/15 text-[#e3b341]">
+                        {formatDate(j.criada_em, 'dd/MM')}
+                      </span>
                     </div>
-                  ))}
-                </div>
+                    <p className="text-sm text-gray-300 mt-2 italic">"{j.motivo}"</p>
+                    <p className="text-xs text-gray-600 mt-1">por {j.responsavel_nome}</p>
+                  </div>
+                ))
               )}
             </div>
-          )}
+          </div>
         </div>
       )}
+
     </div>
   )
 }

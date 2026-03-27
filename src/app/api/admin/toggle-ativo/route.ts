@@ -21,6 +21,12 @@ export async function POST(req: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
+  // Bloqueia desativação de usuários admin
+  const { data: alvo } = await admin.from('usuarios').select('perfil').eq('id', user_id).single()
+  if (alvo?.perfil === 'admin') {
+    return NextResponse.json({ error: 'Usuários admin não podem ser desativados pelo painel.' }, { status: 403 })
+  }
+
   // Atualiza na tabela pública
   await admin.from('usuarios').update({ ativo }).eq('id', user_id)
 

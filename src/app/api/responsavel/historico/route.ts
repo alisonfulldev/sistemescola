@@ -10,6 +10,11 @@ export async function GET(req: NextRequest) {
   const aluno_id = req.nextUrl.searchParams.get('aluno_id')
   if (!aluno_id) return NextResponse.json({ error: 'aluno_id obrigatório' }, { status: 400 })
 
+  const { isValidUUID } = await import('@/lib/validate')
+  if (!isValidUUID(aluno_id)) {
+    return NextResponse.json({ error: 'aluno_id inválido' }, { status: 400 })
+  }
+
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,

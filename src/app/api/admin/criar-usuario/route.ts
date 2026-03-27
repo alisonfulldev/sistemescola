@@ -22,17 +22,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Acesso negado. Apenas administradores podem criar usuários.' }, { status: 403 })
     }
 
-    const { nome, email, senha, perfil: novoPerfil } = await req.json()
+    const body = await req.json()
+    const nome = typeof body.nome === 'string' ? body.nome.trim().slice(0, 200) : ''
+    const email = typeof body.email === 'string' ? body.email.trim().slice(0, 254).toLowerCase() : ''
+    const senha = typeof body.senha === 'string' ? body.senha : ''
+    const novoPerfil = typeof body.perfil === 'string' ? body.perfil : ''
 
-    if (!nome?.trim() || !email?.trim() || !senha?.trim() || !novoPerfil) {
+    if (!nome || !email || !senha || !novoPerfil) {
       return NextResponse.json({ error: 'Campos obrigatórios: nome, email, senha, perfil' }, { status: 400 })
     }
 
-    if (senha.length < 8) {
-      return NextResponse.json({ error: 'A senha deve ter no mínimo 8 caracteres' }, { status: 400 })
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Email inválido' }, { status: 400 })
     }
 
-    const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin']
+    if (senha.length < 8 || senha.length > 128) {
+      return NextResponse.json({ error: 'A senha deve ter entre 8 e 128 caracteres' }, { status: 400 })
+    }
+
+    const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin', 'cozinha', 'diretor']
     if (!perfisValidos.includes(novoPerfil)) {
       return NextResponse.json({ error: 'Perfil inválido' }, { status: 400 })
     }
@@ -47,7 +55,11 @@ export async function POST(req: NextRequest) {
     const { data, error } = await adminClient.auth.admin.createUser({
       email: email.trim(),
       password: senha,
-      user_metadata: { nome: nome.trim(), perfil: novoPerfil },
+      user_metadata: {
+        nome: nome.trim(),
+        perfil: novoPerfil,
+        ...(novoPerfil === 'diretor' ? { force_password_reset: true } : {})
+      },
       email_confirm: true,
     })
 

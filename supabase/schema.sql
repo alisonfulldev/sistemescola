@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   nome TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
-  perfil TEXT NOT NULL CHECK (perfil IN ('professor', 'secretaria', 'admin', 'responsavel')),
+  perfil TEXT NOT NULL CHECK (perfil IN ('professor', 'secretaria', 'admin', 'responsavel', 'cozinha', 'diretor')),
   ativo BOOLEAN NOT NULL DEFAULT true,
   criado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -339,8 +339,13 @@ BEGIN
       ) THEN
         INSERT INTO public.alertas (tipo, aluno_id, turma_id, descricao)
         VALUES ('falta_excessiva', p_aluno_id, v_turma_id,
-          format('Aluno %s com frequência de %.1f%% no mês (mínimo: 75%%)', v_aluno_nome, v_percentual));
+          'Aluno ' || v_aluno_nome || ' com frequência de ' || ROUND(v_percentual, 1) || '% no mês (mínimo: 75%)');
       END IF;
+    ELSE
+      -- Frequência voltou ao normal: remove alertas pendentes do mês
+      UPDATE public.alertas SET lido = true
+      WHERE aluno_id = p_aluno_id AND tipo = 'falta_excessiva' AND lido = false
+        AND EXTRACT(MONTH FROM criado_em) = EXTRACT(MONTH FROM CURRENT_DATE);
     END IF;
   END IF;
 
@@ -365,8 +370,13 @@ BEGIN
     ) THEN
       INSERT INTO public.alertas (tipo, aluno_id, turma_id, descricao)
       VALUES ('faltas_consecutivas', p_aluno_id, v_turma_id,
-        format('Aluno %s com 3 ou mais faltas consecutivas', v_aluno_nome));
+        'Aluno ' || v_aluno_nome || ' com 3 ou mais faltas consecutivas');
     END IF;
+  ELSE
+    -- Faltas consecutivas resolvidas: remove alerta recente
+    UPDATE public.alertas SET lido = true
+    WHERE aluno_id = p_aluno_id AND tipo = 'faltas_consecutivas' AND lido = false
+      AND criado_em >= NOW() - INTERVAL '7 days';
   END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -375,9 +385,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION public.trigger_verificar_frequencia()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.status IN ('falta', 'justificada') THEN
-    PERFORM public.verificar_frequencia_aluno(NEW.aluno_id);
-  END IF;
+  PERFORM public.verificar_frequencia_aluno(NEW.aluno_id);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

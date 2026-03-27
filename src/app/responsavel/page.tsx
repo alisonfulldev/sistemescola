@@ -6,6 +6,65 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  return Uint8Array.from(Array.from(rawData).map(c => c.charCodeAt(0)))
+}
+
+function BannerInstalarApp() {
+  const [visivel, setVisivel] = useState(false)
+  const [mostrarInstrucoes, setMostrarInstrucoes] = useState(false)
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) return
+    if (localStorage.getItem('pwa-dispensado') === '1') return
+    setVisivel(true)
+    window.addEventListener('appinstalled', () => setVisivel(false))
+  }, [])
+
+  if (!visivel) return null
+
+  async function instalar() {
+    const p = (window as any).__pwaInstallPrompt
+    if (p) {
+      p.prompt()
+      const { outcome } = await p.userChoice
+      if (outcome === 'accepted') { setVisivel(false); return }
+    }
+    setMostrarInstrucoes(true)
+  }
+
+  function dispensar() {
+    localStorage.setItem('pwa-dispensado', '1')
+    setVisivel(false)
+  }
+
+  return (
+    <div className="bg-[#1c2128] border border-[#58a6ff]/30 rounded-xl px-4 py-3 mb-4">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl flex-shrink-0">📲</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-[#58a6ff]">Instalar app</p>
+          <p className="text-xs text-gray-500 mt-0.5">Receba notificações mesmo com o navegador fechado</p>
+        </div>
+        <button onClick={dispensar} className="text-gray-600 hover:text-gray-400 text-xl px-1 flex-shrink-0">×</button>
+        <button onClick={instalar} className="text-xs font-bold text-black bg-[#58a6ff] hover:bg-blue-400 px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors">
+          Instalar
+        </button>
+      </div>
+      {mostrarInstrucoes && (
+        <div className="mt-3 pt-3 border-t border-[#30363d] text-xs text-gray-400 space-y-1">
+          <p className="font-semibold text-gray-300">Para instalar manualmente:</p>
+          <p>• <strong>Android (Chrome):</strong> toque nos 3 pontos (⋮) → <em>"Adicionar à tela inicial"</em></p>
+          <p>• <strong>iPhone (Safari):</strong> toque em compartilhar (⬆) → <em>"Adicionar à Tela de Início"</em></p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function BotaoNotificacao() {
   const [status, setStatus] = useState<'idle' | 'ativando' | 'ativo' | 'negado'>('idle')
 
@@ -23,17 +82,20 @@ function BotaoNotificacao() {
       if (perm !== 'granted') { setStatus('negado'); return }
       const reg = await navigator.serviceWorker.register('/sw.js')
       await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY })
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!) })
       await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) })
       setStatus('ativo')
     } catch { setStatus('idle') }
   }
 
   if (status === 'ativo') return (
-    <div className="flex items-center gap-2 bg-[#39d353]/10 border border-[#39d353]/30 rounded-xl px-4 py-3 mb-4">
-      <span className="text-lg">🔔</span>
-      <p className="text-sm text-[#39d353] font-medium">Notificações ativadas</p>
-    </div>
+    <button onClick={ativar} className="w-full flex items-center justify-between bg-[#39d353]/10 border border-[#39d353]/30 rounded-xl px-4 py-3 mb-4">
+      <div className="flex items-center gap-2">
+        <span className="text-lg">🔔</span>
+        <p className="text-sm text-[#39d353] font-medium">Notificações ativadas</p>
+      </div>
+      <span className="text-xs text-[#39d353]/60">Toque para renovar</span>
+    </button>
   )
   if (status === 'negado') return (
     <div className="flex items-center gap-2 bg-[#f85149]/10 border border-[#f85149]/30 rounded-xl px-4 py-3 mb-4">
@@ -72,6 +134,10 @@ export default function ResponsavelDashboard() {
   }
 
   useEffect(() => {
+    // Registra SW no carregamento para habilitar instalação PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
     carregar()
     const interval = setInterval(carregar, 30000)
     const ch = supabase.channel('responsavel-rt')
@@ -110,6 +176,7 @@ export default function ResponsavelDashboard() {
         <p className="text-gray-500 text-sm mt-1 capitalize">{formatDate(new Date(), "EEEE, dd 'de' MMMM")}</p>
       </div>
 
+      <BannerInstalarApp />
       <BotaoNotificacao />
 
       {alunos.length === 0 ? (
@@ -141,6 +208,11 @@ export default function ResponsavelDashboard() {
                     <div className="flex-1 min-w-0">
                       <h2 className="font-bold text-white text-base truncate">{aluno.nome_completo}</h2>
                       <p className="text-gray-500 text-sm">{aluno.turmas?.nome}</p>
+                      {(aluno.turmas?.serie || aluno.turmas?.turno) && (
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {[aluno.turmas?.serie, aluno.turmas?.turno].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
                       <p className="text-xs text-gray-600 mt-0.5 font-mono">Matrícula: {aluno.matricula}</p>
                     </div>
                   </div>
@@ -234,6 +306,21 @@ export default function ResponsavelDashboard() {
                     )}
                   </div>
 
+                  {aluno.ultima_aula && (aluno.ultima_aula.conteudo_programatico || aluno.ultima_aula.atividades_desenvolvidas) && (
+                    <div className="mt-3 bg-[#0d1117] border border-[#30363d] rounded-xl p-3">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                        📖 Última aula{aluno.ultima_aula.disciplinas?.nome ? ` · ${aluno.ultima_aula.disciplinas.nome}` : ''}
+                        {aluno.ultima_aula.data && <span className="ml-2 font-normal normal-case">{new Date(aluno.ultima_aula.data + 'T12:00:00').toLocaleDateString('pt-BR')}</span>}
+                      </p>
+                      {aluno.ultima_aula.conteudo_programatico && (
+                        <p className="text-xs text-gray-400 leading-relaxed">{aluno.ultima_aula.conteudo_programatico}</p>
+                      )}
+                      {aluno.ultima_aula.atividades_desenvolvidas && (
+                        <p className="text-xs text-gray-500 leading-relaxed mt-1">✏️ {aluno.ultima_aula.atividades_desenvolvidas}</p>
+                      )}
+                    </div>
+                  )}
+
                   <Link href={`/responsavel/${aluno.id}`}
                     className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-[#0d1117] hover:bg-[#30363d] text-gray-400 hover:text-gray-200 rounded-xl text-sm transition-colors border border-[#30363d]"
                   >
@@ -249,32 +336,65 @@ export default function ResponsavelDashboard() {
       {/* Boletim / Notas */}
       {notas.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Boletim — Notas publicadas</h2>
-          <div className="space-y-2">
-            {notas.map((n, i) => {
-              const pct = n.nota !== null && n.nota_maxima ? (n.nota / n.nota_maxima) * 100 : null
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Boletim — {new Date().getFullYear()}</h2>
+          <div className="space-y-3">
+            {/* Group by aluno */}
+            {Array.from(new Set(notas.map((n: any) => n.aluno_id))).map(alunoId => {
+              const notasAluno = notas.filter((n: any) => n.aluno_id === alunoId)
+              const alunoDados = notasAluno[0]
               return (
-                <div key={i} className="bg-[#161b22] border border-[#30363d] rounded-xl px-4 py-3">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{n.titulo}</p>
-                      <p className="text-xs text-gray-500">{n.aluno_nome} · {n.turma} · {n.data ? new Date(n.data + 'T12:00:00').toLocaleDateString('pt-BR') : ''}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      {n.nota !== null ? (
-                        <p className={`text-lg font-bold ${pct !== null && pct >= 60 ? 'text-[#39d353]' : 'text-[#f85149]'}`}>
-                          {n.nota}<span className="text-xs text-gray-500">/{n.nota_maxima}</span>
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-500">—</p>
-                      )}
-                    </div>
+                <div key={alunoId as string} className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-[#30363d] flex items-center justify-between">
+                    <p className="text-sm font-semibold text-white">{alunoDados.aluno_nome}</p>
+                    <p className="text-xs text-gray-500">{alunoDados.ano}</p>
                   </div>
-                  {pct !== null && (
-                    <div className="w-full bg-[#0d1117] rounded-full h-1.5 mt-2">
-                      <div className={`h-1.5 rounded-full ${pct >= 60 ? 'bg-[#39d353]' : 'bg-[#f85149]'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
-                    </div>
-                  )}
+                  <div className="divide-y divide-[#30363d]/50">
+                    {notasAluno.map((n: any, i: number) => {
+                      const medNum = n.media_final
+                      const recFinal = n.recuperacao !== null && medNum !== null && medNum < 5 ? n.recuperacao : null
+                      return (
+                        <div key={i} className="px-4 py-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium text-gray-200">{n.disciplina}</p>
+                            <div className="flex items-center gap-2">
+                              {medNum !== null && (
+                                <span className={`text-xs font-bold font-mono px-2 py-0.5 rounded-full ${
+                                  medNum >= 7 ? 'bg-[#39d353]/15 text-[#39d353]' :
+                                  medNum >= 5 ? 'bg-yellow-500/15 text-yellow-400' :
+                                  'bg-[#f85149]/15 text-[#f85149]'
+                                }`}>
+                                  {medNum.toFixed(1)}
+                                </span>
+                              )}
+                              {n.situacao_final && (
+                                <span className={`text-xs ${n.situacao_final === 'Aprovado' ? 'text-[#39d353]' : 'text-yellow-400'}`}>
+                                  {n.situacao_final}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-3 flex-wrap">
+                            {['b1', 'b2', 'b3', 'b4'].map((bim, idx) => (
+                              <div key={bim} className="text-center">
+                                <p className="text-xs text-gray-600 mb-0.5">{idx + 1}º Bim</p>
+                                <p className={`text-sm font-mono font-semibold ${
+                                  n[bim] === null ? 'text-gray-600' :
+                                  n[bim] >= 7 ? 'text-[#39d353]' :
+                                  n[bim] >= 5 ? 'text-yellow-400' : 'text-[#f85149]'
+                                }`}>{n[bim] !== null ? n[bim].toFixed(1) : '—'}</p>
+                              </div>
+                            ))}
+                            {recFinal !== null && (
+                              <div className="text-center">
+                                <p className="text-xs text-gray-600 mb-0.5">Rec.</p>
+                                <p className="text-sm font-mono font-semibold text-yellow-400">{recFinal.toFixed(1)}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )
             })}

@@ -7,6 +7,11 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
+  const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+  if (!['admin', 'secretaria', 'diretor'].includes(perfil?.perfil)) {
+    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  }
+
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -36,7 +41,7 @@ export async function GET() {
         aulas!inner(id, data, horario_inicio, horario_fim,
           turmas(id, nome, turno), disciplinas(nome), usuarios(nome)
         ),
-        registros_chamada(id, status, alunos(nome_completo, foto_url))
+        registros_chamada(id, status, motivo_alteracao, horario_evento, alunos(nome_completo, foto_url))
       `)
       .eq('aulas.data', hoje)
       .order('iniciada_em', { ascending: false }),
