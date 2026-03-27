@@ -65,7 +65,7 @@ export async function GET() {
   }
 
   // Get turma IDs
-  const turmaIds = [...new Set(alunos.map((a: any) => a.turmas?.id).filter(Boolean))]
+  const turmaIds = Array.from(new Set(alunos.map((a: any) => a.turmas?.id).filter(Boolean)))
 
   // Get last aula content per turma
   const ultimaAulaMap = new Map<string, any>()
