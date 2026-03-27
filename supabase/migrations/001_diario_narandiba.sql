@@ -1,6 +1,6 @@
 -- ============================================================
 -- MIGRAÇÃO: Adequação ao Diário de Narandiba
--- Execute cada bloco separadamente no Supabase SQL Editor
+-- Pode ser executado inteiro de uma só vez — totalmente idempotente
 -- ============================================================
 
 -- ============================================================
@@ -23,9 +23,6 @@ CREATE TABLE IF NOT EXISTS public.escola (
 );
 
 ALTER TABLE public.escola ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "escola_select" ON public.escola FOR SELECT USING (auth.uid() IS NOT NULL);
-CREATE POLICY "escola_insert" ON public.escola FOR INSERT WITH CHECK (public.is_admin());
-CREATE POLICY "escola_update" ON public.escola FOR UPDATE USING (public.is_admin());
 
 -- Adicionar colunas caso a tabela já exista sem elas
 ALTER TABLE public.escola ADD COLUMN IF NOT EXISTS diretor TEXT;
@@ -35,6 +32,13 @@ ALTER TABLE public.escola ADD COLUMN IF NOT EXISTS numero TEXT;
 ALTER TABLE public.escola ADD COLUMN IF NOT EXISTS bairro TEXT;
 ALTER TABLE public.escola ADD COLUMN IF NOT EXISTS telefone TEXT;
 ALTER TABLE public.escola ADD COLUMN IF NOT EXISTS email TEXT;
+
+DROP POLICY IF EXISTS "escola_select" ON public.escola;
+DROP POLICY IF EXISTS "escola_insert" ON public.escola;
+DROP POLICY IF EXISTS "escola_update" ON public.escola;
+CREATE POLICY "escola_select" ON public.escola FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "escola_insert" ON public.escola FOR INSERT WITH CHECK (public.is_admin());
+CREATE POLICY "escola_update" ON public.escola FOR UPDATE USING (public.is_admin());
 
 -- ============================================================
 -- BLOCO 2: Tabela anos_letivos
@@ -51,13 +55,17 @@ CREATE TABLE IF NOT EXISTS public.anos_letivos (
 );
 
 ALTER TABLE public.anos_letivos ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anos_letivos_select" ON public.anos_letivos FOR SELECT USING (auth.uid() IS NOT NULL);
-CREATE POLICY "anos_letivos_insert" ON public.anos_letivos FOR INSERT WITH CHECK (public.is_admin());
-CREATE POLICY "anos_letivos_update" ON public.anos_letivos FOR UPDATE USING (public.is_admin());
 
 -- Adicionar colunas caso a tabela já exista sem elas
 ALTER TABLE public.anos_letivos ADD COLUMN IF NOT EXISTS recesso_inicio DATE;
 ALTER TABLE public.anos_letivos ADD COLUMN IF NOT EXISTS recesso_fim DATE;
+
+DROP POLICY IF EXISTS "anos_letivos_select" ON public.anos_letivos;
+DROP POLICY IF EXISTS "anos_letivos_insert" ON public.anos_letivos;
+DROP POLICY IF EXISTS "anos_letivos_update" ON public.anos_letivos;
+CREATE POLICY "anos_letivos_select" ON public.anos_letivos FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "anos_letivos_insert" ON public.anos_letivos FOR INSERT WITH CHECK (public.is_admin());
+CREATE POLICY "anos_letivos_update" ON public.anos_letivos FOR UPDATE USING (public.is_admin());
 
 -- ============================================================
 -- BLOCO 3: Tabela bimestres
@@ -73,6 +81,10 @@ CREATE TABLE IF NOT EXISTS public.bimestres (
 );
 
 ALTER TABLE public.bimestres ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "bimestres_select" ON public.bimestres;
+DROP POLICY IF EXISTS "bimestres_insert" ON public.bimestres;
+DROP POLICY IF EXISTS "bimestres_update" ON public.bimestres;
 CREATE POLICY "bimestres_select" ON public.bimestres FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY "bimestres_insert" ON public.bimestres FOR INSERT WITH CHECK (public.is_admin());
 CREATE POLICY "bimestres_update" ON public.bimestres FOR UPDATE USING (public.is_admin());
@@ -91,6 +103,11 @@ CREATE TABLE IF NOT EXISTS public.calendario_escolar (
 );
 
 ALTER TABLE public.calendario_escolar ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "calendario_select" ON public.calendario_escolar;
+DROP POLICY IF EXISTS "calendario_insert" ON public.calendario_escolar;
+DROP POLICY IF EXISTS "calendario_update" ON public.calendario_escolar;
+DROP POLICY IF EXISTS "calendario_delete" ON public.calendario_escolar;
 CREATE POLICY "calendario_select" ON public.calendario_escolar FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY "calendario_insert" ON public.calendario_escolar FOR INSERT WITH CHECK (public.is_admin());
 CREATE POLICY "calendario_update" ON public.calendario_escolar FOR UPDATE USING (public.is_admin());
@@ -175,6 +192,10 @@ CREATE TABLE IF NOT EXISTS public.notas (
 );
 
 ALTER TABLE public.notas ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "notas_select" ON public.notas;
+DROP POLICY IF EXISTS "notas_insert" ON public.notas;
+DROP POLICY IF EXISTS "notas_update" ON public.notas;
 CREATE POLICY "notas_select" ON public.notas FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY "notas_insert" ON public.notas FOR INSERT WITH CHECK (public.is_adm());
 CREATE POLICY "notas_update" ON public.notas FOR UPDATE USING (public.is_adm());
