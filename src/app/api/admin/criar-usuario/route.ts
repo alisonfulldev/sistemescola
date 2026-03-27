@@ -18,8 +18,10 @@ export async function POST(req: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (perfil?.perfil !== 'admin') {
-      return NextResponse.json({ error: 'Acesso negado. Apenas administradores podem criar usuários.' }, { status: 403 })
+    const isAdmin = perfil?.perfil === 'admin'
+    const isSecretaria = perfil?.perfil === 'secretaria'
+    if (!isAdmin && !isSecretaria) {
+      return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
     }
 
     const body = await req.json()
@@ -43,6 +45,11 @@ export async function POST(req: NextRequest) {
     const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin', 'cozinha', 'diretor']
     if (!perfisValidos.includes(novoPerfil)) {
       return NextResponse.json({ error: 'Perfil inválido' }, { status: 400 })
+    }
+
+    // Secretaria não pode criar conta admin
+    if (isSecretaria && novoPerfil === 'admin') {
+      return NextResponse.json({ error: 'Secretaria não pode criar contas de administrador.' }, { status: 403 })
     }
 
     // Usa service_role para criar usuário no Auth

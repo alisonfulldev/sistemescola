@@ -9,7 +9,7 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (perfil?.perfil !== 'admin') return NextResponse.json({ error: 'Apenas admin' }, { status: 403 })
+  if (!['admin', 'secretaria'].includes(perfil?.perfil)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

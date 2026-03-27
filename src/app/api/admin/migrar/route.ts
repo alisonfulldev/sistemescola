@@ -14,7 +14,7 @@ export async function POST() {
   )
 
   const { data: usuario } = await admin.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (usuario?.perfil !== 'admin') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  if (!['admin', 'secretaria'].includes(usuario?.perfil)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
   // Roda a migração via Management API do Supabase
   const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL!.replace('https://', '').split('.')[0]

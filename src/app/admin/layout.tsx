@@ -72,7 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return router.push('/admin/trocar-senha')
       }
       const { data } = await supabase.from('usuarios').select('nome, perfil').eq('id', user.id).single()
-      if (data?.perfil !== 'admin' && data?.perfil !== 'diretor') return router.push('/login')
+      if (!['admin', 'secretaria', 'diretor'].includes(data?.perfil)) return router.push('/login')
       setUsuario(data)
     }
     init()
