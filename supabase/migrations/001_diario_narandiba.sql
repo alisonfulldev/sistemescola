@@ -175,6 +175,21 @@ CREATE TRIGGER trigger_calcular_bimestre
 -- ============================================================
 -- BLOCO 9: Tabela notas (diário de notas por bimestre)
 -- ============================================================
+
+-- Se existir uma tabela notas antiga (sem ano_letivo_id), remove para recriar corretamente
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'notas'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'notas' AND column_name = 'ano_letivo_id'
+  ) THEN
+    DROP TABLE public.notas CASCADE;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.notas (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   aluno_id UUID NOT NULL REFERENCES public.alunos(id) ON DELETE CASCADE,
