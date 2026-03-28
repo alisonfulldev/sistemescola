@@ -58,8 +58,8 @@ export default function ProfessoresPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Usuários</h1>
-          <p className="text-gray-400 text-sm">{usuarios.length} usuário(s)</p>
+          <h1 className="text-xl font-bold text-white">Professores</h1>
+          <p className="text-gray-400 text-sm">{usuarios.length} professor(es)</p>
         </div>
         <button onClick={() => { setShowForm(true); setErro('') }} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
           + Novo Usuário
@@ -85,17 +85,6 @@ export default function ProfessoresPage() {
               <label className="block text-xs text-gray-400 mb-1.5">Senha (mín. 8 caracteres) *</label>
               <input type="password" value={form.senha} onChange={e => setForm(p => ({ ...p, senha: e.target.value }))}
                 className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Perfil *</label>
-              <select value={form.perfil} onChange={e => setForm(p => ({ ...p, perfil: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
-              >
-                <option value="professor">Professor</option>
-                <option value="secretaria">Secretaria</option>
-                <option value="responsavel">Responsável</option>
-                <option value="admin">Administrador</option>
-              </select>
             </div>
           </div>
           <div className="flex gap-3">
