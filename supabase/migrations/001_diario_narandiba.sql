@@ -37,8 +37,8 @@ DROP POLICY IF EXISTS "escola_select" ON public.escola;
 DROP POLICY IF EXISTS "escola_insert" ON public.escola;
 DROP POLICY IF EXISTS "escola_update" ON public.escola;
 CREATE POLICY "escola_select" ON public.escola FOR SELECT USING (auth.uid() IS NOT NULL);
-CREATE POLICY "escola_insert" ON public.escola FOR INSERT WITH CHECK (public.is_admin());
-CREATE POLICY "escola_update" ON public.escola FOR UPDATE USING (public.is_admin());
+CREATE POLICY "escola_insert" ON public.escola FOR INSERT WITH CHECK (public.is_adm());
+CREATE POLICY "escola_update" ON public.escola FOR UPDATE USING (public.is_adm());
 
 -- ============================================================
 -- BLOCO 2: Tabela anos_letivos
@@ -64,8 +64,8 @@ DROP POLICY IF EXISTS "anos_letivos_select" ON public.anos_letivos;
 DROP POLICY IF EXISTS "anos_letivos_insert" ON public.anos_letivos;
 DROP POLICY IF EXISTS "anos_letivos_update" ON public.anos_letivos;
 CREATE POLICY "anos_letivos_select" ON public.anos_letivos FOR SELECT USING (auth.uid() IS NOT NULL);
-CREATE POLICY "anos_letivos_insert" ON public.anos_letivos FOR INSERT WITH CHECK (public.is_admin());
-CREATE POLICY "anos_letivos_update" ON public.anos_letivos FOR UPDATE USING (public.is_admin());
+CREATE POLICY "anos_letivos_insert" ON public.anos_letivos FOR INSERT WITH CHECK (public.is_adm());
+CREATE POLICY "anos_letivos_update" ON public.anos_letivos FOR UPDATE USING (public.is_adm());
 
 -- ============================================================
 -- BLOCO 3: Tabela bimestres
@@ -86,8 +86,8 @@ DROP POLICY IF EXISTS "bimestres_select" ON public.bimestres;
 DROP POLICY IF EXISTS "bimestres_insert" ON public.bimestres;
 DROP POLICY IF EXISTS "bimestres_update" ON public.bimestres;
 CREATE POLICY "bimestres_select" ON public.bimestres FOR SELECT USING (auth.uid() IS NOT NULL);
-CREATE POLICY "bimestres_insert" ON public.bimestres FOR INSERT WITH CHECK (public.is_admin());
-CREATE POLICY "bimestres_update" ON public.bimestres FOR UPDATE USING (public.is_admin());
+CREATE POLICY "bimestres_insert" ON public.bimestres FOR INSERT WITH CHECK (public.is_adm());
+CREATE POLICY "bimestres_update" ON public.bimestres FOR UPDATE USING (public.is_adm());
 
 -- ============================================================
 -- BLOCO 4: Tabela calendario_escolar
@@ -109,9 +109,9 @@ DROP POLICY IF EXISTS "calendario_insert" ON public.calendario_escolar;
 DROP POLICY IF EXISTS "calendario_update" ON public.calendario_escolar;
 DROP POLICY IF EXISTS "calendario_delete" ON public.calendario_escolar;
 CREATE POLICY "calendario_select" ON public.calendario_escolar FOR SELECT USING (auth.uid() IS NOT NULL);
-CREATE POLICY "calendario_insert" ON public.calendario_escolar FOR INSERT WITH CHECK (public.is_admin());
-CREATE POLICY "calendario_update" ON public.calendario_escolar FOR UPDATE USING (public.is_admin());
-CREATE POLICY "calendario_delete" ON public.calendario_escolar FOR DELETE USING (public.is_admin());
+CREATE POLICY "calendario_insert" ON public.calendario_escolar FOR INSERT WITH CHECK (public.is_adm());
+CREATE POLICY "calendario_update" ON public.calendario_escolar FOR UPDATE USING (public.is_adm());
+CREATE POLICY "calendario_delete" ON public.calendario_escolar FOR DELETE USING (public.is_adm());
 
 -- ============================================================
 -- BLOCO 5: Alterar turmas
