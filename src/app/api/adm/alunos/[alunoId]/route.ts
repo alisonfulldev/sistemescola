@@ -49,8 +49,7 @@ export async function GET(_req: NextRequest, { params }: { params: { alunoId: st
         ),
         justificativas_falta(motivo, criada_em, usuarios!responsavel_id(nome))
       `)
-      .eq('aluno_id', alunoId)
-      .order('chamadas(aulas(data))', { ascending: false }),
+      .eq('aluno_id', alunoId),
 
     admin.from('alertas')
       .select('id, tipo, mensagem, criado_em, lido')
