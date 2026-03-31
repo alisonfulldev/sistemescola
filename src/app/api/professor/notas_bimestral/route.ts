@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     .eq('ano_letivo_id', ano_letivo_id)
     .eq('turma_id', turma_id)
 
-  const notasMap = {}
+  const notasMap: Record<string, { nota: any }> = {}
   for (const n of notas || []) {
     notasMap[n.aluno_id] = { nota: n.nota }
   }
