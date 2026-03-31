@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(_req: NextRequest, { params }: { params: { alunoId: string } }) {
+export async function GET(_req: NextRequest, { params: paramsPromise }: { params: Promise<{ alunoId: string }> }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -18,7 +18,7 @@ export async function GET(_req: NextRequest, { params }: { params: { alunoId: st
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  const { alunoId } = params
+  const { alunoId } = await paramsPromise
 
   const { isValidUUID } = await import('@/lib/validate')
   if (!isValidUUID(alunoId)) {

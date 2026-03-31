@@ -6,7 +6,12 @@
       "Bash(mkdir -p \"c:/Users/Home/Desktop/sistema escola/src/app/api/portaria/registrar-entrada\")",
       "Bash(mkdir -p \"c:/Users/Home/Desktop/sistema escola/src/app/api/alunos/[id]/qrcode\")",
       "Bash(mkdir -p \"c:/Users/Home/Desktop/sistema escola/src/app/api/admin/criar-usuario\")",
-      "Bash(ls -la src/app/*/)"
+      "Bash(ls -la src/app/*/)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(grep -r generate src/ --include=*.ts --include=*.tsx --include=*.js)",
+      "Bash(npm --version)",
+      "Bash(gh auth:*)"
     ]
   }
 }

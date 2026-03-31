@@ -2,12 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  if (!params.id) {
+  const { id } = await paramsPromise
+  if (!id) {
     return NextResponse.json({ error: 'ID da avaliação não fornecido' }, { status: 400 })
   }
 
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const { data: avaliacao } = await admin
       .from('avaliacoes')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (!avaliacao) {
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         alunos(nome_completo, numero_chamada),
         usuarios:registrado_por(nome)
       `)
-      .eq('avaliacao_id', params.id)
+      .eq('avaliacao_id', id)
       .order('alunos.numero_chamada', { nullsFirst: false })
       .order('alunos.nome_completo')
 
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -62,7 +63,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
-  if (!params.id) {
+  const { id } = await paramsPromise
+  if (!id) {
     return NextResponse.json({ error: 'ID da avaliação não fornecido' }, { status: 400 })
   }
 
@@ -113,7 +115,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     // Preparar dados para insert (upsert)
     const notasParaInserir = notasData.map(nota => ({
-      avaliacao_id: params.id,
+      avaliacao_id: id,
       aluno_id: nota.aluno_id,
       nota: nota.nota === '' || nota.nota === null ? null : parseFloat(nota.nota),
       observacao: nota.observacao || null,
@@ -138,7 +140,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -149,6 +151,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
+  const { id } = await paramsPromise
   const { aluno_id, nota, observacao } = await req.json()
 
   if (!aluno_id || nota === undefined) {
@@ -169,7 +172,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         observacao,
         atualizado_em: new Date().toISOString()
       })
-      .eq('avaliacao_id', params.id)
+      .eq('avaliacao_id', id)
       .eq('aluno_id', aluno_id)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

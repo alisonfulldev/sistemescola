@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -12,13 +12,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
+  const { id } = await paramsPromise
   const { status, observacao_aprovacao } = await req.json()
 
   if (!status || !['aprovada', 'rejeitada'].includes(status)) {
     return NextResponse.json({ error: 'Status inválido. Deve ser: aprovada ou rejeitada' }, { status: 400 })
   }
 
-  if (!params.id) {
+  if (!id) {
     return NextResponse.json({ error: 'ID da justificativa não fornecido' }, { status: 400 })
   }
 
@@ -38,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         observacao_aprovacao,
         atualizado_em: new Date().toISOString()
       })
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -51,7 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -67,6 +68,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
+  const { id } = await paramsPromise
+
   try {
     const { data: justificativa, error } = await admin
       .from('justificativas')
@@ -76,7 +79,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         usuarios:enviado_por(nome),
         usuarios:aprovado_por(nome)
       `)
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error || !justificativa) {
@@ -89,7 +92,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -105,11 +108,13 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
+  const { id } = await paramsPromise
+
   try {
     const { error } = await admin
       .from('justificativas')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
