@@ -7,7 +7,9 @@ import { formatDate, formatTime } from '@/lib/utils'
 
 export const revalidate = 0
 
-export default async function ResumoChamadaPage({ params }: { params: { chamadaId: string } }) {
+export default async function ResumoChamadaPage({ params: paramsPromise }: { params: Promise<{ chamadaId: string }> }) {
+  const { chamadaId } = await paramsPromise
+
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -33,7 +35,7 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
         justificativas_falta (motivo, responsavel_id, usuarios!responsavel_id(nome), criada_em)
       )
     `)
-    .eq('id', params.chamadaId)
+    .eq('id', chamadaId)
     .single()
 
   if (!chamada) redirect('/professor')
@@ -192,7 +194,7 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
         >
           ← Voltar
         </Link>
-        <Link href={`/professor/chamada/${params.chamadaId}`}
+        <Link href={`/professor/chamada/${chamadaId}`}
           className="flex-1 py-3 bg-white border border-green-300 text-green-600 rounded-xl font-medium text-center hover:bg-green-50 transition-colors text-sm"
         >
           ✏ Editar chamada

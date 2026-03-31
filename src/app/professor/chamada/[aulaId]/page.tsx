@@ -24,9 +24,17 @@ interface ModalAlteracao {
   novoStatus: StatusPresenca
 }
 
+interface Props {
+  params: Promise<{ aulaId: string }>
+}
+
 // Rota: /professor/chamada/[aulaId] onde aulaId é na verdade o chamadaId
-export default function ChamadaPage({ params }: { params: { aulaId: string } }) {
-  const chamadaId = params.aulaId
+export default function ChamadaPage({ params: paramsPromise }: Props) {
+  const [chamadaId, setChamadaId] = useState<string>('')
+
+  useEffect(() => {
+    paramsPromise.then((params) => setChamadaId(params.aulaId))
+  }, [paramsPromise])
 
   const [alunos, setAlunos] = useState<AlunoRow[]>([])
   const [aula, setAula] = useState<any>(null)
