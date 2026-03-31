@@ -62,14 +62,16 @@ export default function NotasPage() {
     carregarNotas();
   }, [carregarNotas]);
 
-  function media(alunoId: string) {
-    const vals = ["b1", "b2", "b3", "b4"].map((c) => {
-      const nota = notas[alunoId]?.[c];
-      return nota !== null && nota !== undefined ? parseFloat(String(nota)) : null;
-    }).filter((v) => v !== null) as number[];
+  const calcularMedia = (alunoId: string) => {
+    const vals = ["b1", "b2", "b3", "b4"]
+      .map((c) => {
+        const nota = notas[alunoId]?.[c];
+        return nota !== null && nota !== undefined ? parseFloat(String(nota)) : null;
+      })
+      .filter((v) => v !== null) as number[];
     if (vals.length === 0) return null;
-    return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-  }
+    return ((vals.reduce((a, b) => a + b, 0) / vals.length) as any).toFixed(1);
+  };
 
   return (
     <div>
@@ -160,7 +162,7 @@ export default function NotasPage() {
               </thead>
               <tbody>
                 {alunos.map((aluno) => {
-                  const med = media(aluno.id);
+                  const med = calcularMedia(aluno.id);
                   const medNum = med ? parseFloat(med) : null;
                   const totalFaltas = faltas[aluno.id] || 0;
                   return (
