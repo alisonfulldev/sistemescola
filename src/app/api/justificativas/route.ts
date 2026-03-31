@@ -38,8 +38,8 @@ export async function GET(req: NextRequest) {
         .select('aluno_id')
         .eq('responsavel_id', user.id)
 
-      const meusFil hos = minhaFamilias?.map(f => f.aluno_id) || []
-      query = query.in('aluno_id', meusFil hos.length > 0 ? meusFil hos : [''])
+      const meusFilhos = minhaFamilias?.map(f => f.aluno_id) || []
+      query = query.in('aluno_id', meusFilhos.length > 0 ? meusFilhos : [''])
     } else if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
@@ -91,8 +91,8 @@ export async function POST(req: NextRequest) {
       .select('aluno_id')
       .eq('responsavel_id', user.id)
 
-    const meusFil hos = filhos?.map(f => f.aluno_id) || []
-    if (!meusFil hos.includes(aluno_id)) {
+    const meusFilhos = filhos?.map(f => f.aluno_id) || []
+    if (!meusFilhos.includes(aluno_id)) {
       return NextResponse.json({ error: 'Sem permissão para justificar este aluno' }, { status: 403 })
     }
   } else if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
