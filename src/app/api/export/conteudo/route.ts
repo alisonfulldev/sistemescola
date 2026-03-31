@@ -88,8 +88,8 @@ export async function GET(req: NextRequest) {
         data: a.data,
         horario: `${a.horario_inicio} - ${a.horario_fim}`,
         bimestre: a.bimestre,
-        disciplina: a.disciplinas?.nome,
-        professor: a.usuarios?.nome,
+        disciplina: (a.disciplinas as any)?.nome,
+        professor: (a.usuarios as any)?.nome,
         conteudo_programatico: a.conteudo_programatico || '(não informado)',
         atividades_desenvolvidas: a.atividades_desenvolvidas || '(não informado)'
       })),
