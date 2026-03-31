@@ -153,7 +153,7 @@ export default function NotasAvaliacaoPage({ params: paramsPromise }: Props) {
                     <td className="py-3 px-3 text-center">
                       <input
                         type="number"
-                        value={notasInput[n.aluno_id] !== undefined && notasInput[n.aluno_id] !== null ? notasInput[n.aluno_id] : ''}
+                        value={(notasInput[n.aluno_id] ?? '') as any}
                         onChange={e => {
                           const val = e.target.value === '' ? null : parseFloat(e.target.value)
                           setNotasInput({
