@@ -1,77 +1,77 @@
-"use client"
+'use client'
 
-import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useEffect, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function NotasPage() {
-  const supabase = createClient();
-  const [turmas, setTurmas] = useState<any[]>([]);
-  const [disciplinas, setDisciplinas] = useState<any[]>([]);
-  const [anosLetivos, setAnosLetivos] = useState<any[]>([]);
-  const [turmaId, setTurmaId] = useState("");
-  const [disciplinaId, setDisciplinaId] = useState("");
-  const [anoLetivoId, setAnoLetivoId] = useState("");
-  const [alunos, setAlunos] = useState<any[]>([]);
-  const [notas, setNotas] = useState<Record<string, any>>({});
-  const [faltas, setFaltas] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(false);
+  const supabase = createClient()
+  const [turmas, setTurmas] = useState<any[]>([])
+  const [disciplinas, setDisciplinas] = useState<any[]>([])
+  const [anosLetivos, setAnosLetivos] = useState<any[]>([])
+  const [turmaId, setTurmaId] = useState('')
+  const [disciplinaId, setDisciplinaId] = useState('')
+  const [anoLetivoId, setAnoLetivoId] = useState('')
+  const [alunos, setAlunos] = useState<any[]>([])
+  const [notas, setNotas] = useState<Record<string, any>>({})
+  const [faltas, setFaltas] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     async function init() {
       const [{ data: t }, { data: a }] = await Promise.all([
-        supabase.from("turmas").select("id, nome").eq("ativo", true).order("nome"),
-        supabase.from("anos_letivos").select("id, ano, ativo").order("ano", { ascending: false }),
-      ]);
-      setTurmas(t || []);
-      setAnosLetivos(a || []);
-      const anoAtivo = (a || []).find((x: any) => x.ativo);
-      if (anoAtivo) setAnoLetivoId(anoAtivo.id);
+        supabase.from('turmas').select('id, nome').eq('ativo', true).order('nome'),
+        supabase.from('anos_letivos').select('id, ano, ativo').order('ano', { ascending: false })
+      ])
+      setTurmas(t || [])
+      setAnosLetivos(a || [])
+      const anoAtivo = (a || []).find((x: any) => x.ativo)
+      if (anoAtivo) setAnoLetivoId(anoAtivo.id)
     }
-    init();
-  }, []);
+    init()
+  }, [])
 
   useEffect(() => {
     if (!turmaId) {
-      setDisciplinas([]);
-      setDisciplinaId("");
-      return;
+      setDisciplinas([])
+      setDisciplinaId('')
+      return
     }
     async function carregarDisciplinas() {
       const { data } = await supabase
-        .from("disciplinas")
-        .select("id, nome, usuarios(nome)")
-        .order("nome");
-      setDisciplinas(data || []);
-      setDisciplinaId("");
+        .from('disciplinas')
+        .select('id, nome, usuarios(nome)')
+        .order('nome')
+      setDisciplinas(data || [])
+      setDisciplinaId('')
     }
-    carregarDisciplinas();
-  }, [turmaId]);
+    carregarDisciplinas()
+  }, [turmaId])
 
   const carregarNotas = useCallback(async () => {
-    if (!turmaId || !disciplinaId || !anoLetivoId) return;
-    setLoading(true);
-    const res = await fetch(`/api/adm/notas?turma_id=${turmaId}&disciplina_id=${disciplinaId}&ano_letivo_id=${anoLetivoId}`);
-    const data = await res.json();
-    setAlunos(data.alunos || []);
-    setNotas(data.notas || {});
-    setFaltas(data.faltas || {});
-    setLoading(false);
-  }, [turmaId, disciplinaId, anoLetivoId]);
+    if (!turmaId || !disciplinaId || !anoLetivoId) return
+    setLoading(true)
+    const res = await fetch(`/api/adm/notas?turma_id=${turmaId}&disciplina_id=${disciplinaId}&ano_letivo_id=${anoLetivoId}`)
+    const data = await res.json()
+    setAlunos(data.alunos || [])
+    setNotas(data.notas || {})
+    setFaltas(data.faltas || {})
+    setLoading(false)
+  }, [turmaId, disciplinaId, anoLetivoId])
 
   useEffect(() => {
-    carregarNotas();
-  }, [carregarNotas]);
+    carregarNotas()
+  }, [carregarNotas])
 
   const calcularMedia = (alunoId: string) => {
-    const vals = ["b1", "b2", "b3", "b4"]
+    const vals = ['b1', 'b2', 'b3', 'b4']
       .map((c) => {
-        const nota = notas[alunoId]?.[c];
-        return nota !== null && nota !== undefined ? parseFloat(String(nota)) : null;
+        const nota = notas[alunoId]?.[c]
+        return nota !== null && nota !== undefined ? parseFloat(String(nota)) : null
       })
-      .filter((v) => v !== null) as number[];
-    if (vals.length === 0) return null;
-    return ((vals.reduce((a, b) => a + b, 0) / vals.length) as any).toFixed(1);
-  };
+      .filter((v) => v !== null) as number[]
+    if (vals.length === 0) return null
+    return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)
+  }
 
   return (
     <div>
@@ -122,7 +122,7 @@ export default function NotasPage() {
             <option value="">Selecione...</option>
             {anosLetivos.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.ano} {a.ativo ? "(ativo)" : ""}
+                {a.ano} {a.ativo ? '(ativo)' : ''}
               </option>
             ))}
           </select>
@@ -149,7 +149,7 @@ export default function NotasPage() {
                 <tr className="bg-slate-50 border-b border-slate-200">
                   <th className="p-3 text-slate-500 font-medium text-center w-10">Nº</th>
                   <th className="p-3 text-slate-500 font-medium text-left">Aluno</th>
-                  {["B1", "B2", "B3", "B4"].map((b) => (
+                  {['B1', 'B2', 'B3', 'B4'].map((b) => (
                     <th key={b} className="p-3 text-slate-500 font-medium text-center w-20">
                       {b}
                     </th>
@@ -162,16 +162,16 @@ export default function NotasPage() {
               </thead>
               <tbody>
                 {alunos.map((aluno) => {
-                  const med = calcularMedia(aluno.id);
-                  const medNum = med ? parseFloat(med) : null;
-                  const totalFaltas = faltas[aluno.id] || 0;
+                  const med = calcularMedia(aluno.id)
+                  const medNum = med ? parseFloat(med) : null
+                  const totalFaltas = faltas[aluno.id] || 0
                   return (
                     <tr key={aluno.id} className="border-b border-slate-100 transition-colors hover:bg-slate-50">
                       <td className="p-3 text-center text-xs text-slate-400 font-mono">
-                        {aluno.numero_chamada?.toString().padStart(2, "0") || "—"}
+                        {aluno.numero_chamada?.toString().padStart(2, '0') || '—'}
                       </td>
                       <td className="p-3 text-slate-900 text-sm">{aluno.nome_completo}</td>
-                      {["B1", "B2", "B3", "B4"].map((bim) => (
+                      {['B1', 'B2', 'B3', 'B4'].map((bim) => (
                         <td key={bim} className="p-3 text-center">
                           <span className="text-xs font-mono text-slate-400">—</span>
                         </td>
@@ -182,12 +182,13 @@ export default function NotasPage() {
                       <td className="p-3 text-center">
                         {med !== null ? (
                           <span
-                            className={`text-xs font-bold font-mono ${medNum! >= 7
-                                ? "text-green-700"
-                                : medNum! >= 5
-                                  ? "text-amber-700"
-                                  : "text-red-600"
-                              }`}
+                            className={`text-xs font-bold font-mono ${
+                              medNum && medNum >= 7
+                                ? 'text-green-700'
+                                : medNum && medNum >= 5
+                                  ? 'text-amber-700'
+                                  : 'text-red-600'
+                            }`}
                           >
                             {med}
                           </span>
@@ -197,15 +198,16 @@ export default function NotasPage() {
                       </td>
                       <td className="p-3 text-center">
                         <span
-                          className={`text-xs font-mono font-bold ${totalFaltas > 0 ? "text-red-600" : "text-slate-300"
-                            }`}
+                          className={`text-xs font-mono font-bold ${
+                            totalFaltas > 0 ? 'text-red-600' : 'text-slate-300'
+                          }`}
                         >
-                          {totalFaltas || "—"}
+                          {totalFaltas || '—'}
                         </span>
                       </td>
                       <td></td>
                     </tr>
-                  );
+                  )
                 })}
               </tbody>
             </table>
@@ -218,12 +220,11 @@ export default function NotasPage() {
               <span className="text-amber-700 font-bold">■</span> 5.0–6.9 Recuperação
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="text-red-600 font-bold">■</span> < 5.0 Reprovado
+              <span className="text-red-600 font-bold">■</span> &lt; 5.0 Reprovado
             </span>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
-
