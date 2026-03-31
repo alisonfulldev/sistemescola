@@ -60,7 +60,7 @@ export default function NotasAvaliacaoPage({ params: paramsPromise }: Props) {
         nota: notasInput[n.aluno_id] !== undefined ? notasInput[n.aluno_id] : null
       }))
 
-      const res = await fetch(`/api/avaliacoes/${params.id}/notas`, {
+      const res = await fetch(`/api/avaliacoes/${id}/notas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notas: notasParaEnviar })

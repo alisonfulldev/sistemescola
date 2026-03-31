@@ -98,7 +98,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
     const { data: avaliacao } = await admin
       .from('avaliacoes')
       .select('id, aula_id')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (!avaliacao) {
