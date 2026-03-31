@@ -38,10 +38,10 @@ export function calcularFrequencia(presencas: number, total: number): number {
 
 export function getCorStatusPresenca(status: string): string {
   switch (status) {
-    case 'presente': return 'bg-green-500/20 text-green-400 border-green-500/30'
-    case 'falta': return 'bg-red-500/20 text-red-400 border-red-500/30'
-    case 'justificada': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-    default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+    case 'presente': return 'bg-green-50 text-green-600 border-green-200'
+    case 'falta': return 'bg-red-50 text-red-600 border-red-200'
+    case 'justificada': return 'bg-amber-50 text-amber-600 border-amber-200'
+    default: return 'bg-slate-50 text-slate-500 border-slate-200'
   }
 }
 
@@ -65,10 +65,10 @@ export function getTurnoLabel(turno: string): string {
 
 export function getTurnoBadge(turno: string): string {
   switch (turno) {
-    case 'matutino': return 'bg-yellow-500/20 text-yellow-400'
-    case 'vespertino': return 'bg-orange-500/20 text-orange-400'
-    case 'noturno': return 'bg-purple-500/20 text-purple-400'
-    default: return 'bg-gray-500/20 text-gray-400'
+    case 'matutino': return 'bg-amber-50 text-amber-600'
+    case 'vespertino': return 'bg-orange-50 text-orange-600'
+    case 'noturno': return 'bg-blue-50 text-blue-600'
+    default: return 'bg-slate-50 text-slate-500'
   }
 }
 

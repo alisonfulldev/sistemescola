@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (!['admin', 'secretaria'].includes(perfil?.perfil)) {
+  if (!['admin', 'secretaria', 'diretor'].includes(perfil?.perfil)) {
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 

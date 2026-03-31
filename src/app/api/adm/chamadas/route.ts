@@ -6,6 +6,12 @@ export async function GET(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+  const perfil = userData?.perfil || ''
+  const escolaId: string | null = null
+  if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
+    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  }
 
   const data = req.nextUrl.searchParams.get('data') || new Date().toISOString().split('T')[0]
 
@@ -15,12 +21,14 @@ export async function GET(req: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Busca aulas da data e suas chamadas
-  const { data: aulas } = await admin
+  let q = admin
     .from('aulas')
-    .select('id, data, horario_inicio, horario_fim, turmas(nome, turno), disciplinas(nome), usuarios(nome)')
+    .select('id, data, horario_inicio, horario_fim, turmas!inner(nome, turno, escola_id), disciplinas(nome), usuarios(nome)')
     .eq('data', data)
     .order('horario_inicio')
+  if (escolaId) q = (q as any).eq('turmas.escola_id', escolaId)
+
+  const { data: aulas } = await q
 
   if (!aulas?.length) return NextResponse.json({ chamadas: [] })
 

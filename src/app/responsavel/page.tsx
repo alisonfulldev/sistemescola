@@ -42,21 +42,21 @@ function BannerInstalarApp() {
   }
 
   return (
-    <div className="bg-[#1c2128] border border-[#58a6ff]/30 rounded-xl px-4 py-3 mb-4">
+    <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4">
       <div className="flex items-center gap-3">
         <span className="text-2xl flex-shrink-0">📲</span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-[#58a6ff]">Instalar app</p>
-          <p className="text-xs text-gray-500 mt-0.5">Receba notificações mesmo com o navegador fechado</p>
+          <p className="text-sm font-bold text-blue-600">Instalar app</p>
+          <p className="text-xs text-slate-500 mt-0.5">Receba notificações mesmo com o navegador fechado</p>
         </div>
-        <button onClick={dispensar} className="text-gray-600 hover:text-gray-400 text-xl px-1 flex-shrink-0">×</button>
-        <button onClick={instalar} className="text-xs font-bold text-black bg-[#58a6ff] hover:bg-blue-400 px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors">
+        <button onClick={dispensar} className="text-slate-400 hover:text-slate-600 text-xl px-1 flex-shrink-0">×</button>
+        <button onClick={instalar} className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors">
           Instalar
         </button>
       </div>
       {mostrarInstrucoes && (
-        <div className="mt-3 pt-3 border-t border-[#30363d] text-xs text-gray-400 space-y-1">
-          <p className="font-semibold text-gray-300">Para instalar manualmente:</p>
+        <div className="mt-3 pt-3 border-t border-slate-200 text-xs text-slate-500 space-y-1">
+          <p className="font-semibold text-slate-600">Para instalar manualmente:</p>
           <p>• <strong>Android (Chrome):</strong> toque nos 3 pontos (⋮) → <em>"Adicionar à tela inicial"</em></p>
           <p>• <strong>iPhone (Safari):</strong> toque em compartilhar (⬆) → <em>"Adicionar à Tela de Início"</em></p>
         </div>
@@ -89,23 +89,23 @@ function BotaoNotificacao() {
   }
 
   if (status === 'ativo') return (
-    <button onClick={ativar} className="w-full flex items-center justify-between bg-[#39d353]/10 border border-[#39d353]/30 rounded-xl px-4 py-3 mb-4">
+    <button onClick={ativar} className="w-full flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
       <div className="flex items-center gap-2">
         <span className="text-lg">🔔</span>
-        <p className="text-sm text-[#39d353] font-medium">Notificações ativadas</p>
+        <p className="text-sm text-green-600 font-medium">Notificações ativadas</p>
       </div>
-      <span className="text-xs text-[#39d353]/60">Toque para renovar</span>
+      <span className="text-xs text-green-400">Toque para renovar</span>
     </button>
   )
   if (status === 'negado') return (
-    <div className="flex items-center gap-2 bg-[#f85149]/10 border border-[#f85149]/30 rounded-xl px-4 py-3 mb-4">
+    <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
       <span className="text-lg">🔕</span>
-      <p className="text-sm text-[#f85149]">Notificações bloqueadas. Ative nas configurações do navegador.</p>
+      <p className="text-sm text-red-600">Notificações bloqueadas. Ative nas configurações do navegador.</p>
     </div>
   )
   return (
     <button onClick={ativar} disabled={status === 'ativando'}
-      className="w-full flex items-center justify-center gap-2 bg-[#39d353] hover:bg-green-400 disabled:opacity-60 text-black font-bold rounded-xl px-4 py-3 mb-4 transition-colors"
+      className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white font-bold rounded-xl px-4 py-3 mb-4 transition-colors"
     >
       <span className="text-lg">🔔</span>
       {status === 'ativando' ? 'Ativando...' : 'Ativar notificações'}
@@ -136,7 +136,7 @@ export default function ResponsavelDashboard() {
   useEffect(() => {
     // Registra SW no carregamento para habilitar instalação PWA
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
+      navigator.serviceWorker.register('/sw.js').catch(() => { })
     }
     carregar()
     const interval = setInterval(carregar, 30000)
@@ -165,25 +165,38 @@ export default function ResponsavelDashboard() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <div className="animate-spin w-8 h-8 border-4 border-[#39d353] border-t-transparent rounded-full" />
+      <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
     </div>
   )
 
   return (
     <div>
       <div className="mb-4">
-        <h1 className="text-xl font-bold text-white">Acompanhamento</h1>
-        <p className="text-gray-500 text-sm mt-1 capitalize">{formatDate(new Date(), "EEEE, dd 'de' MMMM")}</p>
+        <h1 className="text-xl font-bold text-slate-900">Acompanhamento</h1>
+        <p className="text-slate-500 text-sm mt-1 capitalize">{formatDate(new Date(), "EEEE, dd 'de' MMMM")}</p>
       </div>
 
       <BannerInstalarApp />
       <BotaoNotificacao />
 
+      {/* Card de Justificativas */}
+      <Link href="/responsavel/justificativas"
+        className="block bg-white border border-slate-200 rounded-xl px-4 py-3 hover:border-blue-300 transition-colors mb-4"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">📋 Justificativas</p>
+            <p className="text-xs text-slate-500">Justifique as faltas de seus filhos</p>
+          </div>
+          <span className="text-slate-400">→</span>
+        </div>
+      </Link>
+
       {alunos.length === 0 ? (
-        <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-8 text-center">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
           <div className="text-4xl mb-3">👨‍👩‍👦</div>
-          <p className="text-gray-400 font-medium">Nenhum aluno vinculado</p>
-          <p className="text-gray-600 text-sm mt-1">Entre em contato com a escola para vincular seu(s) filho(s)</p>
+          <p className="text-slate-500 font-medium">Nenhum aluno vinculado</p>
+          <p className="text-slate-400 text-sm mt-1">Entre em contato com a escola para vincular seu(s) filho(s)</p>
         </div>
       ) : (
         <div className="space-y-4 mb-6">
@@ -193,57 +206,55 @@ export default function ResponsavelDashboard() {
             const justificativa = aluno.justificativa
 
             return (
-              <div key={aluno.id} className="bg-[#161b22] border border-[#30363d] rounded-2xl overflow-hidden">
+              <div key={aluno.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
                 <div className="p-5">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-[#30363d] overflow-hidden flex-shrink-0 flex items-center justify-center border border-[#30363d]">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center border border-slate-200">
                       {aluno.foto_url ? (
                         <Image src={aluno.foto_url} alt="" width={56} height={56} className="object-cover w-full h-full" />
                       ) : (
-                        <span className="text-lg font-bold text-gray-400">
+                        <span className="text-lg font-bold text-slate-500">
                           {aluno.nome_completo.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
                         </span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="font-bold text-white text-base truncate">{aluno.nome_completo}</h2>
-                      <p className="text-gray-500 text-sm">{aluno.turmas?.nome}</p>
+                      <h2 className="font-bold text-slate-900 text-base truncate">{aluno.nome_completo}</h2>
+                      <p className="text-slate-500 text-sm">{aluno.turmas?.nome}</p>
                       {(aluno.turmas?.serie || aluno.turmas?.turno) && (
-                        <p className="text-xs text-gray-600 mt-0.5">
+                        <p className="text-xs text-slate-400 mt-0.5">
                           {[aluno.turmas?.serie, aluno.turmas?.turno].filter(Boolean).join(' · ')}
                         </p>
                       )}
-                      <p className="text-xs text-gray-600 mt-0.5 font-mono">Matrícula: {aluno.matricula}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 font-mono">Matrícula: {aluno.matricula}</p>
                     </div>
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${
-                      status === 'presente' ? 'bg-[#39d353]/10 border-[#39d353]/30' :
-                      status === 'falta' ? 'bg-[#f85149]/10 border-[#f85149]/30' :
-                      status === 'justificada' ? 'bg-[#e3b341]/10 border-[#e3b341]/30' :
-                      'bg-[#0d1117] border-[#30363d]'
-                    }`}>
+                    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${status === 'presente' ? 'bg-green-50 border-green-200' :
+                        status === 'falta' ? 'bg-red-50 border-red-200' :
+                          status === 'justificada' ? 'bg-amber-50 border-amber-200' :
+                            'bg-slate-50 border-slate-200'
+                      }`}>
                       <span className="text-lg">
                         {status === 'presente' ? '✅' : status === 'falta' ? '❌' : status === 'justificada' ? '📝' : '📋'}
                       </span>
                       <div className="flex-1">
-                        <p className={`text-sm font-medium ${
-                          status === 'presente' ? 'text-[#39d353]' :
-                          status === 'falta' ? 'text-[#f85149]' :
-                          status === 'justificada' ? 'text-[#e3b341]' : 'text-gray-500'
-                        }`}>
+                        <p className={`text-sm font-medium ${status === 'presente' ? 'text-green-600' :
+                            status === 'falta' ? 'text-red-600' :
+                              status === 'justificada' ? 'text-amber-600' : 'text-slate-500'
+                          }`}>
                           {status === 'presente' ? 'Presente na aula' :
-                           status === 'falta' ? 'Falta registrada' :
-                           status === 'justificada' ? 'Falta justificada' : 'Chamada não realizada'}
+                            status === 'falta' ? 'Falta registrada' :
+                              status === 'justificada' ? 'Falta justificada' : 'Chamada não realizada'}
                         </p>
                         {aluno.registro?.registrado_em && (
-                          <p className="text-xs text-gray-600 font-mono">
+                          <p className="text-xs text-slate-400 font-mono">
                             confirmado às {new Date(aluno.registro.registrado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         )}
                         {aluno.registro?.observacao && (
-                          <p className="text-xs text-gray-500 mt-0.5 italic">{aluno.registro.observacao}</p>
+                          <p className="text-xs text-slate-500 mt-0.5 italic">{aluno.registro.observacao}</p>
                         )}
                       </div>
                     </div>
@@ -254,7 +265,7 @@ export default function ResponsavelDashboard() {
                         {justificandoId === registroId ? (
                           <div className="space-y-2">
                             {okJust === registroId ? (
-                              <p className="text-xs text-[#39d353] text-center py-2">✓ Justificativa enviada! Aguardando aprovação do professor.</p>
+                              <p className="text-xs text-green-600 text-center py-2">✓ Justificativa enviada! Aguardando aprovação do professor.</p>
                             ) : (
                               <>
                                 <textarea
@@ -262,16 +273,16 @@ export default function ResponsavelDashboard() {
                                   onChange={e => setMotivoText(e.target.value)}
                                   placeholder="Descreva o motivo da falta..."
                                   rows={2}
-                                  className="w-full bg-[#0d1117] border border-yellow-400/30 text-gray-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-yellow-400 resize-none"
+                                  className="w-full bg-white border border-amber-300 text-slate-900 text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500 resize-none"
                                 />
                                 <div className="flex gap-2">
                                   <button onClick={() => justificar(registroId)} disabled={enviandoJust || !motivoText.trim()}
-                                    className="flex-1 py-2 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black text-sm font-bold rounded-xl transition-colors"
+                                    className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors"
                                   >
                                     {enviandoJust ? 'Enviando...' : 'Enviar justificativa'}
                                   </button>
                                   <button onClick={() => { setJustificandoId(null); setMotivoText('') }}
-                                    className="px-3 py-2 bg-[#30363d] text-gray-300 text-sm rounded-xl transition-colors"
+                                    className="px-3 py-2 bg-white border border-slate-300 text-slate-600 text-sm rounded-xl transition-colors"
                                   >
                                     Cancelar
                                   </button>
@@ -281,7 +292,7 @@ export default function ResponsavelDashboard() {
                           </div>
                         ) : (
                           <button onClick={() => setJustificandoId(registroId)}
-                            className="w-full py-2 border border-yellow-400/30 text-yellow-400 text-sm rounded-xl hover:bg-yellow-400/10 transition-colors"
+                            className="w-full py-2 border border-amber-300 text-amber-600 text-sm rounded-xl hover:bg-amber-50 transition-colors"
                           >
                             📝 Justificar falta
                           </button>
@@ -291,15 +302,14 @@ export default function ResponsavelDashboard() {
 
                     {/* Status da justificativa */}
                     {justificativa && (
-                      <div className={`px-3 py-2 rounded-xl border text-xs ${
-                        justificativa.status === 'pendente' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' :
-                        justificativa.status === 'aprovada' ? 'bg-[#39d353]/10 border-[#39d353]/30 text-[#39d353]' :
-                        'bg-[#f85149]/10 border-[#f85149]/30 text-[#f85149]'
-                      }`}>
+                      <div className={`px-3 py-2 rounded-xl border text-xs ${justificativa.status === 'pendente' ? 'bg-amber-50 border-amber-200 text-amber-600' :
+                          justificativa.status === 'aprovada' ? 'bg-green-50 border-green-200 text-green-600' :
+                            'bg-red-50 border-red-200 text-red-600'
+                        }`}>
                         <p className="font-medium">
                           {justificativa.status === 'pendente' ? '⏳ Justificativa enviada — aguardando aprovação' :
-                           justificativa.status === 'aprovada' ? '✅ Justificativa aprovada pelo professor' :
-                           '❌ Justificativa não aprovada'}
+                            justificativa.status === 'aprovada' ? '✅ Justificativa aprovada pelo professor' :
+                              '❌ Justificativa não aprovada'}
                         </p>
                         {justificativa.professor_resposta && <p className="mt-0.5 opacity-80">"{justificativa.professor_resposta}"</p>}
                       </div>
@@ -307,22 +317,22 @@ export default function ResponsavelDashboard() {
                   </div>
 
                   {aluno.ultima_aula && (aluno.ultima_aula.conteudo_programatico || aluno.ultima_aula.atividades_desenvolvidas) && (
-                    <div className="mt-3 bg-[#0d1117] border border-[#30363d] rounded-xl p-3">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    <div className="mt-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                         📖 Última aula{aluno.ultima_aula.disciplinas?.nome ? ` · ${aluno.ultima_aula.disciplinas.nome}` : ''}
                         {aluno.ultima_aula.data && <span className="ml-2 font-normal normal-case">{new Date(aluno.ultima_aula.data + 'T12:00:00').toLocaleDateString('pt-BR')}</span>}
                       </p>
                       {aluno.ultima_aula.conteudo_programatico && (
-                        <p className="text-xs text-gray-400 leading-relaxed">{aluno.ultima_aula.conteudo_programatico}</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">{aluno.ultima_aula.conteudo_programatico}</p>
                       )}
                       {aluno.ultima_aula.atividades_desenvolvidas && (
-                        <p className="text-xs text-gray-500 leading-relaxed mt-1">✏️ {aluno.ultima_aula.atividades_desenvolvidas}</p>
+                        <p className="text-xs text-slate-400 leading-relaxed mt-1">✏️ {aluno.ultima_aula.atividades_desenvolvidas}</p>
                       )}
                     </div>
                   )}
 
                   <Link href={`/responsavel/${aluno.id}`}
-                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-[#0d1117] hover:bg-[#30363d] text-gray-400 hover:text-gray-200 rounded-xl text-sm transition-colors border border-[#30363d]"
+                    className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 rounded-xl text-sm transition-colors border border-slate-200"
                   >
                     📅 Ver histórico de frequência
                   </Link>
@@ -336,59 +346,38 @@ export default function ResponsavelDashboard() {
       {/* Boletim / Notas */}
       {notas.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Boletim — {new Date().getFullYear()}</h2>
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Boletim — {new Date().getFullYear()}</h2>
           <div className="space-y-3">
-            {/* Group by aluno */}
+
+            {/* Group by aluno - simplificado */}
             {Array.from(new Set(notas.map((n: any) => n.aluno_id))).map(alunoId => {
               const notasAluno = notas.filter((n: any) => n.aluno_id === alunoId)
               const alunoDados = notasAluno[0]
               return (
-                <div key={alunoId as string} className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-[#30363d] flex items-center justify-between">
-                    <p className="text-sm font-semibold text-white">{alunoDados.aluno_nome}</p>
-                    <p className="text-xs text-gray-500">{alunoDados.ano}</p>
+                <div key={alunoId as string} className="bg-white border border-slate-200 rounded-xl overflow-hidden mb-3">
+                  <div className="px-4 py-3 border-b border-slate-200">
+                    <p className="text-sm font-semibold text-slate-900">{alunoDados.aluno_nome} — {alunoDados.ano}</p>
                   </div>
-                  <div className="divide-y divide-[#30363d]/50">
-                    {notasAluno.map((n: any, i: number) => {
+                  <div className="p-4 space-y-3">
+                    {notasAluno.map((n: any) => {
                       const medNum = n.media_final
-                      const recFinal = n.recuperacao !== null && medNum !== null && medNum < 5 ? n.recuperacao : null
                       return (
-                        <div key={i} className="px-4 py-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-sm font-medium text-gray-200">{n.disciplina}</p>
-                            <div className="flex items-center gap-2">
-                              {medNum !== null && (
-                                <span className={`text-xs font-bold font-mono px-2 py-0.5 rounded-full ${
-                                  medNum >= 7 ? 'bg-[#39d353]/15 text-[#39d353]' :
-                                  medNum >= 5 ? 'bg-yellow-500/15 text-yellow-400' :
-                                  'bg-[#f85149]/15 text-[#f85149]'
+                        <div key={n.disciplina} className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-700">{n.disciplina}</span>
+                          <div className="text-right">
+                            {medNum !== null && (
+                              <span className={`text-xs font-bold font-mono px-3 py-1 rounded-full ${medNum >= 7 ? 'bg-green-50 text-green-600 border border-green-200' :
+                                  medNum >= 5 ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                                    'bg-red-50 text-red-600 border border-red-200'
                                 }`}>
-                                  {medNum.toFixed(1)}
-                                </span>
-                              )}
-                              {n.situacao_final && (
-                                <span className={`text-xs ${n.situacao_final === 'Aprovado' ? 'text-[#39d353]' : 'text-yellow-400'}`}>
-                                  {n.situacao_final}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-3 flex-wrap">
-                            {['b1', 'b2', 'b3', 'b4'].map((bim, idx) => (
-                              <div key={bim} className="text-center">
-                                <p className="text-xs text-gray-600 mb-0.5">{idx + 1}º Bim</p>
-                                <p className={`text-sm font-mono font-semibold ${
-                                  n[bim] === null ? 'text-gray-600' :
-                                  n[bim] >= 7 ? 'text-[#39d353]' :
-                                  n[bim] >= 5 ? 'text-yellow-400' : 'text-[#f85149]'
-                                }`}>{n[bim] !== null ? n[bim].toFixed(1) : '—'}</p>
-                              </div>
-                            ))}
-                            {recFinal !== null && (
-                              <div className="text-center">
-                                <p className="text-xs text-gray-600 mb-0.5">Rec.</p>
-                                <p className="text-sm font-mono font-semibold text-yellow-400">{recFinal.toFixed(1)}</p>
-                              </div>
+                                {medNum.toFixed(1)}
+                              </span>
+                            )}
+                            {n.situacao_final && (
+                              <span className={`text-xs font-medium block mt-1 ${n.situacao_final === 'Aprovado' ? 'text-green-600' : 'text-amber-600'
+                                }`}>
+                                {n.situacao_final}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -398,6 +387,7 @@ export default function ResponsavelDashboard() {
                 </div>
               )
             })}
+
           </div>
         </div>
       )}

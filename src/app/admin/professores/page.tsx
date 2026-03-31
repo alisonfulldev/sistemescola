@@ -48,82 +48,82 @@ export default function ProfessoresPage() {
   }
 
   const perfilBadge = (p: string) => ({
-    admin: 'bg-purple-500/20 text-purple-300',
-    secretaria: 'bg-blue-500/20 text-blue-300',
-    professor: 'bg-gray-500/20 text-gray-300',
-    responsavel: 'bg-green-500/20 text-green-300',
-  }[p] || 'bg-gray-500/20 text-gray-400')
+    admin:      'bg-blue-50 text-blue-700',
+    secretaria: 'bg-blue-50 text-blue-700',
+    professor:  'bg-slate-100 text-slate-600',
+    responsavel:'bg-green-50 text-green-700',
+  }[p] || 'bg-slate-100 text-slate-500')
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Professores</h1>
-          <p className="text-gray-400 text-sm">{usuarios.length} professor(es)</p>
+          <h1 className="text-xl font-bold text-slate-900">Professores</h1>
+          <p className="text-slate-600 text-sm">{usuarios.length} professor(es)</p>
         </div>
-        <button onClick={() => { setShowForm(true); setErro('') }} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+        <button onClick={() => { setShowForm(true); setErro('') }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
           + Novo Usuário
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-[#161b22] border border-purple-500/30 rounded-xl p-5 mb-6 animate-slide-up">
-          <h3 className="font-semibold text-white mb-4">Novo Usuário</h3>
-          {erro && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{erro}</div>}
+        <div className="bg-white border border-blue-200 rounded-xl p-5 mb-6 animate-slide-up shadow-sm">
+          <h3 className="font-semibold text-slate-900 mb-4">Novo Usuário</h3>
+          {erro && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{erro}</div>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Nome Completo *</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Nome Completo *</label>
               <input type="text" value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
+                className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Email *</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Email *</label>
               <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
+                className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Senha (mín. 8 caracteres) *</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Senha (mín. 8 caracteres) *</label>
               <input type="password" value={form.senha} onChange={e => setForm(p => ({ ...p, senha: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
+                className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
             </div>
           </div>
           <div className="flex gap-3">
             <button onClick={criarUsuario} disabled={salvando || !form.nome.trim() || !form.email.trim() || !form.senha.trim()}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
             >{salvando ? 'Criando...' : 'Criar Usuário'}</button>
-            <button onClick={() => { setShowForm(false); setErro('') }} className="px-4 py-2 bg-[#30363d] text-gray-300 text-sm rounded-lg hover:bg-[#21262d] transition-colors">Cancelar</button>
+            <button onClick={() => { setShowForm(false); setErro('') }} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-sm rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
           </div>
         </div>
       )}
 
-      <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <table className="w-full text-sm min-w-[480px]">
           <thead>
-            <tr className="border-b border-[#30363d]">
-              <th className="p-4 text-gray-400 font-medium text-left">Nome</th>
-              <th className="p-4 text-gray-400 font-medium text-left hidden md:table-cell">Email</th>
-              <th className="p-4 text-gray-400 font-medium text-center">Perfil</th>
-              <th className="p-4 text-gray-400 font-medium text-center">Status</th>
-              <th className="p-4 text-gray-400 font-medium text-center">Ações</th>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <th className="p-4 text-slate-500 font-medium text-left">Nome</th>
+              <th className="p-4 text-slate-500 font-medium text-left hidden md:table-cell">Email</th>
+              <th className="p-4 text-slate-500 font-medium text-center">Perfil</th>
+              <th className="p-4 text-slate-500 font-medium text-center">Status</th>
+              <th className="p-4 text-slate-500 font-medium text-center">Ações</th>
             </tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={5} className="text-center py-8 text-gray-500">Carregando...</td></tr>
+            {loading ? <tr><td colSpan={5} className="text-center py-8 text-slate-400">Carregando...</td></tr>
             : usuarios.map(u => (
-              <tr key={u.id} className="border-b border-[#30363d]/50 hover:bg-[#21262d] transition-colors">
-                <td className="p-4 text-white">{u.nome}</td>
-                <td className="p-4 text-gray-300 text-xs hidden md:table-cell" style={{ fontFamily: 'DM Mono, monospace' }}>{u.email}</td>
+              <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                <td className="p-4 text-slate-900">{u.nome}</td>
+                <td className="p-4 text-slate-600 text-xs hidden md:table-cell" style={{ fontFamily: 'DM Mono, monospace' }}>{u.email}</td>
                 <td className="p-4 text-center">
                   <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${perfilBadge(u.perfil)}`}>{u.perfil}</span>
                 </td>
                 <td className="p-4 text-center">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${u.ativo ? 'bg-[#39d353]/15 text-[#39d353]' : 'bg-red-500/15 text-red-400'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${u.ativo ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
                     {u.ativo ? 'Ativo' : 'Inativo'}
                   </span>
                 </td>
                 <td className="p-4 text-center">
-                  <button onClick={() => toggleAtivo(u)} className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.ativo ? 'text-red-400 border-red-400/30 hover:bg-red-400/10' : 'text-[#39d353] border-[#39d353]/30 hover:bg-[#39d353]/10'}`}>
+                  <button onClick={() => toggleAtivo(u)} className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.ativo ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-green-700 border-green-200 hover:bg-green-50'}`}>
                     {u.ativo ? 'Desativar' : 'Ativar'}
                   </button>
                 </td>

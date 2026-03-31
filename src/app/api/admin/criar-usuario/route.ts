@@ -4,7 +4,6 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    // Verifica se o solicitante é admin
     const supabase = createServerClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -12,15 +11,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const { data: perfil } = await supabase
+    const { data: perfilData } = await supabase
       .from('usuarios')
-      .select('perfil')
+      .select('perfil, escola_id')
       .eq('id', user.id)
       .single()
 
-    const isAdmin = perfil?.perfil === 'admin'
-    const isSecretaria = perfil?.perfil === 'secretaria'
-    const isDiretor = perfil?.perfil === 'diretor'
+    const isAdmin = perfilData?.perfil === 'admin'
+    const isSecretaria = perfilData?.perfil === 'secretaria'
+    const isDiretor = perfilData?.perfil === 'diretor'
     if (!isAdmin && !isSecretaria && !isDiretor) {
       return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
     }
@@ -53,7 +52,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Apenas administradores podem criar contas de administrador.' }, { status: 403 })
     }
 
-    // Usa service_role para criar usuário no Auth
+    // Determinar escola_id do novo usuário:
+    // - admin criando diretor: recebe escola_id via body
+    // - admin criando qualquer outro: recebe escola_id via body
+    // - diretor/secretaria criando qualquer usuário: herda o próprio escola_id
+    let novoEscolaId: string | null = null
+    if (isAdmin) {
+      novoEscolaId = typeof body.escola_id === 'string' ? body.escola_id : null
+    } else {
+      // diretor/secretaria: novos usuários herdam a mesma escola
+      novoEscolaId = perfilData?.escola_id || null
+    }
+
+    // responsavel não tem escola_id (é vinculado a alunos, não a escola diretamente)
+    if (novoPerfil === 'responsavel') novoEscolaId = null
+
     const adminClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -78,13 +91,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    // Insere na tabela public.usuarios (necessário para o sistema funcionar)
+    const usuarioLogin = email.trim().split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '')
+
     const { error: erroInsert } = await adminClient
       .from('usuarios')
-      .upsert({ id: data.user.id, nome: nome.trim(), email: email.trim(), perfil: novoPerfil })
+      .upsert({
+        id: data.user.id,
+        nome: nome.trim(),
+        email: email.trim(),
+        perfil: novoPerfil,
+        escola_id: novoEscolaId,
+        usuario: usuarioLogin,
+        ativo: true,
+      }, { onConflict: 'id' })
 
     if (erroInsert) {
-      // Reverte criação no auth se falhar o insert
       await adminClient.auth.admin.deleteUser(data.user.id)
       return NextResponse.json({ error: 'Erro ao salvar usuário: ' + erroInsert.message }, { status: 500 })
     }

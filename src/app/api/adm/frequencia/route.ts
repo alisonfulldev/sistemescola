@@ -6,6 +6,12 @@ export async function GET(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+  const perfil = userData?.perfil || ''
+  const escolaId: string | null = null
+  if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
+    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  }
 
   const mesAno = req.nextUrl.searchParams.get('mes') || (() => {
     const d = new Date()
@@ -22,7 +28,9 @@ export async function GET(req: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  const { data: turmas } = await admin.from('turmas').select('id, nome, turno').eq('ativo', true).order('nome')
+  let qt = admin.from('turmas').select('id, nome, turno').eq('ativo', true).order('nome')
+  if (escolaId) qt = (qt as any).eq('escola_id', escolaId)
+  const { data: turmas } = await qt
   if (!turmas?.length) return NextResponse.json({ dados: [] })
 
   // Aulas do período

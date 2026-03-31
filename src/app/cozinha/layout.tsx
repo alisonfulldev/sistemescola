@@ -24,17 +24,17 @@ export default async function CozinhaLayout({ children }: { children: React.Reac
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117]" style={{ fontFamily: 'Sora, sans-serif' }}>
-      <header className="bg-[#161b22] border-b border-[#30363d] sticky top-0 z-10">
+    <div className="min-h-screen bg-slate-50 text-slate-900" style={{ fontFamily: 'Sora, sans-serif' }}>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">🍽️</span>
-            <span className="font-semibold text-white text-sm">Cozinha Piloto</span>
+            <span className="font-semibold text-slate-900 text-sm">Cozinha Piloto</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500 hidden sm:block">{usuario?.nome}</span>
+            <span className="text-xs text-slate-500 hidden sm:block">{usuario?.nome}</span>
             <form action={logout}>
-              <button type="submit" className="text-xs text-gray-500 hover:text-[#f85149] transition-colors px-2 py-1 rounded">
+              <button type="submit" className="text-xs text-slate-500 hover:text-red-600 transition-colors px-2 py-1 rounded">
                 Sair
               </button>
             </form>

@@ -6,9 +6,9 @@ export async function GET(_req: NextRequest, { params }: { params: { alunoId: st
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-
-  const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (!['secretaria', 'admin'].includes(perfil?.perfil || '')) {
+  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+  const perfil = userData?.perfil || ''
+  if (!['secretaria', 'admin', 'diretor'].includes(perfil)) {
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 

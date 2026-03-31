@@ -15,9 +15,13 @@ export async function GET() {
 
   const { data } = await admin
     .from('usuarios')
-    .select('perfil, nome')
+    .select('perfil, nome, escola_id')
     .eq('id', user.id)
     .single()
 
-  return NextResponse.json({ perfil: data?.perfil || null, nome: data?.nome || null })
+  return NextResponse.json({
+    perfil: data?.perfil || null,
+    nome: data?.nome || null,
+    escola_id: data?.escola_id || null,
+  })
 }

@@ -62,17 +62,17 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
   return (
     <div>
       {/* Cabeçalho */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-4 mb-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="font-bold text-white text-base">{aula?.turmas?.nome}</h2>
-            {aula?.disciplinas?.nome && <p className="text-gray-400 text-sm">{aula.disciplinas.nome}</p>}
-            <p className="text-gray-600 text-xs mt-1" style={{ fontFamily: 'DM Mono, monospace' }}>
+            <h2 className="font-bold text-slate-900 text-base">{aula?.turmas?.nome}</h2>
+            {aula?.disciplinas?.nome && <p className="text-slate-500 text-sm">{aula.disciplinas.nome}</p>}
+            <p className="text-slate-400 text-xs mt-1" style={{ fontFamily: 'DM Mono, monospace' }}>
               {formatDate(aula?.data, "dd/MM/yyyy")}
               {aula?.horario_inicio && ` · ${formatTime(aula.horario_inicio)} – ${formatTime(aula.horario_fim)}`}
             </p>
           </div>
-          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${chamada.status === 'concluida' ? 'bg-[#39d353]/15 text-[#39d353]' : 'bg-yellow-500/15 text-yellow-400'}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${chamada.status === 'concluida' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
             {chamada.status === 'concluida' ? 'Concluída' : 'Em andamento'}
           </span>
         </div>
@@ -81,10 +81,10 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
       {/* KPIs */}
       <div className="grid grid-cols-4 gap-2 mb-4">
         {[
-          { n: total, label: 'Total', cls: 'bg-[#161b22] border-[#30363d] text-white' },
-          { n: presentes.length, label: 'Presentes', cls: 'bg-[#39d353]/10 border-[#39d353]/30 text-[#39d353]' },
-          { n: faltas.length, label: 'Faltas', cls: 'bg-[#f85149]/10 border-[#f85149]/30 text-[#f85149]' },
-          { n: justificadas.length, label: 'Justif.', cls: 'bg-[#e3b341]/10 border-[#e3b341]/30 text-[#e3b341]' },
+          { n: total, label: 'Total', cls: 'bg-white border-slate-200 text-slate-900' },
+          { n: presentes.length, label: 'Presentes', cls: 'bg-green-50 border-green-200 text-green-600' },
+          { n: faltas.length, label: 'Faltas', cls: 'bg-red-50 border-red-200 text-red-600' },
+          { n: justificadas.length, label: 'Justif.', cls: 'bg-amber-50 border-amber-200 text-amber-600' },
         ].map(k => (
           <div key={k.label} className={`rounded-xl border p-3 text-center ${k.cls}`}>
             <div className="text-xl font-bold">{k.n}</div>
@@ -94,35 +94,35 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
       </div>
 
       {/* Barra de frequência */}
-      <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-4 mb-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-300">Frequência da turma</span>
-          <span className={`text-lg font-bold ${freq >= 75 ? 'text-[#39d353]' : 'text-[#f85149]'}`}>{freq}%</span>
+          <span className="text-sm font-medium text-slate-600">Frequência da turma</span>
+          <span className={`text-lg font-bold ${freq >= 75 ? 'text-green-600' : 'text-red-600'}`}>{freq}%</span>
         </div>
-        <div className="w-full bg-[#0d1117] rounded-full h-3">
+        <div className="w-full bg-slate-100 rounded-full h-3">
           <div
-            className={`h-3 rounded-full transition-all duration-500 ${freq >= 75 ? 'bg-[#39d353]' : 'bg-[#f85149]'}`}
+            className={`h-3 rounded-full transition-all duration-500 ${freq >= 75 ? 'bg-green-600' : 'bg-red-600'}`}
             style={{ width: `${freq}%` }}
           />
         </div>
-        {freq < 75 && <p className="text-xs text-[#f85149] mt-2">⚠ Frequência abaixo do mínimo (75%)</p>}
+        {freq < 75 && <p className="text-xs text-red-600 mt-2">⚠ Frequência abaixo do mínimo (75%)</p>}
       </div>
 
       {/* Faltas */}
       {faltas.length > 0 && (
         <div className="mb-4">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
             Faltas ({faltas.length})
           </h3>
           <div className="space-y-2">
             {faltas.map((r: any) => (
-              <div key={r.id} className="bg-[#161b22] border border-[#f85149]/30 rounded-xl p-3 flex items-center gap-3">
-                <Avatar r={r} cor="bg-[#f85149]/20 text-[#f85149]" />
+              <div key={r.id} className="bg-white border border-red-200 rounded-xl p-3 flex items-center gap-3">
+                <Avatar r={r} cor="bg-red-50 text-red-600" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-200 truncate">{r.alunos?.nome_completo}</p>
-                  {r.observacao && <p className="text-xs text-gray-500 mt-0.5 italic">"{r.observacao}"</p>}
+                  <p className="text-sm font-medium text-slate-700 truncate">{r.alunos?.nome_completo}</p>
+                  {r.observacao && <p className="text-xs text-slate-500 mt-0.5 italic">"{r.observacao}"</p>}
                 </div>
-                <span className="text-xs text-[#f85149] font-bold flex-shrink-0">F</span>
+                <span className="text-xs text-red-600 font-bold flex-shrink-0">F</span>
               </div>
             ))}
           </div>
@@ -132,27 +132,27 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
       {/* Justificadas */}
       {justificadas.length > 0 && (
         <div className="mb-4">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
             Justificadas ({justificadas.length})
           </h3>
           <div className="space-y-2">
             {justificadas.map((r: any) => {
               const just = r.justificativas_falta?.[0]
               return (
-                <div key={r.id} className="bg-[#161b22] border border-[#e3b341]/30 rounded-xl p-3">
+                <div key={r.id} className="bg-white border border-amber-200 rounded-xl p-3">
                   <div className="flex items-center gap-3">
-                    <Avatar r={r} cor="bg-[#e3b341]/20 text-[#e3b341]" />
+                    <Avatar r={r} cor="bg-amber-50 text-amber-600" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-200 truncate">{r.alunos?.nome_completo}</p>
+                      <p className="text-sm font-medium text-slate-700 truncate">{r.alunos?.nome_completo}</p>
                       {just?.usuarios?.nome && (
-                        <p className="text-xs text-gray-500 mt-0.5">por {just.usuarios.nome}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">por {just.usuarios.nome}</p>
                       )}
                     </div>
-                    <span className="text-xs text-[#e3b341] font-bold flex-shrink-0">J</span>
+                    <span className="text-xs text-amber-600 font-bold flex-shrink-0">J</span>
                   </div>
                   {just?.motivo && (
-                    <div className="mt-2 bg-[#0d1117] rounded-lg px-3 py-2">
-                      <p className="text-xs text-gray-300 italic">"{just.motivo}"</p>
+                    <div className="mt-2 bg-slate-50 rounded-lg px-3 py-2">
+                      <p className="text-xs text-slate-600 italic">"{just.motivo}"</p>
                     </div>
                   )}
                 </div>
@@ -165,15 +165,15 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
       {/* Presentes */}
       {presentes.length > 0 && (
         <div className="mb-4">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
             Presentes ({presentes.length})
           </h3>
           <div className="grid grid-cols-1 gap-1.5">
             {presentes.map((r: any) => (
-              <div key={r.id} className="bg-[#161b22] border border-[#30363d] rounded-xl p-3 flex items-center gap-3">
-                <Avatar r={r} cor="bg-[#39d353]/20 text-[#39d353]" />
-                <p className="text-sm text-gray-300 truncate flex-1">{r.alunos?.nome_completo}</p>
-                <span className="text-xs text-[#39d353] font-bold flex-shrink-0">P</span>
+              <div key={r.id} className="bg-white border border-slate-200 rounded-xl p-3 flex items-center gap-3">
+                <Avatar r={r} cor="bg-green-50 text-green-600" />
+                <p className="text-sm text-slate-600 truncate flex-1">{r.alunos?.nome_completo}</p>
+                <span className="text-xs text-green-600 font-bold flex-shrink-0">P</span>
               </div>
             ))}
           </div>
@@ -181,19 +181,19 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
       )}
 
       {total === 0 && (
-        <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 text-center text-gray-500 text-sm mb-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-slate-500 text-sm mb-4">
           Nenhum registro encontrado para esta chamada.
         </div>
       )}
 
       <div className="flex gap-3 mt-2">
         <Link href="/professor"
-          className="flex-1 py-3 bg-[#0d1117] border border-[#30363d] text-gray-400 rounded-xl font-medium text-center hover:bg-[#30363d] hover:text-gray-200 transition-colors text-sm"
+          className="flex-1 py-3 bg-white border border-slate-300 text-slate-500 rounded-xl font-medium text-center hover:bg-slate-50 hover:text-slate-900 transition-colors text-sm"
         >
           ← Voltar
         </Link>
         <Link href={`/professor/chamada/${params.chamadaId}`}
-          className="flex-1 py-3 bg-[#161b22] border border-[#39d353]/40 text-[#39d353] rounded-xl font-medium text-center hover:bg-[#39d353]/10 transition-colors text-sm"
+          className="flex-1 py-3 bg-white border border-green-300 text-green-600 rounded-xl font-medium text-center hover:bg-green-50 transition-colors text-sm"
         >
           ✏ Editar chamada
         </Link>

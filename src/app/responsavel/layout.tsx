@@ -23,15 +23,15 @@ export default async function ResponsavelLayout({ children }: { children: React.
   if (usuario?.perfil !== 'responsavel') redirect('/login')
 
   return (
-    <div className="min-h-screen bg-[#0d1117]" style={{ fontFamily: 'Sora, sans-serif' }}>
-      <header className="bg-[#161b22] border-b border-[#30363d] sticky top-0 z-10">
+    <div className="min-h-screen bg-slate-50 text-slate-900" style={{ fontFamily: 'Sora, sans-serif' }}>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">🏫</span>
-            <span className="font-semibold text-white text-sm">Frequência Escolar</span>
+            <span className="font-semibold text-slate-900 text-sm">Frequência Escolar</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500 hidden sm:block">{usuario?.nome}</span>
+            <span className="text-xs text-slate-500 hidden sm:block">{usuario?.nome}</span>
             <LogoutButton email={user.email} />
           </div>
         </div>

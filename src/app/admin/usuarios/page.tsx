@@ -36,12 +36,12 @@ export default function UsuariosPage() {
   const supabase = createClient()
 
   async function carregar() {
-    const [{ data: u }, { data: e }] = await Promise.all([
+    const [{ data: u }, { data: eData }] = await Promise.all([
       supabase.from('usuarios').select('*').order('nome'),
-      supabase.from('escola').select('codigo, nome_oficial').limit(1).single(),
+      supabase.from('escola').select('id, codigo, nome_oficial').limit(1).single(),
     ])
     setUsuarios(u || [])
-    if (e) setEscola(e)
+    if (eData) setEscola(eData)
     setLoading(false)
   }
 
@@ -54,7 +54,7 @@ export default function UsuariosPage() {
     const res = await fetch('/api/admin/criar-usuario', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form }),
     })
     if (!res.ok) {
       const d = await res.json()
@@ -143,25 +143,25 @@ export default function UsuariosPage() {
   function handleFiltro(fn: () => void) { fn(); setPagina(1) }
 
   const perfilBadge = (p: string) => ({
-    admin:      'bg-purple-500/20 text-purple-300',
-    diretor:    'bg-indigo-500/20 text-indigo-300',
-    secretaria: 'bg-blue-500/20 text-blue-300',
-    professor:  'bg-gray-500/20 text-gray-300',
-    responsavel:'bg-green-500/20 text-green-300',
-    cozinha:    'bg-orange-500/20 text-orange-300',
-  }[p] || 'bg-gray-500/20 text-gray-400')
+    admin:      'bg-blue-50 text-blue-700',
+    diretor:    'bg-blue-50 text-blue-700',
+    secretaria: 'bg-blue-50 text-blue-700',
+    professor:  'bg-slate-100 text-slate-600',
+    responsavel:'bg-green-50 text-green-700',
+    cozinha:    'bg-orange-50 text-orange-700',
+  }[p] || 'bg-slate-100 text-slate-500')
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Usuários</h1>
-          <p className="text-gray-400 text-sm">{usuariosFiltrados.length} de {usuarios.length} usuário(s)</p>
+          <h1 className="text-xl font-bold text-slate-900">Usuários</h1>
+          <p className="text-slate-600 text-sm">{usuariosFiltrados.length} de {usuarios.length} usuário(s)</p>
 
         </div>
         <button
           onClick={() => { setShowForm(true); setErro('') }}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
         >
           + Novo Usuário
         </button>
@@ -170,19 +170,19 @@ export default function UsuariosPage() {
       {/* Busca e filtros */}
       <div className="flex flex-col sm:flex-row gap-2 mb-5">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
           <input
             type="text"
             value={busca}
             onChange={e => handleFiltro(() => setBusca(e.target.value))}
             placeholder="Buscar por nome ou email..."
-            className="w-full bg-[#161b22] border border-[#30363d] text-gray-200 text-sm rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-purple-500"
+            className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           />
         </div>
         <select
           value={filtroPerfil}
           onChange={e => handleFiltro(() => setFiltroPerfil(e.target.value))}
-          className="bg-[#161b22] border border-[#30363d] text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+          className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         >
           <option value="">Todos os perfis</option>
           <option value="professor">Professor</option>
@@ -195,7 +195,7 @@ export default function UsuariosPage() {
         <select
           value={filtroStatus}
           onChange={e => handleFiltro(() => setFiltroStatus(e.target.value))}
-          className="bg-[#161b22] border border-[#30363d] text-gray-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+          className="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         >
           <option value="">Todos os status</option>
           <option value="ativo">Ativos</option>
@@ -204,7 +204,7 @@ export default function UsuariosPage() {
         {(busca || filtroPerfil || filtroStatus) && (
           <button
             onClick={() => { setBusca(''); setFiltroPerfil(''); setFiltroStatus(''); setPagina(1) }}
-            className="px-3 py-2 bg-[#30363d] text-gray-400 text-xs rounded-lg hover:bg-[#21262d] transition-colors whitespace-nowrap"
+            className="px-3 py-2 bg-white border border-slate-300 text-slate-500 text-xs rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap"
           >
             Limpar
           </button>
@@ -212,27 +212,27 @@ export default function UsuariosPage() {
       </div>
 
       {showForm && (
-        <div className="bg-[#161b22] border border-purple-500/30 rounded-xl p-5 mb-6">
-          <h3 className="font-semibold text-white mb-4">Novo Usuário</h3>
-          {erro && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">{erro}</div>}
+        <div className="bg-white border border-blue-200 rounded-xl p-5 mb-6 shadow-sm">
+          <h3 className="font-semibold text-slate-900 mb-4">Novo Usuário</h3>
+          {erro && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{erro}</div>}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Nome Completo *</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Nome Completo *</label>
               <input type="text" value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
+                className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Email *</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Email *</label>
               <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
+                className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Senha inicial (mín. 8 caracteres) *</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Senha inicial (mín. 8 caracteres) *</label>
               <input type="password" value={form.senha} onChange={e => setForm(p => ({ ...p, senha: e.target.value }))}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500" />
+                className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Perfil *</label>
+              <label className="block text-xs text-slate-600 mb-1.5">Perfil *</label>
               <select value={form.perfil} onChange={e => {
                 const perfil = e.target.value
                 const novoForm: typeof form = { ...form, perfil }
@@ -242,7 +242,7 @@ export default function UsuariosPage() {
                 }
                 setForm(novoForm)
               }}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-purple-500"
+                className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option value="professor">Professor</option>
                 <option value="secretaria">Secretaria</option>
@@ -252,46 +252,49 @@ export default function UsuariosPage() {
                 <option value="admin">Administrador</option>
               </select>
               {form.perfil === 'diretor' && escola?.codigo && (
-                <p className="text-xs text-blue-400 mt-1">🏫 Login gerado pelo INEP: <span className="font-mono">{escola.codigo}</span></p>
+                <p className="text-xs text-blue-600 mt-1">🏫 Login gerado pelo INEP: <span className="font-mono">{escola.codigo}</span></p>
               )}
             </div>
           </div>
           <div className="flex gap-3">
             <button onClick={criarUsuario} disabled={salvando || !form.nome.trim() || !form.email.trim() || !form.senha.trim()}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
             >{salvando ? 'Criando...' : 'Criar Usuário'}</button>
-            <button onClick={() => { setShowForm(false); setErro('') }} className="px-4 py-2 bg-[#30363d] text-gray-300 text-sm rounded-lg hover:bg-[#21262d] transition-colors">Cancelar</button>
+            <button onClick={() => { setShowForm(false); setErro('') }} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-sm rounded-lg hover:bg-slate-50 transition-colors">Cancelar</button>
           </div>
         </div>
       )}
 
-      <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[540px]">
             <thead>
-              <tr className="border-b border-[#30363d]">
-                <th className="p-4 text-gray-400 font-medium text-left">Nome</th>
-                <th className="p-4 text-gray-400 font-medium text-left hidden md:table-cell">Email</th>
-                <th className="p-4 text-gray-400 font-medium text-center">Perfil</th>
-                <th className="p-4 text-gray-400 font-medium text-center">Status</th>
-                <th className="p-4 text-gray-400 font-medium text-center">Ações</th>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="p-4 text-slate-500 font-medium text-left">Nome</th>
+                <th className="p-4 text-slate-500 font-medium text-left hidden md:table-cell">Email</th>
+                <th className="p-4 text-slate-500 font-medium text-center">Perfil</th>
+                <th className="p-4 text-slate-500 font-medium text-center">Status</th>
+                <th className="p-4 text-slate-500 font-medium text-center">Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} className="text-center py-8 text-gray-500">Carregando...</td></tr>
+                <tr><td colSpan={5} className="text-center py-8 text-slate-400">Carregando...</td></tr>
               ) : usuariosFiltrados.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-8 text-gray-500 text-sm">Nenhum usuário encontrado.</td></tr>
+                <tr><td colSpan={5} className="text-center py-8 text-slate-400 text-sm">Nenhum usuário encontrado.</td></tr>
               ) : usuariosPaginados.map(u => (
                 <>
-                  <tr key={u.id} className="border-b border-[#30363d]/50 hover:bg-[#21262d] transition-colors">
-                    <td className="p-4 text-white">{u.nome}</td>
-                    <td className="p-4 text-gray-300 text-xs hidden md:table-cell" style={{ fontFamily: 'DM Mono, monospace' }}>{u.email}</td>
+                  <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="p-4">
+                      <p className="text-slate-900">{u.nome}</p>
+                      {u.usuario && <p className="text-xs text-blue-600 font-mono mt-0.5">@{u.usuario}</p>}
+                    </td>
+                    <td className="p-4 text-slate-600 text-xs hidden md:table-cell" style={{ fontFamily: 'DM Mono, monospace' }}>{u.email}</td>
                     <td className="p-4 text-center">
                       <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${perfilBadge(u.perfil)}`}>{u.perfil}</span>
                     </td>
                     <td className="p-4 text-center">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${u.ativo ? 'bg-[#39d353]/15 text-[#39d353]' : 'bg-red-500/15 text-red-400'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${u.ativo ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
                         {u.ativo ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
@@ -299,13 +302,13 @@ export default function UsuariosPage() {
                       <div className="flex items-center justify-center gap-1.5 flex-wrap">
                         <button
                           onClick={() => editando === u.id ? setEditando(null) : abrirEdicao(u)}
-                          className="text-xs px-2 py-1 rounded-lg border text-blue-400 border-blue-400/30 hover:bg-blue-400/10 transition-all"
+                          className="text-xs px-2 py-1 rounded-lg border text-blue-600 border-blue-200 hover:bg-blue-50 transition-all"
                         >
                           {editando === u.id ? 'Fechar' : 'Editar'}
                         </button>
                         <button
                           onClick={() => linkAberto === u.id ? setLinkAberto(null) : gerarLink(u.id, u.email)}
-                          className="text-xs px-2 py-1 rounded-lg border text-yellow-400 border-yellow-400/30 hover:bg-yellow-400/10 transition-all"
+                          className="text-xs px-2 py-1 rounded-lg border text-amber-700 border-amber-200 hover:bg-amber-50 transition-all"
                         >
                           {linkAberto === u.id ? 'Fechar' : '🔑 Senha'}
                         </button>
@@ -313,7 +316,7 @@ export default function UsuariosPage() {
                           onClick={() => toggleAtivo(u)}
                           disabled={u.perfil === 'admin'}
                           title={u.perfil === 'admin' ? 'Usuários admin não podem ser desativados' : undefined}
-                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.perfil === 'admin' ? 'opacity-30 cursor-not-allowed text-gray-500 border-gray-500/20' : u.ativo ? 'text-red-400 border-red-400/30 hover:bg-red-400/10' : 'text-[#39d353] border-[#39d353]/30 hover:bg-[#39d353]/10'}`}
+                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.perfil === 'admin' ? 'opacity-30 cursor-not-allowed text-slate-400 border-slate-200' : u.ativo ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-green-700 border-green-200 hover:bg-green-50'}`}
                         >
                           {u.ativo ? 'Desativar' : 'Ativar'}
                         </button>
@@ -322,34 +325,34 @@ export default function UsuariosPage() {
                   </tr>
 
                   {editando === u.id && (
-                    <tr key={`${u.id}-edit`} className="border-b border-[#30363d]/50 bg-blue-500/5">
+                    <tr key={`${u.id}-edit`} className="border-b border-slate-100 bg-blue-50">
                       <td colSpan={5} className="px-4 py-4">
-                        {erroEdit && <p className="text-xs text-red-400 mb-3">{erroEdit}</p>}
+                        {erroEdit && <p className="text-xs text-red-600 mb-3">{erroEdit}</p>}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                           <div>
-                            <label className="block text-xs text-gray-500 mb-1">Nome</label>
+                            <label className="block text-xs text-slate-500 mb-1">Nome</label>
                             <input
                               type="text"
                               value={editForm.nome}
                               onChange={e => setEditForm(p => ({ ...p, nome: e.target.value }))}
-                              className="w-full bg-[#0d1117] border border-blue-400/30 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400"
+                              className="w-full bg-white border border-blue-200 text-slate-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs text-gray-500 mb-1">Email</label>
+                            <label className="block text-xs text-slate-500 mb-1">Email</label>
                             <input
                               type="email"
                               value={editForm.email}
                               onChange={e => setEditForm(p => ({ ...p, email: e.target.value }))}
-                              className="w-full bg-[#0d1117] border border-blue-400/30 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400"
+                              className="w-full bg-white border border-blue-200 text-slate-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs text-gray-500 mb-1">Perfil</label>
+                            <label className="block text-xs text-slate-500 mb-1">Perfil</label>
                             <select
                               value={editForm.perfil}
                               onChange={e => setEditForm(p => ({ ...p, perfil: e.target.value }))}
-                              className="w-full bg-[#0d1117] border border-blue-400/30 text-gray-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-400"
+                              className="w-full bg-white border border-blue-200 text-slate-900 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
                             >
                               <option value="professor">Professor</option>
                               <option value="secretaria">Secretaria</option>
@@ -363,13 +366,13 @@ export default function UsuariosPage() {
                           <button
                             onClick={salvarEdicao}
                             disabled={salvandoEdit}
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors"
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors"
                           >
                             {salvandoEdit ? 'Salvando...' : 'Salvar'}
                           </button>
                           <button
                             onClick={() => setEditando(null)}
-                            className="px-3 py-1.5 bg-[#30363d] text-gray-300 text-xs rounded-lg hover:bg-[#21262d] transition-colors"
+                            className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs rounded-lg hover:bg-slate-50 transition-colors"
                           >
                             Cancelar
                           </button>
@@ -379,34 +382,34 @@ export default function UsuariosPage() {
                   )}
 
                   {linkAberto === u.id && (
-                    <tr key={`${u.id}-link`} className="border-b border-[#30363d]/50 bg-yellow-500/5">
+                    <tr key={`${u.id}-link`} className="border-b border-slate-100 bg-amber-50">
                       <td colSpan={5} className="px-4 py-4">
                         {gerandoLink ? (
-                          <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <div className="animate-spin w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full" />
+                          <div className="flex items-center gap-2 text-sm text-slate-500">
+                            <div className="animate-spin w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full" />
                             Gerando link...
                           </div>
                         ) : erroLink ? (
-                          <p className="text-sm text-red-400">{erroLink}</p>
+                          <p className="text-sm text-red-600">{erroLink}</p>
                         ) : linkGerado ? (
                           <div>
-                            <p className="text-xs text-gray-400 mb-2">
-                              Link de redefinição para <span className="text-white font-medium">{u.nome}</span> — válido por 1 hora:
+                            <p className="text-xs text-slate-500 mb-2">
+                              Link de redefinição para <span className="text-slate-900 font-medium">{u.nome}</span> — válido por 1 hora:
                             </p>
                             <div className="flex gap-2 items-center">
                               <input
                                 readOnly
                                 value={linkGerado}
-                                className="flex-1 bg-[#0d1117] border border-yellow-400/30 text-gray-300 text-xs rounded-lg px-3 py-2 font-mono truncate focus:outline-none"
+                                className="flex-1 bg-white border border-amber-200 text-slate-700 text-xs rounded-lg px-3 py-2 font-mono truncate focus:outline-none"
                               />
                               <button
                                 onClick={copiarLink}
-                                className={`px-3 py-2 text-xs font-bold rounded-lg transition-all flex-shrink-0 ${copiado ? 'bg-[#39d353] text-black' : 'bg-yellow-500 hover:bg-yellow-400 text-black'}`}
+                                className={`px-3 py-2 text-xs font-bold rounded-lg transition-all flex-shrink-0 ${copiado ? 'bg-green-500 text-white' : 'bg-amber-500 hover:bg-amber-400 text-white'}`}
                               >
                                 {copiado ? '✓ Copiado!' : 'Copiar'}
                               </button>
                             </div>
-                            <p className="text-xs text-gray-600 mt-2">Envie este link para o usuário. Ao acessar, ele poderá definir uma nova senha.</p>
+                            <p className="text-xs text-slate-400 mt-2">Envie este link para o usuário. Ao acessar, ele poderá definir uma nova senha.</p>
                           </div>
                         ) : null}
                       </td>
@@ -418,24 +421,24 @@ export default function UsuariosPage() {
           </table>
         </div>
         {totalPaginas > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-[#30363d]">
-            <span className="text-xs text-gray-500">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200">
+            <span className="text-xs text-slate-400">
               {(paginaAtual - 1) * POR_PAGINA + 1}–{Math.min(paginaAtual * POR_PAGINA, usuariosFiltrados.length)} de {usuariosFiltrados.length}
             </span>
             <div className="flex items-center gap-1">
-              <button onClick={() => setPagina(1)} disabled={paginaAtual === 1} className="px-2 py-1 text-xs rounded text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">«</button>
-              <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaAtual === 1} className="px-2 py-1 text-xs rounded text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">‹</button>
+              <button onClick={() => setPagina(1)} disabled={paginaAtual === 1} className="px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed">«</button>
+              <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={paginaAtual === 1} className="px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed">‹</button>
               {Array.from({ length: Math.min(5, totalPaginas) }, (_, i) => {
                 const start = Math.max(1, Math.min(paginaAtual - 2, totalPaginas - 4))
                 const p = start + i
                 return (
                   <button key={p} onClick={() => setPagina(p)}
-                    className={`w-7 h-7 text-xs rounded transition-colors ${p === paginaAtual ? 'bg-purple-600 text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-[#21262d]'}`}
+                    className={`w-7 h-7 text-xs rounded transition-colors ${p === paginaAtual ? 'bg-blue-600 text-white font-bold' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'}`}
                   >{p}</button>
                 )
               })}
-              <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={paginaAtual === totalPaginas} className="px-2 py-1 text-xs rounded text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">›</button>
-              <button onClick={() => setPagina(totalPaginas)} disabled={paginaAtual === totalPaginas} className="px-2 py-1 text-xs rounded text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">»</button>
+              <button onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))} disabled={paginaAtual === totalPaginas} className="px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed">›</button>
+              <button onClick={() => setPagina(totalPaginas)} disabled={paginaAtual === totalPaginas} className="px-2 py-1 text-xs rounded text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed">»</button>
             </div>
           </div>
         )}
