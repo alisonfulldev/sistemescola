@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Calcular percentuais
-    const resumoFormatado: Record<number, any> = {}
+    const resumoFormatado: Record<string, any> = {}
     for (const [bim, stats] of Object.entries(resumoPorBimestre)) {
       resumoFormatado[bim] = {
         total_aulas: stats.total,
