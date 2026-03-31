@@ -80,10 +80,10 @@ export async function GET(req: NextRequest) {
     for (const aula of aulas || []) {
       if (aula.disciplina_id && !disciplinaMap.has(aula.disciplina_id)) {
         disciplinaMap.set(aula.disciplina_id, {
-          id: aula.disciplinas?.id,
-          nome: aula.disciplinas?.nome,
-          professor_id: aula.usuarios?.id,
-          professor_nome: aula.usuarios?.nome
+          id: (aula.disciplinas as any)?.id,
+          nome: (aula.disciplinas as any)?.nome,
+          professor_id: (aula.usuarios as any)?.id,
+          professor_nome: (aula.usuarios as any)?.nome
         })
       }
     }
