@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
       .in('chamada_id', chamadaIds)
 
     // Montar grid: aluno × aula
-    const frequenciaGrid: Record<string, Record<string, string>> = {}
+    const frequenciaGrid: Record<string, Record<string, string | null>> = {}
     const resumoPorAluno: Record<string, { presentes: number; faltas: number; justificadas: number }> = {}
 
     for (const aluno of alunos) {
