@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
     const frequenciaMap: Record<string, Record<string, string>> = {}
     for (const aluno of alunos || []) frequenciaMap[aluno.id] = {}
     for (const reg of registrosFrequencia || []) {
-      const data = reg.chamadas?.aulas?.data
+      const data = (reg.chamadas as any)?.aulas?.data
       if (data && reg.aluno_id) {
         frequenciaMap[reg.aluno_id] = frequenciaMap[reg.aluno_id] || {}
         frequenciaMap[reg.aluno_id][data] = reg.status
