@@ -45,4 +45,3 @@ const nextConfig = {
   },
 }
 module.exports = nextConfig
-// Trigger rebuild
