@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function NotasAvaliacaoPage({ params }: { params: { id: string } }) {
+interface Props {
+  params: Promise<{ id: string }>
+}
+
+export default function NotasAvaliacaoPage({ params: paramsPromise }: Props) {
   const [avaliacao, setAvaliacao] = useState<any>(null)
   const [notas, setNotas] = useState<any[]>([])
   const [notasInput, setNotasInput] = useState<Record<string, number | null>>({})
@@ -11,13 +15,19 @@ export default function NotasAvaliacaoPage({ params }: { params: { id: string } 
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState(false)
+  const [id, setId] = useState<string>('')
 
   const router = useRouter()
 
   useEffect(() => {
+    paramsPromise.then((params) => setId(params.id))
+  }, [paramsPromise])
+
+  useEffect(() => {
+    if (!id) return
     async function carregar() {
       try {
-        const res = await fetch(`/api/avaliacoes/${params.id}/notas`)
+        const res = await fetch(`/api/avaliacoes/${id}/notas`)
         if (!res.ok) throw new Error('Avaliação não encontrada')
 
         const { avaliacao: av, notas: ns } = await res.json()
@@ -36,7 +46,7 @@ export default function NotasAvaliacaoPage({ params }: { params: { id: string } 
       setLoading(false)
     }
     carregar()
-  }, [params.id])
+  }, [id])
 
   async function salvarNotas() {
     setSalvando(true)
