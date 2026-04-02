@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate, formatTime } from '@/lib/utils'
-import { Users, CheckCircle2, XCircle, Clock, FileText, InboxX, User, Bell, BarChart3, Eye } from 'lucide-react'
+import { Users, CheckCircle2, XCircle, Clock, FileText, Inbox, User, Bell, BarChart3, Eye } from 'lucide-react'
 
 function KPI({ label, value, color, Icon, sub }: { label: string; value: number | string; color: string; Icon: React.ReactNode; sub?: string }) {
   return (
@@ -160,7 +160,7 @@ export default function AdmDashboard() {
           {chamadas.length === 0 ? (
             <div className="text-center py-10 text-slate-400">
               <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <InboxX className="w-6 h-6 text-slate-400" />
+                <Inbox className="w-6 h-6 text-slate-400" />
               </div>
               <p className="text-sm">Nenhuma chamada iniciada hoje</p>
             </div>
