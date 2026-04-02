@@ -52,7 +52,7 @@ function calcDiasLetivos(inicio: string, fim: string, especiais: Record<string, 
 }
 
 export default function AdmDashboard() {
-  const [kpis, setKpis] = useState({ matriculados: 0, presentes: 0, faltas: 0, pendentes: 0 })
+  const [kpis, setKpis] = useState({ matriculados: 0, presentes: 0, faltas: 0, pendentes: 0 }) // v2
   const [chamadas, setChamadas] = useState<any[]>([])
   const [alertas, setAlertas] = useState<any[]>([])
   const [selecionada, setSelecionada] = useState<any>(null)
