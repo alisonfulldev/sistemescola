@@ -33,27 +33,29 @@ export default async function ProfessorLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex" style={{ fontFamily: 'Sora, sans-serif' }}>
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
         {/* Logo */}
-        <div className="px-6 py-4 border-b border-slate-200">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">👨‍🏫</span>
+        <div className="px-6 py-6 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">SE</span>
+            </div>
             <div>
-              <div className="font-semibold text-slate-900 text-sm">Professor</div>
-              <div className="text-xs text-slate-500">{usuario?.nome}</div>
+              <div className="font-semibold text-white text-sm">Professor</div>
+              <div className="text-xs text-slate-400">{usuario?.nome}</div>
             </div>
           </div>
         </div>
 
         {/* Menu */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-6 space-y-1">
           {menuItems.map(item => {
             const Icon = item.icon
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
               >
                 <Icon className="w-5 h-5" />
                 {item.label}
@@ -63,11 +65,11 @@ export default async function ProfessorLayout({ children }: { children: React.Re
         </nav>
 
         {/* Logout */}
-        <div className="px-4 py-4 border-t border-slate-200">
+        <div className="px-4 py-4 border-t border-slate-800">
           <form action={logout} className="w-full">
             <button
               type="submit"
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors"
             >
               <LogOut className="w-5 h-5" />
               Sair
@@ -80,11 +82,9 @@ export default async function ProfessorLayout({ children }: { children: React.Re
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-          <div className="px-6 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">📚</span>
-              <span className="font-semibold text-slate-900">Sistema Escolar</span>
-            </div>
+          <div className="px-8 h-16 flex items-center justify-between">
+            <h2 className="font-semibold text-slate-900 text-lg">Gestor Acadêmico</h2>
+            <div className="text-sm text-slate-500">Sistema Escolar</div>
           </div>
         </header>
 
