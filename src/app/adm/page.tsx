@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate, formatTime } from '@/lib/utils'
+import { Users, CheckCircle2, XCircle, Clock, FileText, InboxX, User, Bell, BarChart3, Eye } from 'lucide-react'
 
-function KPI({ label, value, color, icon, sub }: { label: string; value: number | string; color: string; icon: string; sub?: string }) {
+function KPI({ label, value, color, Icon, sub }: { label: string; value: number | string; color: string; Icon: React.ReactNode; sub?: string }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm text-slate-600">{label}</p>
-        <span className="text-xl">{icon}</span>
+        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+          {Icon}
+        </div>
       </div>
       <p className={`text-2xl sm:text-3xl font-bold ${color}`} style={{ fontFamily: 'DM Mono, monospace' }}>{value}</p>
       {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
@@ -23,7 +26,11 @@ function StatusBadge({ status }: { status: string }) {
     em_andamento: 'bg-blue-50 text-blue-700',
     pendente: 'bg-amber-50 text-amber-700',
   }
-  const l: Record<string, string> = { concluida: '✓ Concluída', em_andamento: '⏳ Em andamento', pendente: '◷ Aguardando' }
+  const l: Record<string, string> = {
+    concluida: 'Concluída',
+    em_andamento: 'Em andamento',
+    pendente: 'Aguardando'
+  }
   return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${m[status] || 'bg-slate-100 text-slate-500'}`}>{l[status] || status}</span>
 }
 
@@ -98,59 +105,64 @@ export default function AdmDashboard() {
 
   return (
     <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Acesso Rápido</h1>
-          <p className="text-slate-600 text-sm capitalize hidden sm:block">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
+          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-slate-600 text-sm mt-1">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-green-600">
+        <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1.5 rounded-lg">
           <span className="w-2 h-2 bg-green-500 rounded-full live-dot" />
-          <span>Ao vivo</span>
+          <span className="font-medium">Ao vivo</span>
         </div>
       </div>
 
       {/* Dias letivos por bimestre */}
       {bimestres.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
           {bimestres.map((b: any) => {
             const dl = calcDiasLetivos(b.data_inicio, b.data_fim, diasEspeciais)
             return (
-              <div key={b.numero} className="bg-white border border-slate-200 rounded-xl p-3 text-center">
-                <p className="text-xs text-blue-600 font-semibold mb-1">{b.numero}º Bimestre</p>
-                <p className="text-xl font-bold text-slate-900 font-mono">{dl}</p>
-                <p className="text-xs text-slate-400">dias letivos</p>
+              <div key={b.numero} className="bg-white border border-slate-200 rounded-xl p-4 text-center">
+                <p className="text-xs text-blue-600 font-semibold mb-2">{b.numero}º Bimestre</p>
+                <p className="text-2xl font-bold text-slate-900 font-mono">{dl}</p>
+                <p className="text-xs text-slate-400 mt-1">dias letivos</p>
               </div>
             )
           })}
-          <div className="bg-white border border-green-200 rounded-xl p-3 text-center">
-            <p className="text-xs text-green-700 font-semibold mb-1">Total</p>
-            <p className="text-xl font-bold text-green-700 font-mono">
+          <div className="bg-white border border-green-200 rounded-xl p-4 text-center">
+            <p className="text-xs text-green-700 font-semibold mb-2">Total</p>
+            <p className="text-2xl font-bold text-green-700 font-mono">
               {bimestres.reduce((acc: number, b: any) => acc + calcDiasLetivos(b.data_inicio, b.data_fim, diasEspeciais), 0)}
             </p>
-            <p className="text-xs text-slate-400">no ano</p>
+            <p className="text-xs text-slate-400 mt-1">no ano</p>
           </div>
         </div>
       )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <KPI label="Matriculados" value={kpis.matriculados} color="text-slate-900" icon="👥" />
-        <KPI label="Presentes Hoje" value={kpis.presentes} color="text-green-600" icon="✅" />
-        <KPI label="Faltas Hoje" value={kpis.faltas} color="text-red-600" icon="❌" />
-        <KPI label="Chamadas Pendentes" value={kpis.pendentes} color="text-amber-600" icon="⏳" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <KPI label="Matriculados" value={kpis.matriculados} color="text-slate-900" Icon={<Users className="w-5 h-5 text-blue-600" />} />
+        <KPI label="Presentes Hoje" value={kpis.presentes} color="text-green-600" Icon={<CheckCircle2 className="w-5 h-5 text-green-600" />} />
+        <KPI label="Faltas Hoje" value={kpis.faltas} color="text-red-600" Icon={<XCircle className="w-5 h-5 text-red-600" />} />
+        <KPI label="Pendentes" value={kpis.pendentes} color="text-amber-600" Icon={<Clock className="w-5 h-5 text-amber-600" />} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Chamadas */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <h2 className="font-semibold text-slate-900 mb-4 flex items-center justify-between text-sm">
-            📋 Chamadas de Hoje
-            <span className="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg">{chamadas.length} total</span>
-          </h2>
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold text-slate-900 text-base flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              Chamadas de Hoje
+            </h2>
+            <span className="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-medium">{chamadas.length} total</span>
+          </div>
           {chamadas.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm">
-              <div className="text-3xl mb-2">📭</div>
-              <p>Nenhuma chamada iniciada hoje</p>
+            <div className="text-center py-10 text-slate-400">
+              <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <InboxX className="w-6 h-6 text-slate-400" />
+              </div>
+              <p className="text-sm">Nenhuma chamada iniciada hoje</p>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -166,32 +178,32 @@ export default function AdmDashboard() {
                   <div key={c.id} onClick={() => setSelecionada(sel ? null : c)}
                     className={`border rounded-xl p-4 cursor-pointer transition-all ${sel ? 'border-blue-200 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}
                   >
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-slate-900 font-medium text-sm">{c.aulas?.turmas?.nome}</span>
+                        <span className="text-slate-900 font-semibold text-sm">{c.aulas?.turmas?.nome}</span>
                         <span className="text-slate-500 text-xs">{c.aulas?.disciplinas?.nome}</span>
                       </div>
                       <StatusBadge status={c.status} />
                     </div>
-                    <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span>👨‍🏫 {c.aulas?.usuarios?.nome}</span>
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                      <span>{c.aulas?.usuarios?.nome}</span>
                       <span style={{ fontFamily: 'DM Mono, monospace' }}>{formatTime(c.aulas?.horario_inicio)} – {formatTime(c.aulas?.horario_fim)}</span>
                     </div>
                     {c.status === 'em_andamento' && (
-                      <div className="mt-2.5">
-                        <div className="flex justify-between text-xs mb-1">
+                      <div>
+                        <div className="flex justify-between text-xs mb-1.5">
                           <span className="text-slate-400">Progresso</span>
-                          <span style={{ fontFamily: 'DM Mono, monospace' }} className="text-blue-600">{prog}%</span>
+                          <span style={{ fontFamily: 'DM Mono, monospace' }} className="text-blue-600 font-medium">{prog}%</span>
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-blue-500 h-1.5 rounded-full transition-all" style={{ width: `${prog}%` }} />
+                        <div className="w-full bg-slate-200 rounded-full h-2">
+                          <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${prog}%` }} />
                         </div>
                       </div>
                     )}
                     {c.status === 'concluida' && (
-                      <div className="flex gap-4 mt-2 text-xs" style={{ fontFamily: 'DM Mono, monospace' }}>
-                        <span className="text-green-700">{p} presentes</span>
-                        <span className="text-red-600">{f} faltas</span>
+                      <div className="flex gap-4 text-xs">
+                        <span className="text-green-700 font-medium">{p} presentes</span>
+                        <span className="text-red-600 font-medium">{f} faltas</span>
                       </div>
                     )}
                   </div>
@@ -202,17 +214,22 @@ export default function AdmDashboard() {
         </div>
 
         {/* Alertas */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-          <h2 className="font-semibold text-slate-900 mb-4 flex items-center justify-between text-sm">
-            🔔 Alertas
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-semibold text-slate-900 text-base flex items-center gap-2">
+              <Bell className="w-5 h-5 text-blue-600" />
+              Alertas
+            </h2>
             {alertas.length > 0 && (
-              <span className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{alertas.length}</span>
+              <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2.5 py-1">{alertas.length}</span>
             )}
-          </h2>
+          </div>
           {alertas.length === 0 ? (
-            <div className="text-center py-6 text-slate-400 text-sm">
-              <div className="text-2xl mb-2">✅</div>
-              <p>Sem alertas pendentes</p>
+            <div className="text-center py-8 text-slate-400">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+              <p className="text-sm">Sem alertas pendentes</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -222,7 +239,7 @@ export default function AdmDashboard() {
                       'border-slate-200 bg-slate-50'
                   }`}>
                   <p className="text-xs text-slate-700 leading-relaxed">{a.descricao}</p>
-                  {a.alunos && <p className="text-xs text-slate-400 mt-1">👤 {a.alunos.nome_completo}</p>}
+                  {a.alunos && <p className="text-xs text-slate-500 mt-1">{a.alunos.nome_completo}</p>}
                 </div>
               ))}
             </div>
@@ -232,54 +249,55 @@ export default function AdmDashboard() {
 
       {/* Relatório por turma */}
       {relatorio.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden mb-4 shadow-sm">
-          <div className="px-5 py-3 border-b border-slate-200">
-            <h2 className="font-semibold text-slate-900 text-sm">📊 Situação por Turma</h2>
+        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
+            <h2 className="font-semibold text-slate-900">Situação por Turma</h2>
           </div>
 
           {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-xs min-w-[700px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500">
-                  <th className="px-4 py-2.5 text-left font-medium">Turma</th>
-                  <th className="px-3 py-2.5 text-center font-medium">Alunos</th>
-                  <th className="px-3 py-2.5 text-center font-medium">Aulas</th>
-                  <th className="px-3 py-2.5 text-center font-medium">Conteúdos</th>
-                  <th className="px-3 py-2.5 text-center font-medium">Notas</th>
-                  <th className="px-3 py-2.5 text-center font-medium">Freq.</th>
-                  <th className="px-3 py-2.5 text-center font-medium">Recuperação</th>
-                  <th className="px-3 py-2.5 text-center font-medium">Diário</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                  <th className="px-6 py-3 text-left font-semibold">Turma</th>
+                  <th className="px-3 py-3 text-center font-semibold">Alunos</th>
+                  <th className="px-3 py-3 text-center font-semibold">Aulas</th>
+                  <th className="px-3 py-3 text-center font-semibold">Conteúdos</th>
+                  <th className="px-3 py-3 text-center font-semibold">Notas</th>
+                  <th className="px-3 py-3 text-center font-semibold">Freq.</th>
+                  <th className="px-3 py-3 text-center font-semibold">Recuperação</th>
+                  <th className="px-3 py-3 text-center font-semibold">Diário</th>
                 </tr>
               </thead>
               <tbody>
                 {relatorio.map((t: any) => (
                   <tr key={t.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-2.5">
+                    <td className="px-6 py-3">
                       <p className="text-slate-900 font-medium">{t.nome}</p>
-                      {t.turno && <p className="text-slate-400 text-xs">{t.turno}</p>}
+                      {t.turno && <p className="text-slate-500 text-xs capitalize">{t.turno}</p>}
                     </td>
-                    <td className="px-3 py-2.5 text-center text-slate-600 font-mono">{t.total_alunos}</td>
-                    <td className="px-3 py-2.5 text-center">
-                      <span className="font-mono text-slate-600">{t.aulas_realizadas}</span>
-                      {t.aulas_previstas > 0 && <span className="text-slate-400">/{t.aulas_previstas}</span>}
+                    <td className="px-3 py-3 text-center text-slate-700 font-mono">{t.total_alunos}</td>
+                    <td className="px-3 py-3 text-center">
+                      <span className="font-mono text-slate-700">{t.aulas_realizadas}</span>
+                      {t.aulas_previstas > 0 && <span className="text-slate-500">/{t.aulas_previstas}</span>}
                     </td>
-                    <td className="px-3 py-2.5 text-center font-mono text-slate-600">{t.conteudos_registrados}</td>
-                    <td className="px-3 py-2.5 text-center font-mono text-slate-600">{t.notas_lancadas}</td>
-                    <td className="px-3 py-2.5 text-center">
+                    <td className="px-3 py-3 text-center font-mono text-slate-700">{t.conteudos_registrados}</td>
+                    <td className="px-3 py-3 text-center font-mono text-slate-700">{t.notas_lancadas}</td>
+                    <td className="px-3 py-3 text-center">
                       {t.freq_geral !== null ? (
                         <span className={`font-mono font-bold ${t.freq_geral >= 75 ? 'text-green-700' : 'text-red-600'}`}>{t.freq_geral}%</span>
                       ) : <span className="text-slate-400">—</span>}
                     </td>
-                    <td className="px-3 py-2.5 text-center">
+                    <td className="px-3 py-3 text-center">
                       {t.alunos_recuperacao > 0
                         ? <span className="text-amber-700 font-mono font-bold">{t.alunos_recuperacao}</span>
                         : <span className="text-slate-400">—</span>}
                     </td>
-                    <td className="px-3 py-2.5 text-center">
+                    <td className="px-3 py-3 text-center">
                       {t.pdf_pronto
-                        ? <span className="text-green-700">✓ Pronto</span>
-                        : <span className="text-slate-400">Pendente</span>}
+                        ? <span className="text-green-700 font-medium">Pronto</span>
+                        : <span className="text-slate-500">Pendente</span>}
                     </td>
                   </tr>
                 ))}
@@ -290,35 +308,35 @@ export default function AdmDashboard() {
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-slate-200">
             {relatorio.map((t: any) => (
-              <div key={t.id} className="px-4 py-3">
-                <div className="flex items-center justify-between mb-2">
+              <div key={t.id} className="px-6 py-4">
+                <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="text-slate-900 font-semibold text-sm">{t.nome}</p>
-                    {t.turno && <p className="text-slate-400 text-xs capitalize">{t.turno}</p>}
+                    <p className="text-slate-900 font-semibold">{t.nome}</p>
+                    {t.turno && <p className="text-slate-500 text-xs capitalize">{t.turno}</p>}
                   </div>
                   <div className="text-right">
                     {t.freq_geral !== null ? (
-                      <span className={`text-lg font-bold font-mono ${t.freq_geral >= 75 ? 'text-green-700' : 'text-red-600'}`}>{t.freq_geral}%</span>
-                    ) : <span className="text-slate-400 text-lg">—</span>}
-                    <p className="text-slate-400 text-xs">freq.</p>
+                      <span className={`text-xl font-bold font-mono ${t.freq_geral >= 75 ? 'text-green-700' : 'text-red-600'}`}>{t.freq_geral}%</span>
+                    ) : <span className="text-slate-500 text-xl">—</span>}
+                    <p className="text-slate-500 text-xs">freq.</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <div className="bg-slate-50 rounded-lg p-2 text-center">
-                    <p className="text-slate-700 font-mono font-bold">{t.total_alunos}</p>
-                    <p className="text-slate-400">alunos</p>
+                    <p className="text-slate-800 font-mono font-bold">{t.total_alunos}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">alunos</p>
                   </div>
                   <div className="bg-slate-50 rounded-lg p-2 text-center">
-                    <p className="text-slate-700 font-mono font-bold">
-                      {t.aulas_realizadas}{t.aulas_previstas > 0 ? <span className="text-slate-400 font-normal">/{t.aulas_previstas}</span> : ''}
+                    <p className="text-slate-800 font-mono font-bold">
+                      {t.aulas_realizadas}{t.aulas_previstas > 0 ? <span className="text-slate-500 font-normal">/{t.aulas_previstas}</span> : ''}
                     </p>
-                    <p className="text-slate-400">aulas</p>
+                    <p className="text-slate-500 text-xs mt-0.5">aulas</p>
                   </div>
                   <div className="bg-slate-50 rounded-lg p-2 text-center">
                     {t.alunos_recuperacao > 0
                       ? <p className="text-amber-700 font-mono font-bold">{t.alunos_recuperacao}</p>
-                      : <p className="text-slate-400 font-mono">—</p>}
-                    <p className="text-slate-400">recup.</p>
+                      : <p className="text-slate-500 font-mono">—</p>}
+                    <p className="text-slate-500 text-xs mt-0.5">recup.</p>
                   </div>
                 </div>
               </div>
@@ -329,28 +347,31 @@ export default function AdmDashboard() {
 
       {/* Detalhe chamada selecionada */}
       {selecionada && (
-        <div className="bg-white border border-blue-200 rounded-xl p-5 shadow-md animate-slide-up">
+        <div className="bg-white border border-blue-200 rounded-xl p-6 shadow-md mt-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-900 text-sm">👁 Detalhe: {selecionada.aulas?.turmas?.nome}</h3>
-            <button onClick={() => setSelecionada(null)} className="text-slate-400 hover:text-slate-900 transition-colors text-lg leading-none">×</button>
+            <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-blue-600" />
+              Detalhe: {selecionada.aulas?.turmas?.nome}
+            </h3>
+            <button onClick={() => setSelecionada(null)} className="text-slate-400 hover:text-slate-900 transition-colors font-semibold">✕</button>
           </div>
           <div className="space-y-1.5">
             {(selecionada.registros_chamada || []).map((r: any) => (
-              <div key={r.id} className={`flex items-start gap-2 px-3 py-2 rounded-xl text-xs border ${r.status === 'presente' ? 'bg-green-50 text-green-700 border-green-200' :
+              <div key={r.id} className={`flex items-start gap-3 px-3 py-2.5 rounded-lg text-xs border ${r.status === 'presente' ? 'bg-green-50 text-green-700 border-green-200' :
                   r.status === 'falta' ? 'bg-red-50 text-red-600 border-red-200' :
                     r.status === 'justificada' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                      'bg-slate-50 text-slate-500 border-slate-200'
+                      'bg-slate-50 text-slate-600 border-slate-200'
                 }`}>
                 <span className="font-medium flex-1">{r.alunos?.nome_completo}</span>
                 {r.motivo_alteracao && (
-                  <span className="text-slate-400 italic truncate max-w-[200px]">
-                    {r.horario_evento ? `🕐 ${r.horario_evento.slice(0, 5)} · ` : ''}{r.motivo_alteracao}
+                  <span className="text-slate-500 italic truncate max-w-[200px]">
+                    {r.horario_evento ? `${r.horario_evento.slice(0, 5)} · ` : ''}{r.motivo_alteracao}
                   </span>
                 )}
               </div>
             ))}
             {(selecionada.registros_chamada || []).length === 0 && (
-              <p className="text-slate-400 text-sm">Nenhum registro ainda</p>
+              <p className="text-slate-400 text-sm text-center py-4">Nenhum registro ainda</p>
             )}
           </div>
         </div>
