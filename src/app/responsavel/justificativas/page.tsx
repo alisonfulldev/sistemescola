@@ -31,11 +31,11 @@ export default function JustificativasResponsavel() {
         .select('alunos(id, nome_completo, turmas(nome))')
         .eq('responsavel_id', user.id)
 
-      const alunosList = (familias || []).map(f => f.alunos).filter(a => a) as any[]
+      const alunosList = (familias || []).map(f => (f as any)?.alunos).filter(a => a) as any[]
       setAlunos(alunosList)
 
       if (alunosList.length > 0) {
-        setForm({ ...form, aluno_id: alunosList[0]?.id })
+        setForm({ ...form, aluno_id: (alunosList[0] as any)?.id })
         carregarJustificativas()
       }
 
