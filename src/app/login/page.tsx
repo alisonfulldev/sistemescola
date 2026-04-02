@@ -116,11 +116,18 @@ export default function LoginPage() {
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl mb-4 shadow-lg">
-            <span className="text-white font-bold text-2xl">SE</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <div className="relative">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center">
+                <div className="text-white font-bold text-xl">📚</div>
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-400 rounded-full flex items-center justify-center shadow">
+                <span className="text-white text-xs font-bold">+</span>
+              </div>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Sistema Escolar</h1>
-          <p className="text-blue-200">Gestão acadêmica integrada</p>
+          <h1 className="text-3xl font-bold text-white mb-1">Estudapp</h1>
+          <p className="text-blue-200 text-sm">Plataforma educacional integrada</p>
         </div>
 
         {/* Login Card */}

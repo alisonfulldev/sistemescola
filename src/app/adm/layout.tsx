@@ -53,11 +53,16 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-full bg-white">
       <div className="px-6 py-8 border-b border-blue-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-md">
-            <span className="text-white font-bold text-base">SE</span>
+          <div className="relative">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-md text-lg">
+              📚
+            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow text-xs">
+              +
+            </div>
           </div>
           <div>
-            <h1 className="font-bold text-slate-900 text-sm">Sistema Escolar</h1>
+            <h1 className="font-bold text-slate-900 text-sm">Estudapp</h1>
             <p className="text-xs text-blue-600 font-medium">Secretaria</p>
           </div>
         </div>
