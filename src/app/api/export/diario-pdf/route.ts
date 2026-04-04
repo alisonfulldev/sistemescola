@@ -23,16 +23,16 @@ export async function GET(req: NextRequest) {
 
     // Buscar dados consolidados
     const [
-      { data: turma },
-      { data: disciplina },
-      { data: anoLetivo },
-      { data: alunos },
-      { data: aulas },
-      { data: notas },
-      { data: escola },
-      { data: professor },
-      { data: bimestres },
-      { data: registrosChamada },
+      { data: turma }: any,
+      { data: disciplina }: any,
+      { data: anoLetivo }: any,
+      { data: alunos }: any,
+      { data: aulas }: any,
+      { data: notas }: any,
+      { data: escola }: any,
+      { data: professor }: any,
+      { data: bimestres }: any,
+      { data: registrosChamada }: any,
     ] = await Promise.all([
       supabase.from('turmas').select('*').eq('id', turmaId).single(),
       supabase.from('disciplinas').select('*').eq('id', disciplinaId).single(),
