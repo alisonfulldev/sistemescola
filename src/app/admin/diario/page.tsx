@@ -51,14 +51,77 @@ export default function DiarioPage() {
     setErro('')
 
     try {
-      const params = new URLSearchParams({
-        turma_id: turmaSelecionada,
-        disciplina_id: disciplinaSelecionada,
-        ano_letivo_id: anoSelecionado,
+      const [turmaRes, disciplinaRes, anoRes, alunosRes, aulasRes, notasRes, bimestresRes] = await Promise.all([
+        supabase.from('turmas').select('*').eq('id', turmaSelecionada).single(),
+        supabase.from('disciplinas').select('*').eq('id', disciplinaSelecionada).single(),
+        supabase.from('anos_letivos').select('*').eq('id', anoSelecionado).single(),
+        supabase.from('alunos').select('id, numero_chamada, nome_completo')
+          .eq('turma_id', turmaSelecionada).eq('ativo', true).order('numero_chamada'),
+        supabase.from('aulas').select('*')
+          .eq('turma_id', turmaSelecionada).eq('disciplina_id', disciplinaSelecionada).order('data'),
+        supabase.from('notas').select('aluno_id, b1, b2, b3, b4, recuperacao').eq('disciplina_id', disciplinaSelecionada),
+        supabase.from('bimestres').select('*').eq('ano_letivo_id', anoSelecionado).order('numero'),
+      ])
+
+      const { data: professor } = await supabase
+        .from('usuarios')
+        .select('nome')
+        .eq('id', (disciplinaRes.data as any)?.professor_id)
+        .single()
+
+      const { data: escola } = await supabase.from('escola').select('*').limit(1).single()
+
+      // Buscar frequência
+      const frequenciaMap: { [alunoId: string]: { [date: string]: string } } = {}
+      const aulasData = aulasRes.data || []
+      if (aulasData.length > 0) {
+        const { data: chamadas } = await supabase
+          .from('chamadas')
+          .select('id, aula_id')
+          .in('aula_id', (aulasData as any[]).map((a: any) => a.id))
+
+        if (chamadas) {
+          const { data: registros } = await supabase
+            .from('registros_chamada')
+            .select('aluno_id, status, chamada_id')
+            .in('chamada_id', (chamadas as any[]).map((c: any) => c.id))
+
+          if (registros) {
+            (registros as any[]).forEach((reg: any) => {
+              const aula = (aulasData as any[]).find((a: any) =>
+                (chamadas as any[]).find((c: any) => c.id === reg.chamada_id)?.aula_id === a.id
+              )
+              if (aula) {
+                if (!frequenciaMap[reg.aluno_id]) frequenciaMap[reg.aluno_id] = {}
+                frequenciaMap[reg.aluno_id][aula.data] = reg.status || 'falta'
+              }
+            })
+          }
+        }
+      }
+
+      // Montar dados
+      const notasMap: { [alunoId: string]: any } = {}
+      ;(notasRes.data as any[]).forEach((nota: any) => {
+        notasMap[nota.aluno_id] = nota
       })
 
-      // Abrir o PDF em nova aba
-      window.open(`/api/export/diario-pdf?${params.toString()}`, '_blank')
+      const diarioData = {
+        turma: turmaRes.data,
+        disciplina: disciplinaRes.data,
+        ano_letivo: anoRes.data,
+        alunos: alunosRes.data || [],
+        aulas: aulasData,
+        notas: notasMap,
+        frequencia: frequenciaMap,
+        bimestres: bimestresRes.data || [],
+        professor,
+        escola,
+      }
+
+      // Gerar PDF client-side
+      const { gerarDiarioPDF } = await import('./pdf-generator')
+      gerarDiarioPDF(diarioData)
     } catch (err) {
       setErro((err as Error).message || 'Erro ao gerar PDF')
     } finally {
