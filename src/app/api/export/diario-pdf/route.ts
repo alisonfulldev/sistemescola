@@ -289,7 +289,7 @@ export async function GET(req: NextRequest) {
 
     doc.end()
 
-    return new Promise((resolve) => {
+    return new Promise<Response>((resolve) => {
       doc.on('end', () => {
         const buffer = Buffer.concat(chunks)
         resolve(
