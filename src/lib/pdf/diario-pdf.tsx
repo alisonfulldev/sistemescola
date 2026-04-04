@@ -15,7 +15,8 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 20,
     textAlign: 'center',
-    borderBottom: '1 solid #000',
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
     paddingBottom: 10,
   },
   title: {
