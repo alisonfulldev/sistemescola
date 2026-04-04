@@ -84,7 +84,8 @@ function criarHTML(data: any) {
         ${bimestres
           .map((bim: any) => {
             const aulasB = aulas.filter((a: any) => a.bimestre === bim.numero).sort((a: any, b: any) => new Date(a.data).getTime() - new Date(b.data).getTime())
-            const datas = [...new Set(aulasB.map((a: any) => a.data))].sort()
+            const datas: string[] = [...new Set(aulasB.map((a: any) => a.data))] as string[]
+            datas.sort()
 
             return `
               <!-- FREQUÊNCIA BIMESTRE ${bim.numero} -->
