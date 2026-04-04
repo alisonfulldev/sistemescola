@@ -57,6 +57,14 @@ export async function POST(req: NextRequest) {
       disciplinaId = disc?.id
     }
 
+    // Validação: professor deve ter uma disciplina
+    if (!disciplinaId) {
+      return NextResponse.json(
+        { error: 'Professor sem disciplina atribuída. Configure as disciplinas antes de iniciar chamada.' },
+        { status: 400 }
+      )
+    }
+
     const agora = new Date()
     const pad = (n: number) => n.toString().padStart(2, '0')
     const horaInicio = `${pad(agora.getHours())}:${pad(agora.getMinutes())}:00`
