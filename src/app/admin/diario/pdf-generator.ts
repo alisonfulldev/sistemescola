@@ -43,22 +43,25 @@ function criarHTML(data: any) {
       <body>
         <!-- PÁGINA 1: CAPA -->
         <div class="page">
-          <div class="capa">
-            <div class="info-line">
-              <div><b>TURNO:</b> ${turma?.turno?.substring(0, 3).toUpperCase() || 'MAT'}</div>
-              <div><b>ENSINO:</b> ${turma?.grau === 'EF' ? 'EF' : 'EM'}</div>
-              <div><b>ANO:</b> ${anoLetivo?.ano || 2026}</div>
-            </div>
-            <div class="info-line">
-              <div><b>SÉRIE:</b> ${turma?.serie}º ${turma?.turma_letra || 'A'}</div>
-            </div>
-            <hr>
-            <div><b>ESCOLA:</b> ${escola?.nome_oficial || 'Não informado'}</div>
-            <div><b>MUNICÍPIO:</b> ${escola?.municipio || ''}</div>
-            <div><b>DISCIPLINA:</b> ${data.disciplina?.nome || ''}</div>
-            <div><b>PROFESSOR:</b> ${professor?.nome || ''}</div>
-            <div><b>TOTAL DE ALUNOS:</b> ${alunos.length}</div>
-            <div><b>AULAS NO PERÍODO:</b> ${aulas.length}</div>
+          <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-size: 24px; margin-bottom: 30px;">DIÁRIO ESCOLAR</h1>
+            <p style="font-size: 14px; margin: 10px 0;"><b>${escola?.nome_oficial || 'ESCOLA'}</b></p>
+            <p style="font-size: 12px; margin: 5px 0;">${escola?.municipio || ''}</p>
+          </div>
+
+          <div style="border: 2px solid #000; padding: 20px; margin: 20px 0;">
+            <div style="margin: 15px 0;"><b>TURNO:</b> ${turma?.turno?.substring(0, 3).toUpperCase() || 'MAT'}</div>
+            <div style="margin: 15px 0;"><b>ENSINO:</b> ${turma?.grau === 'EF' ? 'FUNDAMENTAL' : 'MÉDIO'}</div>
+            <div style="margin: 15px 0;"><b>ANO LETIVO:</b> ${anoLetivo?.ano || 2026}</div>
+            <div style="margin: 15px 0;"><b>SÉRIE/TURMA:</b> ${turma?.serie}º ${turma?.turma_letra || 'A'}</div>
+            <div style="margin: 15px 0;"><b>NOME DA TURMA:</b> ${turma?.nome || ''}</div>
+          </div>
+
+          <div style="margin-top: 40px;">
+            <div style="margin: 10px 0;"><b>DISCIPLINA:</b> ${data.disciplina?.nome || ''}</div>
+            <div style="margin: 10px 0;"><b>PROFESSOR(A):</b> ${professor?.nome || ''}</div>
+            <div style="margin: 10px 0;"><b>TOTAL DE ALUNOS:</b> ${alunos.length}</div>
+            <div style="margin: 10px 0;"><b>AULAS REGISTRADAS:</b> ${aulas.length}</div>
           </div>
         </div>
 
@@ -68,14 +71,10 @@ function criarHTML(data: any) {
           <table>
             <tr><th>Nº</th><th>NOME COMPLETO</th></tr>
             ${alunos
-              .slice(0, 55)
               .map(
                 (a: any, i: number) =>
                   `<tr><td>${(a.numero_chamada || i + 1).toString().padStart(2, '0')}</td><td>${a.nome_completo || ''}</td></tr>`
               )
-              .join('')}
-            ${Array.from({ length: Math.max(0, 55 - alunos.length) })
-              .map((_, i) => `<tr><td>${(alunos.length + i + 1).toString().padStart(2, '0')}</td><td></td></tr>`)
               .join('')}
           </table>
         </div>
