@@ -42,7 +42,6 @@ export async function GET(req: NextRequest) {
         .order('data'),
       supabase.from('notas').select('aluno_id, b1, b2, b3, b4, recuperacao').eq('disciplina_id', disciplinaId),
       supabase.from('escola').select('*').limit(1).single(),
-      supabase.from('anos_letivos').select('*').limit(1).single(),
       supabase
         .from('bimestres')
         .select('numero, data_inicio, data_fim')
@@ -57,7 +56,7 @@ export async function GET(req: NextRequest) {
     const aulas = results[4].data
     const notas = results[5].data
     const escola = results[6].data
-    const bimestres = results[8].data
+    const bimestres = results[7].data
 
     // Buscar professor da disciplina
     const { data: professor } = await supabase
