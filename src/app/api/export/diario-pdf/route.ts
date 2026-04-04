@@ -125,7 +125,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Renderizar PDF
-    const pdfStream = await renderToStream(React.createElement(DiarioPDF, { data: diarioData }))
+    const pdfStream = await renderToStream(React.createElement(DiarioPDF as any, { data: diarioData }))
 
     // Retornar como response
     return new NextResponse(pdfStream as any, {
