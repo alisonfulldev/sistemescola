@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Settings, Calendar, Users, BookOpen, GraduationCap, ClipboardList, LogOut, Menu, X } from 'lucide-react'
+import { Settings, Calendar, Users, BookOpen, GraduationCap, ClipboardList, LogOut, Menu, X, FileText } from 'lucide-react'
 
 const navGroups = [
   {
@@ -25,6 +25,12 @@ const navGroups = [
       { href: '/admin/alunos', label: 'Alunos', icon: Users },
       { href: '/admin/responsaveis', label: 'Responsáveis', icon: Users },
       { href: '/admin/aulas', label: 'Aulas', icon: Calendar },
+    ]
+  },
+  {
+    label: 'Relatórios',
+    items: [
+      { href: '/admin/diario', label: 'Diário Escolar', icon: FileText },
     ]
   },
 ]

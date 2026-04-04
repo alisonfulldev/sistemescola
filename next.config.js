@@ -9,6 +9,9 @@ const nextConfig = {
       },
     ],
   },
+  generateBuildId: async () => {
+    return 'build-' + new Date().getTime().toString()
+  },
 }
 
 module.exports = nextConfig
