@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { renderToStream } from '@react-pdf/renderer'
 import { DiarioPDF } from '@/lib/pdf/diario-pdf'
-import React from 'react'
+import type { ReactElement } from 'react'
 
 export async function GET(req: NextRequest) {
   try {
@@ -125,7 +125,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Renderizar PDF
-    const pdfStream = await renderToStream(React.createElement(DiarioPDF as any, { data: diarioData }))
+    const document: ReactElement = <DiarioPDF data={diarioData} />
+    const pdfStream = await renderToStream(document)
 
     // Retornar como response
     return new NextResponse(pdfStream as any, {
