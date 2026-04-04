@@ -4,7 +4,7 @@ export async function gerarDiarioPDF(data: any) {
   const element = document.createElement('div')
   element.innerHTML = criarHTML(data)
 
-  const opt = {
+  const opt: any = {
     margin: 10,
     filename: `Diario-${data.turma?.nome}-${data.ano_letivo?.ano}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
@@ -12,7 +12,7 @@ export async function gerarDiarioPDF(data: any) {
     jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
   }
 
-  html2pdf().set(opt).from(element).save()
+  ;(html2pdf() as any).set(opt).from(element).save()
 }
 
 function criarHTML(data: any) {
