@@ -272,16 +272,16 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
   )
 
   return (
-    <div>
+    <div className="px-4 sm:px-6 max-w-4xl mx-auto">
       {/* Info aula */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="font-bold text-slate-900">{aula?.turmas?.nome}</h1>
-            <p className="text-slate-500 text-sm">{aula?.disciplinas?.nome}</p>
+            <h1 className="font-bold text-lg sm:text-xl text-slate-900">{aula?.turmas?.nome}</h1>
+            <p className="text-slate-500 text-xs sm:text-sm">{aula?.disciplinas?.nome}</p>
           </div>
           <div className="text-right">
-            <span className="text-xs text-slate-400" style={{ fontFamily: 'DM Mono, monospace' }}>
+            <span className="text-xs text-slate-400 block" style={{ fontFamily: 'DM Mono, monospace' }}>
               {aula?.horario_inicio?.slice(0, 5)} – {aula?.horario_fim?.slice(0, 5)}
             </span>
             {jaConcluida && (
@@ -292,7 +292,7 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
       </div>
 
       {/* Conteúdo programático + Atividades */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 space-y-3">
+      <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 mb-4 space-y-3">
         <div>
           <label className="block text-xs text-slate-500 mb-2 font-medium">📋 Conteúdo programático</label>
           <textarea
@@ -301,7 +301,7 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
             onBlur={salvarConteudo}
             placeholder="Ex: Números naturais — revisão e ordenação"
             rows={2}
-            className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none placeholder-slate-400"
+            className="w-full bg-white border border-slate-300 text-slate-900 text-xs sm:text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none placeholder-slate-400"
           />
         </div>
         <div>
@@ -312,43 +312,43 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
             onBlur={salvarConteudo}
             placeholder="Ex: Exercícios em sala e resolução de problemas"
             rows={2}
-            className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none placeholder-slate-400"
+            className="w-full bg-white border border-slate-300 text-slate-900 text-xs sm:text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none placeholder-slate-400"
           />
         </div>
         {salvandoConteudo && <p className="text-xs text-slate-400 italic">Salvando...</p>}
       </div>
 
       {/* Progresso */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-slate-600">Progresso</span>
-          <span className="text-sm font-bold text-green-600">{marcados}/{total} alunos</span>
+      <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mb-2">
+          <span className="text-xs sm:text-sm font-medium text-slate-600">Progresso</span>
+          <span className="text-xs sm:text-sm font-bold text-green-600">{marcados}/{total} alunos</span>
         </div>
         <div className="w-full bg-slate-100 rounded-full h-2.5">
           <div className="bg-green-600 h-2.5 rounded-full transition-all duration-300" style={{ width: `${progresso}%` }} />
         </div>
-        <div className="flex gap-5 mt-3 text-xs">
+        <div className="flex flex-wrap gap-2 sm:gap-5 mt-3 text-xs">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-green-600 rounded-full" />
-            <span className="text-green-600">{presentes}</span>
-            <span className="text-slate-500">presentes</span>
+            <span className="w-2 h-2 bg-green-600 rounded-full flex-shrink-0" />
+            <span className="text-green-600 font-semibold">{presentes}</span>
+            <span className="text-slate-500 hidden sm:inline">presentes</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-red-600 rounded-full" />
-            <span className="text-red-600">{faltas}</span>
-            <span className="text-slate-500">faltas</span>
+            <span className="w-2 h-2 bg-red-600 rounded-full flex-shrink-0" />
+            <span className="text-red-600 font-semibold">{faltas}</span>
+            <span className="text-slate-500 hidden sm:inline">faltas</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-amber-600 rounded-full" />
-            <span className="text-amber-600">{justificadas}</span>
-            <span className="text-slate-500">justificadas</span>
+            <span className="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0" />
+            <span className="text-amber-600 font-semibold">{justificadas}</span>
+            <span className="text-slate-500 hidden sm:inline">justificadas</span>
           </span>
-          {salvando && <span className="ml-auto text-slate-400 italic text-xs">Salvando...</span>}
+          {salvando && <span className="text-slate-400 italic text-xs ml-auto">Salvando...</span>}
         </div>
       </div>
 
       {/* Lista de alunos */}
-      <div className="space-y-2 mb-6">
+      <div className="space-y-2 mb-28 sm:mb-6">
         {alunos.map((aluno, idx) => (
           <div key={aluno.id} className={`bg-white rounded-2xl border overflow-hidden transition-all ${
             aluno.status === 'presente' ? 'border-green-300' :
@@ -378,12 +378,12 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
               </div>
 
               {/* Botões */}
-              <div className="flex gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {(['presente', 'falta', 'justificada'] as StatusPresenca[]).map(s => (
                   <button
                     key={s}
                     onClick={() => handleClickStatus(aluno, s)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                    className={`py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       aluno.status === s
                         ? s === 'presente' ? 'bg-green-600 text-white'
                           : s === 'falta' ? 'bg-red-600 text-white'
@@ -391,7 +391,8 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
                         : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200'
                     }`}
                   >
-                    {s === 'presente' ? '✅ Presente' : s === 'falta' ? '❌ Falta' : '📝 Justif.'}
+                    {s === 'presente' ? '✅' : s === 'falta' ? '❌' : '📝'}
+                    <span className="hidden sm:inline ml-1">{s === 'presente' ? 'Presente' : s === 'falta' ? 'Falta' : 'Justif.'}</span>
                   </button>
                 ))}
               </div>
@@ -433,11 +434,11 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
       </div>
 
       {/* Botão confirmar / salvar */}
-      <div className="sticky bottom-4 flex gap-3">
+      <div className="fixed bottom-0 left-0 right-0 sm:static bg-white border-t border-slate-200 sm:border-0 p-4 sm:p-0 flex gap-3 sm:gap-0 shadow-lg sm:shadow-none">
         {jaConcluida && (
           <button
             onClick={() => router.push(`/professor/resumo/${chamadaId}`)}
-            className="py-4 px-5 bg-white border border-slate-300 text-slate-500 rounded-2xl font-medium hover:bg-slate-50 transition-colors text-sm"
+            className="hidden sm:block py-4 px-5 bg-white border border-slate-300 text-slate-500 rounded-2xl font-medium hover:bg-slate-50 transition-colors text-sm"
           >
             Ver resumo
           </button>
@@ -445,15 +446,15 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         <button
           onClick={() => setShowConfirm(true)}
           disabled={marcados < total || total === 0}
-          className={`flex-1 py-4 rounded-2xl font-bold text-base transition-all ${
+          className={`flex-1 py-3 sm:py-4 rounded-2xl font-bold text-sm sm:text-base transition-all ${
             marcados === total && total > 0
               ? 'bg-green-600 text-white hover:bg-green-500 active:scale-[0.99]'
               : 'bg-white border border-slate-200 text-slate-400 cursor-not-allowed'
           }`}
         >
           {marcados === total && total > 0
-            ? jaConcluida ? '💾 Salvar alterações' : '✓ Confirmar Chamada'
-            : `Marque todos os alunos (${total - marcados} restantes)`}
+            ? jaConcluida ? '💾 Salvar' : '✓ Confirmar'
+            : `${total - marcados} restantes`}
         </button>
       </div>
 
@@ -522,14 +523,14 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-sm shadow-lg">
             <h3 className="font-bold text-slate-900 text-lg mb-2">{jaConcluida ? 'Salvar alterações?' : 'Confirmar chamada?'}</h3>
             <p className="text-slate-500 text-sm mb-5">{jaConcluida ? 'Os registros serão atualizados.' : 'Os responsáveis receberão notificação de presença dos alunos.'}</p>
-            <div className="grid grid-cols-3 gap-3 mb-5 text-center">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 text-center">
               {[
                 { n: presentes, label: 'Presentes', cls: 'bg-green-50 border-green-200 text-green-600' },
                 { n: faltas, label: 'Faltas', cls: 'bg-red-50 border-red-200 text-red-600' },
                 { n: justificadas, label: 'Justif.', cls: 'bg-amber-50 border-amber-200 text-amber-600' },
               ].map(k => (
-                <div key={k.label} className={`rounded-xl p-3 border ${k.cls}`}>
-                  <div className="text-2xl font-bold">{k.n}</div>
+                <div key={k.label} className={`rounded-xl p-2 sm:p-3 border ${k.cls}`}>
+                  <div className="text-lg sm:text-2xl font-bold">{k.n}</div>
                   <div className="text-xs mt-0.5 opacity-80">{k.label}</div>
                 </div>
               ))}
