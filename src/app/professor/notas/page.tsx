@@ -96,7 +96,7 @@ export default function ProfessorNotasPage() {
       ano_letivo_id: anoLetivoId,
       notas: Object.entries(editando).map(([alunoId, nota]) => ({ aluno_id: alunoId, nota }))
     }
-    const res = await fetch('/api/professor/notas', {
+    const res = await fetch('/api/professor/notas_bimestral', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
