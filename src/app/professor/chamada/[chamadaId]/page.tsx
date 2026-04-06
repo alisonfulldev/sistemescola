@@ -454,7 +454,6 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         </button>
       </div>
       </div>
-    </div>
 
       {/* Modal de motivo de alteração */}
       {modalAlteracao && (
@@ -548,6 +547,7 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }
