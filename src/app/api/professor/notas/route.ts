@@ -80,10 +80,10 @@ export async function POST(req: NextRequest) {
       }))
 
       const { error } = await admin
-        .from('notas_bimestrais')
-        .upsert(rows, { onConflict: 'aluno_id,turma_id,disciplina_id,ano_letivo_id' })
+        .from('notas')
+        .upsert(rows, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id' })
 
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return NextResponse.json({ error: `Erro ao salvar notas: ${error.message}` }, { status: 500 })
     }
     // Upsert notas de prova
     else if (prova_id) {
