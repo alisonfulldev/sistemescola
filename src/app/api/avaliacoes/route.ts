@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
   )
 
   try {
+    // 1. Criar avaliação
     const { data: novaAvaliacao, error } = await admin
       .from('avaliacoes')
       .insert({
@@ -102,6 +103,29 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // 2. Buscar alunos da turma
+    const { data: alunos } = await admin
+      .from('alunos')
+      .select('id')
+      .eq('turma_id', turma_id)
+      .eq('situacao', 'ativo')
+
+    // 3. Criar registros de notas_avaliacao para cada aluno
+    if (alunos && alunos.length > 0) {
+      const notasRegistros = alunos.map(aluno => ({
+        avaliacao_id: novaAvaliacao.id,
+        aluno_id: aluno.id,
+        nota: null,
+        registrado_em: new Date().toISOString(),
+        atualizado_em: new Date().toISOString()
+      }))
+
+      await admin
+        .from('notas_avaliacao')
+        .insert(notasRegistros)
+        .select()
+    }
 
     return NextResponse.json({ avaliacao: novaAvaliacao }, { status: 201 })
   } catch (error) {

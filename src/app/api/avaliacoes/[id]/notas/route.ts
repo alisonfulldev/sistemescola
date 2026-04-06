@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
     // Obter informações da avaliação
     const { data: avaliacao } = await admin
       .from('avaliacoes')
-      .select('*')
+      .select('*, turmas(id)')
       .eq('id', id)
       .single()
 
@@ -30,22 +30,36 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
       return NextResponse.json({ error: 'Avaliação não encontrada' }, { status: 404 })
     }
 
-    // Obter notas
-    const { data: notas } = await admin
+    // Obter alunos da turma (para garantir que todos apareçam)
+    const { data: alunos } = await admin
+      .from('alunos')
+      .select('id, nome_completo, numero_chamada')
+      .eq('turma_id', avaliacao.turma_id)
+      .eq('situacao', 'ativo')
+      .order('numero_chamada', { nullsFirst: false })
+      .order('nome_completo')
+
+    // Obter notas registradas
+    const { data: notasRegistradas } = await admin
       .from('notas_avaliacao')
-      .select(`
-        id, aluno_id, nota, observacao, registrado_em,
-        alunos(nome_completo, numero_chamada),
-        usuarios:registrado_por(nome)
-      `)
+      .select('id, aluno_id, nota, observacao, registrado_em')
       .eq('avaliacao_id', id)
-      .order('alunos.numero_chamada', { nullsFirst: false })
-      .order('alunos.nome_completo')
+
+    // Mesclar: todos os alunos com suas notas (ou vazio se não tiver nota)
+    const notasMap = new Map(notasRegistradas?.map(n => [n.aluno_id, n]) || [])
+    const notas = (alunos || []).map(aluno => ({
+      aluno_id: aluno.id,
+      nota: notasMap.get(aluno.id)?.nota || null,
+      alunos: {
+        nome_completo: aluno.nome_completo,
+        numero_chamada: aluno.numero_chamada
+      }
+    }))
 
     return NextResponse.json({
       avaliacao,
-      notas: notas || [],
-      total_notas: notas?.length || 0
+      notas,
+      total_notas: notas.length
     })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 })
