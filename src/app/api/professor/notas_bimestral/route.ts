@@ -89,19 +89,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nenhuma nota para salvar' }, { status: 400 })
     }
 
-    const rows = notas.map((n: any) => ({
-      aluno_id: n.aluno_id,
-      disciplina_id,
-      ano_letivo_id,
-      nota: n.nota === '' || n.nota === null ? null : parseFloat(String(n.nota)),
-      atualizado_em: new Date().toISOString()
-    }))
+    // Deletar notas existentes para esta turma/disciplina/ano
+    await admin
+      .from('notas')
+      .delete()
+      .eq('disciplina_id', disciplina_id)
+      .eq('ano_letivo_id', ano_letivo_id)
+      .in('aluno_id', notas.map((n: any) => n.aluno_id))
 
-    const { error } = await admin.from('notas').upsert(rows, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id' })
+    // Inserir notas novas
+    const rows = notas
+      .filter((n: any) => n.nota !== '' && n.nota !== null && n.nota !== undefined)
+      .map((n: any) => ({
+        aluno_id: n.aluno_id,
+        disciplina_id,
+        ano_letivo_id,
+        nota: parseFloat(String(n.nota)),
+        atualizado_em: new Date().toISOString()
+      }))
 
-    if (error) {
-      console.error('Erro Supabase:', error)
-      return NextResponse.json({ error: `Erro ao salvar notas: ${error.message}` }, { status: 500 })
+    if (rows.length > 0) {
+      const { error: insertError } = await admin.from('notas').insert(rows)
+      if (insertError) {
+        console.error('Erro ao inserir notas:', insertError)
+        return NextResponse.json({ error: `Erro ao salvar notas: ${insertError.message}` }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ ok: true })
