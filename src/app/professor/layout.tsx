@@ -69,7 +69,7 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
                 className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-medium text-slate-900 md:text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
-                <span className="hidden md:inline">{item.label}</span>
+                <span className="text-xs md:text-sm">{item.label}</span>
               </Link>
             )
           })}
@@ -82,7 +82,7 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
             className="w-full flex items-center justify-center md:justify-start gap-3 px-3 md:px-4 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
-            <span className="hidden md:inline">Sair</span>
+            <span className="text-xs md:text-sm">Sair</span>
           </button>
         </div>
       </aside>
