@@ -20,13 +20,34 @@ export default function ProfessorNotasPage() {
 
   useEffect(() => {
     async function init() {
-      const [{ data: t }, { data: d }, { data: a }] = await Promise.all([
-        supabase.from('turmas').select('id, nome').eq('ativo', true).order('nome'),
-        supabase.from('disciplinas').select('id, nome').order('nome'),
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Buscar turmas onde o professor tem aulas
+      const { data: aulasData } = await supabase
+        .from('aulas')
+        .select('turma_id, disciplina_id, disciplinas(id, nome)')
+        .eq('professor_id', user.id)
+
+      // Extrair turmas e disciplinas únicas
+      const turmasUnicas = Array.from(new Map(
+        (aulasData || []).map(a => [a.turma_id, a.turma_id])
+      ).values())
+
+      const disciplinasUnicas = Array.from(new Map(
+        (aulasData || [])
+          .filter(a => a.disciplinas)
+          .map(a => [a.disciplinas.id, a.disciplinas])
+      ).values())
+
+      // Buscar dados de turmas e anos letivos
+      const [{ data: t }, { data: a }] = await Promise.all([
+        supabase.from('turmas').select('id, nome').in('id', turmasUnicas.length > 0 ? turmasUnicas : ['']).order('nome'),
         supabase.from('anos_letivos').select('id, ano, ativo').order('ano', { ascending: false }),
       ])
+
       setTurmas(t || [])
-      setDisciplinas(d || [])
+      setDisciplinas(disciplinasUnicas)
       setAnosLetivos(a || [])
       const anoAtivo = (a || []).find((x: any) => x.ativo)
       if (anoAtivo) setAnoLetivoId(anoAtivo.id)
