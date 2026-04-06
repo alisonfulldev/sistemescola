@@ -18,7 +18,7 @@ export default async function ProfessorLayout({ children }: { children: React.Re
 
   async function logout() {
     'use server'
-    const sb = createClient()
+    const sb = await createClient()
     await sb.auth.signOut()
     redirect('/login')
   }

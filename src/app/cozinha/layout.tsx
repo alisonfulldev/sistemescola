@@ -19,7 +19,7 @@ export default async function CozinhaLayout({ children }: { children: React.Reac
 
   async function logout() {
     'use server'
-    const sb = createClient()
+    const sb = await createClient()
     await sb.auth.signOut()
     redirect('/login')
   }
