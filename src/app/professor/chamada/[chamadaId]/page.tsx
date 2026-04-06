@@ -64,6 +64,7 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
   const supabase = createClient()
 
   const load = useCallback(async () => {
+    if (!chamadaId) return
     const res = await fetch(`/api/professor/carregar-chamada?chamada_id=${chamadaId}`)
     if (!res.ok) {
       const data = await res.json()
