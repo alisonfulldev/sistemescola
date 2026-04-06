@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
     if (turma_id && disciplina_id && ano_letivo_id) {
       const rows = notas.map((n: any) => ({
         aluno_id: n.aluno_id,
-        turma_id,
         disciplina_id,
         ano_letivo_id,
         nota: n.nota !== '' && n.nota !== null && n.nota !== undefined ? parseFloat(n.nota) : null,
