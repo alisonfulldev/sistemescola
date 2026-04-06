@@ -276,7 +276,7 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
       <div className="w-full px-3 py-4 md:px-6 md:py-6 md:max-w-4xl md:mx-auto">
         {/* Info aula */}
         <div className="bg-white border border-slate-200 rounded-xl md:rounded-2xl p-3 md:p-4 mb-3 md:mb-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
           <div className="min-w-0">
             <h1 className="font-bold text-base md:text-lg text-slate-900 truncate">{aula?.turmas?.nome}</h1>
             <p className="text-slate-500 text-xs md:text-sm truncate">{aula?.disciplinas?.nome}</p>
