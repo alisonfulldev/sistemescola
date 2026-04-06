@@ -66,7 +66,7 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
+                className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-medium text-slate-900 md:text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 <span className="hidden md:inline">{item.label}</span>
