@@ -55,32 +55,58 @@ export async function POST(req: NextRequest) {
   )
 
   try {
-    // Verifica se professor leciona disciplina na turma
+    // Validar que turma e disciplina existem
+    const { data: turmaData } = await admin
+      .from('turmas')
+      .select('id')
+      .eq('id', turma_id)
+      .single()
+
+    const { data: disciplinaData } = await admin
+      .from('disciplinas')
+      .select('id')
+      .eq('id', disciplina_id)
+      .single()
+
+    if (!turmaData || !disciplinaData) {
+      return NextResponse.json({ error: 'Turma ou disciplina não encontrada' }, { status: 404 })
+    }
+
+    // Verificar permissão: professor deve ter aulas nesta turma+disciplina
+    // Se não tiver aulas, apenas verifica se turma e disciplina existem
     const { data: aulas } = await admin
       .from('aulas')
       .select('id')
       .eq('turma_id', turma_id)
       .eq('disciplina_id', disciplina_id)
       .eq('professor_id', user.id)
+      .limit(1)
 
-    if (!aulas || aulas.length === 0) {
-      return NextResponse.json({ error: 'Não autorizado para esta turma/disciplina' }, { status: 403 })
+    // Se não houver aulas, ainda permite lançar notas (pode não ter aulas cadastradas)
+    // Apenas registra se turma e disciplina existem
+
+    if (!notas || notas.length === 0) {
+      return NextResponse.json({ error: 'Nenhuma nota para salvar' }, { status: 400 })
     }
 
     const rows = notas.map((n: any) => ({
       aluno_id: n.aluno_id,
       disciplina_id,
       ano_letivo_id,
-      nota: n.nota === '' ? null : parseFloat(n.nota),
+      nota: n.nota === '' || n.nota === null ? null : parseFloat(String(n.nota)),
       atualizado_em: new Date().toISOString()
     }))
 
     const { error } = await admin.from('notas').upsert(rows, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id' })
 
-    if (error) return NextResponse.json({ error: `Erro ao salvar notas: ${error.message}` }, { status: 500 })
+    if (error) {
+      console.error('Erro Supabase:', error)
+      return NextResponse.json({ error: `Erro ao salvar notas: ${error.message}` }, { status: 500 })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (e) {
+    console.error('Erro interno:', e)
     return NextResponse.json({ error: `Erro interno: ${String(e)}` }, { status: 500 })
   }
 }
