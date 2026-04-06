@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
+import { CreateUsuarioComSenhaSchema } from '@/lib/schemas/admin'
+import { validateData, errorResponse } from '@/lib/api-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,27 +27,17 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const nome = typeof body.nome === 'string' ? body.nome.trim().slice(0, 200) : ''
-    const email = typeof body.email === 'string' ? body.email.trim().slice(0, 254).toLowerCase() : ''
-    const senha = typeof body.senha === 'string' ? body.senha : ''
-    const novoPerfil = typeof body.perfil === 'string' ? body.perfil : ''
+    const validation = validateData(CreateUsuarioComSenhaSchema, {
+      email: body.email?.toLowerCase(),
+      nome: body.nome,
+      senha: body.senha,
+      perfil: body.perfil,
+      turma_id: body.turma_id
+    })
 
-    if (!nome || !email || !senha || !novoPerfil) {
-      return NextResponse.json({ error: 'Campos obrigatórios: nome, email, senha, perfil' }, { status: 400 })
-    }
+    if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: 'Email inválido' }, { status: 400 })
-    }
-
-    if (senha.length < 8 || senha.length > 128) {
-      return NextResponse.json({ error: 'A senha deve ter entre 8 e 128 caracteres' }, { status: 400 })
-    }
-
-    const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin', 'cozinha', 'diretor']
-    if (!perfisValidos.includes(novoPerfil)) {
-      return NextResponse.json({ error: 'Perfil inválido' }, { status: 400 })
-    }
+    const { email, nome, senha, perfil: novoPerfil, turma_id } = validation.data
 
     // Apenas admin pode criar conta admin
     if (!isAdmin && novoPerfil === 'admin') {

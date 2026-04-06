@@ -1,18 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { SaveNotasSchema } from '@/lib/schemas/notas'
+import { validateData, errorResponse } from '@/lib/api-utils'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { prova_id, turma_id, disciplina_id, ano_letivo_id, notas } = await req.json()
-  // Suporta tanto notas de prova (prova_id) quanto notas bimestrais (turma_id + disciplina_id + ano_letivo_id)
+  const validation = validateData(SaveNotasSchema, await req.json())
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  if (!Array.isArray(notas) || notas.length === 0) {
-    return NextResponse.json({ error: 'Envie um array "notas" não vazio' }, { status: 400 })
-  }
+  const { prova_id, turma_id, disciplina_id, ano_letivo_id, notas } = validation.data
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

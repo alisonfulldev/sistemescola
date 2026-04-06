@@ -22,6 +22,17 @@ export const CreateAdminUsuarioSchema = z.object({
 
 export type CreateAdminUsuario = z.infer<typeof CreateAdminUsuarioSchema>
 
+// Schema para criar usuário com senha
+export const CreateUsuarioComSenhaSchema = z.object({
+  email: z.string().email('Email inválido'),
+  nome: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres').max(200),
+  senha: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres').max(128),
+  perfil: z.enum(['professor', 'admin', 'secretaria', 'diretor', 'responsavel', 'cozinha']),
+  turma_id: z.string().uuid().optional().nullable()
+})
+
+export type CreateUsuarioComSenha = z.infer<typeof CreateUsuarioComSenhaSchema>
+
 // Schema para criar chamada
 export const CreateChamadaSchema = z.object({
   aula_id: z.string().uuid('aula_id deve ser UUID válido'),
