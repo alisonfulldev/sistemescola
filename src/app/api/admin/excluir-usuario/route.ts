@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { DeleteUsuarioSchema } from '@/lib/schemas/admin'
+import { validateData, errorResponse } from '@/lib/api-utils'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -10,8 +12,10 @@ export async function POST(req: NextRequest) {
   const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
   if (!['admin', 'secretaria', 'diretor'].includes(perfil?.perfil)) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
-  const { user_id } = await req.json()
-  if (!user_id) return NextResponse.json({ error: 'user_id obrigatório' }, { status: 400 })
+  const validation = validateData(DeleteUsuarioSchema, await req.json())
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
+
+  const { user_id } = validation.data
 
   // Impede auto-exclusão
   if (user_id === user.id) {

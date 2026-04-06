@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { UpdateUsuarioSchema } from '@/lib/schemas/admin'
+import { validateData, errorResponse } from '@/lib/api-utils'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -16,8 +18,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
-  const { user_id, nome, email, perfil, senha } = await req.json()
-  if (!user_id) return NextResponse.json({ error: 'user_id obrigatório' }, { status: 400 })
+  const validation = validateData(UpdateUsuarioSchema, await req.json())
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
+
+  const { user_id, nome, email, perfil, senha, turma_id } = validation.data
 
   // Secretaria não pode alterar perfis — apenas admin/diretor pode
   if (perfil && !isAdmin && !isDiretor) {
