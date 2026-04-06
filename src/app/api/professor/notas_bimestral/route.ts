@@ -93,6 +93,7 @@ export async function POST(req: NextRequest) {
     await admin
       .from('notas')
       .delete()
+      .eq('turma_id', turma_id)
       .eq('disciplina_id', disciplina_id)
       .eq('ano_letivo_id', ano_letivo_id)
       .in('aluno_id', notas.map((n: any) => n.aluno_id))
@@ -102,6 +103,7 @@ export async function POST(req: NextRequest) {
       .filter((n: any) => n.nota !== '' && n.nota !== null && n.nota !== undefined)
       .map((n: any) => ({
         aluno_id: n.aluno_id,
+        turma_id,
         disciplina_id,
         ano_letivo_id,
         nota: parseFloat(String(n.nota)),
