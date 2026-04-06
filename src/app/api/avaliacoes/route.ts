@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { CreateAvaliacaoSchema } from '@/lib/schemas/avaliacoes'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
