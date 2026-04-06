@@ -272,15 +272,16 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
   )
 
   return (
-    <div className="px-4 sm:px-6 max-w-4xl mx-auto">
+    <div className="w-full bg-slate-50 min-h-screen">
+      <div className="w-full px-3 py-4 md:px-6 md:py-6 md:max-w-4xl md:mx-auto">
       {/* Info aula */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="font-bold text-lg sm:text-xl text-slate-900">{aula?.turmas?.nome}</h1>
-            <p className="text-slate-500 text-xs sm:text-sm">{aula?.disciplinas?.nome}</p>
+      <div className="bg-white border border-slate-200 rounded-xl md:rounded-2xl p-3 md:p-4 mb-3 md:mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
+          <div className="min-w-0">
+            <h1 className="font-bold text-base md:text-lg text-slate-900 truncate">{aula?.turmas?.nome}</h1>
+            <p className="text-slate-500 text-xs md:text-sm truncate">{aula?.disciplinas?.nome}</p>
           </div>
-          <div className="text-right">
+          <div className="text-left md:text-right flex-shrink-0">
             <span className="text-xs text-slate-400 block" style={{ fontFamily: 'DM Mono, monospace' }}>
               {aula?.horario_inicio?.slice(0, 5)} – {aula?.horario_fim?.slice(0, 5)}
             </span>
@@ -291,8 +292,8 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         </div>
       </div>
 
-      {/* Conteúdo programático + Atividades */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 mb-4 space-y-3">
+      {/* Conteúdo programático + Atividades - esconder em mobile */}
+      <div className="hidden md:block bg-white border border-slate-200 rounded-2xl p-4 mb-4 space-y-3">
         <div>
           <label className="block text-xs text-slate-500 mb-2 font-medium">📋 Conteúdo programático</label>
           <textarea
@@ -301,7 +302,7 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
             onBlur={salvarConteudo}
             placeholder="Ex: Números naturais — revisão e ordenação"
             rows={2}
-            className="w-full bg-white border border-slate-300 text-slate-900 text-xs sm:text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none placeholder-slate-400"
+            className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none placeholder-slate-400"
           />
         </div>
         <div>
@@ -312,52 +313,48 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
             onBlur={salvarConteudo}
             placeholder="Ex: Exercícios em sala e resolução de problemas"
             rows={2}
-            className="w-full bg-white border border-slate-300 text-slate-900 text-xs sm:text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none placeholder-slate-400"
+            className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none placeholder-slate-400"
           />
         </div>
         {salvandoConteudo && <p className="text-xs text-slate-400 italic">Salvando...</p>}
       </div>
 
       {/* Progresso */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 mb-4">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 mb-2">
-          <span className="text-xs sm:text-sm font-medium text-slate-600">Progresso</span>
-          <span className="text-xs sm:text-sm font-bold text-green-600">{marcados}/{total} alunos</span>
+      <div className="bg-white border border-slate-200 rounded-xl md:rounded-2xl p-3 md:p-4 mb-3 md:mb-4">
+        <div className="flex justify-between items-center mb-2 gap-2">
+          <span className="text-xs md:text-sm font-medium text-slate-600">Progresso</span>
+          <span className="text-xs md:text-sm font-bold text-green-600 text-right">{marcados}/{total}</span>
         </div>
-        <div className="w-full bg-slate-100 rounded-full h-2.5">
-          <div className="bg-green-600 h-2.5 rounded-full transition-all duration-300" style={{ width: `${progresso}%` }} />
+        <div className="w-full bg-slate-100 rounded-full h-2">
+          <div className="bg-green-600 h-2 rounded-full transition-all duration-300" style={{ width: `${progresso}%` }} />
         </div>
-        <div className="flex flex-wrap gap-2 sm:gap-5 mt-3 text-xs">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-green-600 rounded-full flex-shrink-0" />
-            <span className="text-green-600 font-semibold">{presentes}</span>
-            <span className="text-slate-500 hidden sm:inline">presentes</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-red-600 rounded-full flex-shrink-0" />
-            <span className="text-red-600 font-semibold">{faltas}</span>
-            <span className="text-slate-500 hidden sm:inline">faltas</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-amber-600 rounded-full flex-shrink-0" />
-            <span className="text-amber-600 font-semibold">{justificadas}</span>
-            <span className="text-slate-500 hidden sm:inline">justificadas</span>
-          </span>
-          {salvando && <span className="text-slate-400 italic text-xs ml-auto">Salvando...</span>}
+        <div className="grid grid-cols-3 gap-2 md:gap-5 mt-2 md:mt-3 text-xs md:text-sm">
+          <div className="text-center">
+            <div className="font-bold text-green-600">{presentes}</div>
+            <div className="text-slate-500 text-xs">✅</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-red-600">{faltas}</div>
+            <div className="text-slate-500 text-xs">❌</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-amber-600">{justificadas}</div>
+            <div className="text-slate-500 text-xs">📝</div>
+          </div>
         </div>
       </div>
 
       {/* Lista de alunos */}
-      <div className="space-y-2 mb-28 sm:mb-6">
+      <div className="space-y-2 md:space-y-2 mb-32 md:mb-6">
         {alunos.map((aluno, idx) => (
-          <div key={aluno.id} className={`bg-white rounded-2xl border overflow-hidden transition-all ${
+          <div key={aluno.id} className={`bg-white rounded-lg md:rounded-2xl border overflow-hidden transition-all ${
             aluno.status === 'presente' ? 'border-green-300' :
             aluno.status === 'falta' ? 'border-red-300' :
             aluno.status === 'justificada' ? 'border-amber-300' : 'border-slate-200'
           }`}>
-            <div className="p-3">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+            <div className="p-2.5 md:p-3">
+              <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center text-xs">
                   {aluno.foto_url ? (
                     <Image src={aluno.foto_url} alt={aluno.nome_completo} width={40} height={40} className="object-cover w-full h-full" />
                   ) : (
@@ -367,32 +364,31 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{aluno.nome_completo}</p>
+                  <p className="text-xs md:text-sm font-medium text-slate-800 truncate">{aluno.nome_completo}</p>
                   {aluno.entrada ? (
-                    <p className="text-xs text-green-600">✓ Entrada às {aluno.entrada.hora.slice(0, 5)}</p>
+                    <p className="text-xs text-green-600">✓ {aluno.entrada.hora.slice(0, 5)}</p>
                   ) : (
-                    <p className="text-xs text-slate-400">Entrada não registrada</p>
+                    <p className="text-xs text-slate-400">-</p>
                   )}
                 </div>
-                <span className="text-xs text-slate-400 flex-shrink-0">{idx + 1}</span>
+                <span className="text-xs text-slate-400 flex-shrink-0">#</span>
               </div>
 
               {/* Botões */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 md:gap-2">
                 {(['presente', 'falta', 'justificada'] as StatusPresenca[]).map(s => (
                   <button
                     key={s}
                     onClick={() => handleClickStatus(aluno, s)}
-                    className={`py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 ${
+                    className={`py-1.5 md:py-2 px-1 rounded-lg md:rounded-xl text-xs font-semibold transition-all active:scale-95 ${
                       aluno.status === s
                         ? s === 'presente' ? 'bg-green-600 text-white'
                           : s === 'falta' ? 'bg-red-600 text-white'
                           : 'bg-amber-500 text-white'
-                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200'
+                        : 'bg-slate-50 text-slate-500 border border-slate-200'
                     }`}
                   >
                     {s === 'presente' ? '✅' : s === 'falta' ? '❌' : '📝'}
-                    <span className="hidden sm:inline ml-1">{s === 'presente' ? 'Presente' : s === 'falta' ? 'Falta' : 'Justif.'}</span>
                   </button>
                 ))}
               </div>
@@ -434,11 +430,11 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
       </div>
 
       {/* Botão confirmar / salvar */}
-      <div className="fixed bottom-0 left-0 right-0 sm:static bg-white border-t border-slate-200 sm:border-0 p-4 sm:p-0 flex gap-3 sm:gap-0 shadow-lg sm:shadow-none">
+      <div className="fixed bottom-0 left-0 right-0 md:static bg-white border-t border-slate-200 md:border-0 p-3 md:p-0 flex gap-2 md:gap-3 shadow-lg md:shadow-none z-40 md:z-auto">
         {jaConcluida && (
           <button
             onClick={() => router.push(`/professor/resumo/${chamadaId}`)}
-            className="hidden sm:block py-4 px-5 bg-white border border-slate-300 text-slate-500 rounded-2xl font-medium hover:bg-slate-50 transition-colors text-sm"
+            className="hidden md:block py-3 md:py-4 px-4 md:px-5 bg-white border border-slate-300 text-slate-500 rounded-lg md:rounded-2xl font-medium hover:bg-slate-50 transition-colors text-xs md:text-sm"
           >
             Ver resumo
           </button>
@@ -446,17 +442,19 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         <button
           onClick={() => setShowConfirm(true)}
           disabled={marcados < total || total === 0}
-          className={`flex-1 py-3 sm:py-4 rounded-2xl font-bold text-sm sm:text-base transition-all ${
+          className={`flex-1 py-2.5 md:py-4 rounded-lg md:rounded-2xl font-bold text-xs md:text-base transition-all ${
             marcados === total && total > 0
               ? 'bg-green-600 text-white hover:bg-green-500 active:scale-[0.99]'
               : 'bg-white border border-slate-200 text-slate-400 cursor-not-allowed'
           }`}
         >
           {marcados === total && total > 0
-            ? jaConcluida ? '💾 Salvar' : '✓ Confirmar'
-            : `${total - marcados} restantes`}
+            ? jaConcluida ? '💾' : '✓'
+            : `${total - marcados}`}
         </button>
       </div>
+      </div>
+    </div>
 
       {/* Modal de motivo de alteração */}
       {modalAlteracao && (
