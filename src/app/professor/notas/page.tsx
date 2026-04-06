@@ -31,13 +31,13 @@ export default function ProfessorNotasPage() {
 
       // Extrair turmas e disciplinas únicas
       const turmasUnicas = Array.from(new Map(
-        (aulasData || []).map(a => [a.turma_id, a.turma_id])
+        (aulasData || []).map((a: any) => [a.turma_id, a.turma_id])
       ).values())
 
       const disciplinasUnicas = Array.from(new Map(
         (aulasData || [])
-          .filter(a => a.disciplinas)
-          .map(a => [a.disciplinas.id, a.disciplinas])
+          .filter((a: any) => a.disciplinas && typeof a.disciplinas === 'object' && 'id' in a.disciplinas)
+          .map((a: any) => [(a.disciplinas as any).id, a.disciplinas])
       ).values())
 
       // Buscar dados de turmas e anos letivos
