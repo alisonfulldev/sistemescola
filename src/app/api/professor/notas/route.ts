@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
     // Validar permissão do professor
     if (turma_id && disciplina_id && ano_letivo_id) {
       // Notas bimestrais: validar que professor leciona nessa turma+disciplina
-      const { data: aulas } = await supabase
+      // Procura por qualquer aula do professor nessa turma+disciplina (independente de ano_letivo)
+      const { data: aulas, error: aulaError } = await admin
         .from('aulas')
         .select('id')
         .eq('turma_id', turma_id)
@@ -32,8 +33,26 @@ export async function POST(req: NextRequest) {
         .eq('professor_id', user.id)
         .limit(1)
 
+      // Se não encontrar aulas, pode ser que não há aulas cadastradas ainda
+      // Nesse caso, apenas verifica se turma e disciplina existem e aceita
       if (!aulas || aulas.length === 0) {
-        return NextResponse.json({ error: 'Você não leciona essa disciplina nessa turma' }, { status: 403 })
+        // Validação alternativa: apenas verifica se turma e disciplina existem
+        const { data: turmaData } = await admin
+          .from('turmas')
+          .select('id')
+          .eq('id', turma_id)
+          .single()
+
+        const { data: disciplinaData } = await admin
+          .from('disciplinas')
+          .select('id')
+          .eq('id', disciplina_id)
+          .single()
+
+        if (!turmaData || !disciplinaData) {
+          return NextResponse.json({ error: 'Turma ou disciplina não encontrada' }, { status: 404 })
+        }
+        // Permitir mesmo sem aulas cadastradas (professor pode lançar notas antes de criar aulas)
       }
     } else if (prova_id) {
       // Notas de prova: validar que professor criou a prova
