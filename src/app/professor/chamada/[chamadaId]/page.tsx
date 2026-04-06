@@ -25,15 +25,15 @@ interface ModalAlteracao {
 }
 
 interface Props {
-  params: Promise<{ aulaId: string }>
+  params: Promise<{ chamadaId: string }>
 }
 
-// Rota: /professor/chamada/[aulaId] onde aulaId é na verdade o chamadaId
+// Rota: /professor/chamada/[chamadaId]
 export default function ChamadaPage({ params: paramsPromise }: Props) {
   const [chamadaId, setChamadaId] = useState<string>('')
 
   useEffect(() => {
-    paramsPromise.then((params) => setChamadaId(params.aulaId))
+    paramsPromise.then((params) => setChamadaId(params.chamadaId))
   }, [paramsPromise])
 
   const [alunos, setAlunos] = useState<AlunoRow[]>([])
