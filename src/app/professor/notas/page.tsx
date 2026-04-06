@@ -91,31 +91,31 @@ export default function ProfessorNotasPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 mb-4 md:mb-6">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Lançar Notas</h1>
-          <p className="text-slate-500 text-sm">Notas finais por disciplina</p>
+          <h1 className="text-lg md:text-xl font-bold text-slate-900">Lançar Notas</h1>
+          <p className="text-slate-500 text-xs md:text-sm">Notas finais</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
         <div>
           <label className="block text-xs text-slate-500 mb-2">Turma</label>
-          <select value={turmaId} onChange={e => setTurmaId(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+          <select value={turmaId} onChange={e => setTurmaId(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-sm focus:ring-2 focus:ring-blue-500">
             <option value="">Selecione...</option>
             {turmas.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-2">Disciplina</label>
-          <select value={disciplinaId} onChange={e => setDisciplinaId(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+          <select value={disciplinaId} onChange={e => setDisciplinaId(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-sm focus:ring-2 focus:ring-blue-500">
             <option value="">Selecione...</option>
             {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-xs text-slate-500 mb-2">Ano Letivo</label>
-          <select value={anoLetivoId} onChange={e => setAnoLetivoId(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+          <select value={anoLetivoId} onChange={e => setAnoLetivoId(e.target.value)} className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-sm focus:ring-2 focus:ring-blue-500">
             <option value="">Selecione...</option>
             {anosLetivos.map(a => <option key={a.id} value={a.id}>{a.ano}</option>)}
           </select>
@@ -123,26 +123,26 @@ export default function ProfessorNotasPage() {
       </div>
 
       {alunos.length > 0 && disciplinaId && anoLetivoId && (
-        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm mb-6">
-          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-            <h3 className="text-lg font-bold text-slate-900">{alunos.length} alunos</h3>
+        <div className="bg-white border border-slate-200 rounded-lg md:rounded-xl overflow-hidden shadow-sm mb-6">
+          <div className="px-3 md:px-6 py-3 md:py-4 border-b border-slate-200 bg-slate-50">
+            <h3 className="text-sm md:text-lg font-bold text-slate-900">{alunos.length} alunos</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50">
-                  <th className="p-4 text-left text-sm font-medium text-slate-500">Aluno</th>
-                  <th className="p-4 text-center text-sm font-medium text-slate-500 w-32">Nota Final (0-10)</th>
+                  <th className="p-2 md:p-4 text-left text-xs md:text-sm font-medium text-slate-500">Aluno</th>
+                  <th className="p-2 md:p-4 text-center text-xs md:text-sm font-medium text-slate-500 w-24 md:w-32">Nota</th>
                 </tr>
               </thead>
               <tbody>
                 {alunos.map(aluno => (
                   <tr key={aluno.id} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="p-4">
-                      <div className="font-medium text-slate-900">{aluno.nome_completo}</div>
-                      <div className="text-sm text-slate-500">{aluno.matricula}</div>
+                    <td className="p-2 md:p-4">
+                      <div className="font-medium text-xs md:text-sm text-slate-900 truncate">{aluno.nome_completo}</div>
+                      <div className="text-xs text-slate-500 hidden md:block">{aluno.matricula}</div>
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="p-2 md:p-4 text-center">
                       <input
                         type="number"
                         min="0"
