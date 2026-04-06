@@ -10,7 +10,7 @@ export const revalidate = 0
 export default async function ResumoChamadaPage({ params: paramsPromise }: { params: Promise<{ chamadaId: string }> }) {
   const { chamadaId } = await paramsPromise
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 

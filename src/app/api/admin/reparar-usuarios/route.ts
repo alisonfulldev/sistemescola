@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 // Endpoint temporário: sincroniza usuários do Auth que estão faltando na tabela public.usuarios
 export async function POST() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 

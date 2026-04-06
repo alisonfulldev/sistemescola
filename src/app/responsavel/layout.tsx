@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import LogoutButton from './LogoutButton'
 
 export default async function ResponsavelLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
