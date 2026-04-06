@@ -49,6 +49,10 @@ export default function ProfessorNotasPage() {
       setTurmas(t || [])
       setDisciplinas(disciplinasUnicas)
       setAnosLetivos(a || [])
+
+      // Selecionar turma, disciplina e ano letivo automaticamente
+      if (t && t.length > 0) setTurmaId(t[0].id)
+      if (disciplinasUnicas.length > 0) setDisciplinaId(disciplinasUnicas[0].id)
       const anoAtivo = (a || []).find((x: any) => x.ativo)
       if (anoAtivo) setAnoLetivoId(anoAtivo.id)
     }
