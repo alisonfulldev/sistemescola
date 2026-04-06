@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { SaveAvaliacaoNotasSchema } from '@/lib/schemas/avaliacoes'
+import { validateData, errorResponse } from '@/lib/api-utils'
 
 export async function GET(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -82,24 +84,13 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
     return NextResponse.json({ error: 'ID da avaliação não fornecido' }, { status: 400 })
   }
 
-  const { notas: notasData } = await req.json()
+  const payload = { id, ...(await req.json()) }
 
-  if (!Array.isArray(notasData) || notasData.length === 0) {
-    return NextResponse.json({ error: 'Envie um array "notas" com dados a inserir' }, { status: 400 })
-  }
+  // Validar com Zod
+  const validation = validateData(SaveAvaliacaoNotasSchema, payload)
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  // Validar estrutura
-  for (const nota of notasData) {
-    if (!nota.aluno_id || nota.nota === undefined) {
-      return NextResponse.json({
-        error: 'Cada nota deve ter: aluno_id e nota'
-      }, { status: 400 })
-    }
-
-    if (typeof nota.nota === 'number' && (nota.nota < 0 || nota.nota > 99.9)) {
-      return NextResponse.json({ error: 'Nota deve estar entre 0 e 99.9' }, { status: 400 })
-    }
-  }
+  const { notas: notasData } = validation.data
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

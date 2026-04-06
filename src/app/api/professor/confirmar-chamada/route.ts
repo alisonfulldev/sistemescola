@@ -1,14 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { ConfirmarChamadaSchema } from '@/lib/schemas/chamada'
+import { validateData, errorResponse } from '@/lib/api-utils'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { chamada_id } = await req.json()
-  if (!chamada_id) return NextResponse.json({ error: 'chamada_id obrigatório' }, { status: 400 })
+  const validation = validateData(ConfirmarChamadaSchema, await req.json())
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
+
+  const { chamada_id } = validation.data
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

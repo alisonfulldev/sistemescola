@@ -1,16 +1,18 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { MarcarPresencaSchema } from '@/lib/schemas/chamada'
+import { validateData, errorResponse } from '@/lib/api-utils'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { chamada_id, aluno_id, status, observacao, motivo_alteracao, horario_evento, status_anterior, chamada_concluida } = await req.json()
-  if (!chamada_id || !aluno_id || !status) {
-    return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })
-  }
+  const validation = validateData(MarcarPresencaSchema, await req.json())
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
+
+  const { chamada_id, aluno_id, status, observacao, motivo_alteracao, horario_evento, status_anterior, chamada_concluida } = validation.data
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
