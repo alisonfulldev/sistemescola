@@ -76,6 +76,11 @@ export async function POST(req: NextRequest) {
         disciplina_id,
         ano_letivo_id,
         nota: n.nota !== '' && n.nota !== null && n.nota !== undefined ? parseFloat(n.nota) : null,
+        b1: null,
+        b2: null,
+        b3: null,
+        b4: null,
+        recuperacao: null,
         atualizado_em: new Date().toISOString()
       }))
 
