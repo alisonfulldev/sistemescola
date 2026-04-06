@@ -54,30 +54,33 @@ export async function POST(req: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Verifica se professor leciona disciplina na turma
-  const { data: aulas } = await admin
-    .from('aulas')
-    .select('id')
-    .eq('turma_id', turma_id)
-    .eq('disciplina_id', disciplina_id)
-    .eq('professor_id', user.id)
+  try {
+    // Verifica se professor leciona disciplina na turma
+    const { data: aulas } = await admin
+      .from('aulas')
+      .select('id')
+      .eq('turma_id', turma_id)
+      .eq('disciplina_id', disciplina_id)
+      .eq('professor_id', user.id)
 
-  if (!aulas || aulas.length === 0) {
-    return NextResponse.json({ error: 'Não autorizado para esta turma/disciplina' }, { status: 403 })
+    if (!aulas || aulas.length === 0) {
+      return NextResponse.json({ error: 'Não autorizado para esta turma/disciplina' }, { status: 403 })
+    }
+
+    const rows = notas.map((n: any) => ({
+      aluno_id: n.aluno_id,
+      disciplina_id,
+      ano_letivo_id,
+      nota: n.nota === '' ? null : parseFloat(n.nota),
+      atualizado_em: new Date().toISOString()
+    }))
+
+    const { error } = await admin.from('notas').upsert(rows, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id' })
+
+    if (error) return NextResponse.json({ error: `Erro ao salvar notas: ${error.message}` }, { status: 500 })
+
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return NextResponse.json({ error: `Erro interno: ${String(e)}` }, { status: 500 })
   }
-
-  const rows = notas.map((n: any) => ({
-    aluno_id: n.aluno_id,
-    disciplina_id,
-    ano_letivo_id,
-    turma_id,
-    nota: n.nota === '' ? null : parseFloat(n.nota),
-    atualizado_em: new Date().toISOString()
-  }))
-
-  const { error } = await admin.from('notas').upsert(rows, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id' })
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({ ok: true })
 }
