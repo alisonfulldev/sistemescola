@@ -33,7 +33,11 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
   const [chamadaId, setChamadaId] = useState<string>('')
 
   useEffect(() => {
-    paramsPromise.then((params) => setChamadaId(params.chamadaId))
+    if (paramsPromise && typeof paramsPromise === 'object' && 'then' in paramsPromise) {
+      (paramsPromise as Promise<{ chamadaId: string }>).then((params) => setChamadaId(params.chamadaId))
+    } else if (paramsPromise && (paramsPromise as any).chamadaId) {
+      setChamadaId((paramsPromise as any).chamadaId)
+    }
   }, [paramsPromise])
 
   const [alunos, setAlunos] = useState<AlunoRow[]>([])
