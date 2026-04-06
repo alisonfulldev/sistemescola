@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { SaveNotasSchema } from '@/lib/schemas/notas'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
@@ -42,11 +43,18 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { turma_id, disciplina_id, ano_letivo_id, notas } = await req.json()
+  const payload = await req.json()
 
-  if (!turma_id || !disciplina_id || !ano_letivo_id || !Array.isArray(notas)) {
-    return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
+  // Validar com Zod
+  const validation = SaveNotasSchema.safeParse(payload)
+  if (!validation.success) {
+    return NextResponse.json({
+      error: 'Dados inválidos',
+      details: validation.error.flatten().fieldErrors
+    }, { status: 400 })
   }
+
+  const { turma_id, disciplina_id, ano_letivo_id, notas } = validation.data
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
