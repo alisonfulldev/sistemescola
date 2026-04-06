@@ -548,6 +548,5 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         </div>
       )}
     </div>
-    </div>
   )
 }
