@@ -7,10 +7,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { prova_id, notas, publicar } = await req.json()
-  // notas: [{ aluno_id, nota }]
-  if (!prova_id || !Array.isArray(notas)) {
-    return NextResponse.json({ error: 'prova_id e notas são obrigatórios' }, { status: 400 })
+  const { prova_id, turma_id, disciplina_id, ano_letivo_id, notas } = await req.json()
+  // Suporta tanto notas de prova (prova_id) quanto notas bimestrais (turma_id + disciplina_id + ano_letivo_id)
+
+  if (!Array.isArray(notas) || notas.length === 0) {
+    return NextResponse.json({ error: 'Envie um array "notas" não vazio' }, { status: 400 })
   }
 
   const admin = createAdmin(
@@ -19,76 +20,66 @@ export async function POST(req: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Valida que a prova é do professor
-  const { data: prova } = await admin
-    .from('provas')
-    .select('id, titulo, nota_maxima, turma_id, turmas(nome)')
-    .eq('id', prova_id)
-    .eq('professor_id', user.id)
-    .single()
+  try {
+    // Validar permissão do professor
+    if (turma_id && disciplina_id && ano_letivo_id) {
+      // Notas bimestrais: validar que professor leciona nessa turma+disciplina
+      const { data: aulas } = await supabase
+        .from('aulas')
+        .select('id')
+        .eq('turma_id', turma_id)
+        .eq('disciplina_id', disciplina_id)
+        .eq('professor_id', user.id)
+        .limit(1)
 
-  if (!prova) return NextResponse.json({ error: 'Prova não encontrada' }, { status: 404 })
+      if (!aulas || aulas.length === 0) {
+        return NextResponse.json({ error: 'Você não leciona essa disciplina nessa turma' }, { status: 403 })
+      }
+    } else if (prova_id) {
+      // Notas de prova: validar que professor criou a prova
+      const { data: prova } = await admin
+        .from('provas')
+        .select('id')
+        .eq('id', prova_id)
+        .eq('professor_id', user.id)
+        .single()
 
-  // Upsert notas
-  if (notas.length > 0) {
-    const rows = notas.map((n: any) => ({
-      prova_id,
-      aluno_id: n.aluno_id,
-      nota: n.nota !== '' && n.nota !== null && n.nota !== undefined ? parseFloat(n.nota) : null,
-    }))
+      if (!prova) return NextResponse.json({ error: 'Prova não encontrada ou não autorizado' }, { status: 404 })
+    } else {
+      return NextResponse.json({ error: 'Envie prova_id OU (turma_id + disciplina_id + ano_letivo_id)' }, { status: 400 })
+    }
 
-    const { error } = await admin.from('notas').upsert(rows, { onConflict: 'prova_id,aluno_id' })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    // Upsert notas bimestrais
+    if (turma_id && disciplina_id && ano_letivo_id) {
+      const rows = notas.map((n: any) => ({
+        aluno_id: n.aluno_id,
+        turma_id,
+        disciplina_id,
+        ano_letivo_id,
+        nota: n.nota !== '' && n.nota !== null && n.nota !== undefined ? parseFloat(n.nota) : null,
+        atualizado_em: new Date().toISOString()
+      }))
+
+      const { error } = await admin
+        .from('notas_bimestrais')
+        .upsert(rows, { onConflict: 'aluno_id,turma_id,disciplina_id,ano_letivo_id' })
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    // Upsert notas de prova
+    else if (prova_id) {
+      const rows = notas.map((n: any) => ({
+        prova_id,
+        aluno_id: n.aluno_id,
+        nota: n.nota !== '' && n.nota !== null && n.nota !== undefined ? parseFloat(n.nota) : null,
+      }))
+
+      const { error } = await admin.from('notas').upsert(rows, { onConflict: 'prova_id,aluno_id' })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    return NextResponse.json({ error: String(error) }, { status: 500 })
   }
-
-  // Se publicar, marca prova como publicada e notifica responsáveis
-  if (publicar) {
-    await admin.from('provas').update({ publicada: true }).eq('id', prova_id)
-    notificarNotas(admin, prova_id, prova).catch(() => {})
-  }
-
-  return NextResponse.json({ ok: true })
-}
-
-async function notificarNotas(admin: any, prova_id: string, prova: any) {
-  // Busca alunos da turma com suas notas
-  const { data: notasData } = await admin
-    .from('notas')
-    .select('aluno_id, nota')
-    .eq('prova_id', prova_id)
-
-  if (!notasData?.length) return
-
-  const webpush = await import('web-push')
-  webpush.default.setVapidDetails(
-    process.env.VAPID_SUBJECT!,
-    (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim().replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
-    (process.env.VAPID_PRIVATE_KEY || '').trim()
-  )
-
-  const turmaNome = (prova as any).turmas?.nome || ''
-
-  await Promise.allSettled(notasData.map(async (n: any) => {
-    const { data: vinculos } = await admin
-      .from('responsaveis_alunos')
-      .select('responsavel_id')
-      .eq('aluno_id', n.aluno_id)
-    if (!vinculos?.length) return
-
-    const respIds = vinculos.map((v: any) => v.responsavel_id)
-    const { data: subs } = await admin.from('push_subscriptions').select('subscription').in('responsavel_id', respIds)
-    if (!subs?.length) return
-
-    const { data: aluno } = await admin.from('alunos').select('nome_completo').eq('id', n.aluno_id).single()
-
-    const notaFmt = n.nota !== null ? `${n.nota}/${prova.nota_maxima}` : 'sem nota'
-    const payload = JSON.stringify({
-      title: `📝 Nota publicada — ${prova.titulo}`,
-      body: `${aluno?.nome_completo}: ${notaFmt} · ${turmaNome}`,
-      tag: `nota-${prova_id}-${n.aluno_id}`,
-      url: '/responsavel',
-    })
-
-    await Promise.allSettled(subs.map((s: any) => webpush.default.sendNotification(s.subscription, payload)))
-  }))
 }
