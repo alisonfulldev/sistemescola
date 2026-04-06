@@ -274,8 +274,8 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
   return (
     <div className="w-full bg-slate-50 min-h-screen">
       <div className="w-full px-3 py-4 md:px-6 md:py-6 md:max-w-4xl md:mx-auto">
-      {/* Info aula */}
-      <div className="bg-white border border-slate-200 rounded-xl md:rounded-2xl p-3 md:p-4 mb-3 md:mb-4">
+        {/* Info aula */}
+        <div className="bg-white border border-slate-200 rounded-xl md:rounded-2xl p-3 md:p-4 mb-3 md:mb-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
           <div className="min-w-0">
             <h1 className="font-bold text-base md:text-lg text-slate-900 truncate">{aula?.turmas?.nome}</h1>
@@ -292,8 +292,8 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         </div>
       </div>
 
-      {/* Conteúdo programático + Atividades - esconder em mobile */}
-      <div className="hidden md:block bg-white border border-slate-200 rounded-2xl p-4 mb-4 space-y-3">
+        {/* Conteúdo programático + Atividades - esconder em mobile */}
+        <div className="hidden md:block bg-white border border-slate-200 rounded-2xl p-4 mb-4 space-y-3">
         <div>
           <label className="block text-xs text-slate-500 mb-2 font-medium">📋 Conteúdo programático</label>
           <textarea
@@ -319,8 +319,8 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         {salvandoConteudo && <p className="text-xs text-slate-400 italic">Salvando...</p>}
       </div>
 
-      {/* Progresso */}
-      <div className="bg-white border border-slate-200 rounded-xl md:rounded-2xl p-3 md:p-4 mb-3 md:mb-4">
+        {/* Progresso */}
+        <div className="bg-white border border-slate-200 rounded-xl md:rounded-2xl p-3 md:p-4 mb-3 md:mb-4">
         <div className="flex justify-between items-center mb-2 gap-2">
           <span className="text-xs md:text-sm font-medium text-slate-600">Progresso</span>
           <span className="text-xs md:text-sm font-bold text-green-600 text-right">{marcados}/{total}</span>
@@ -344,8 +344,8 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         </div>
       </div>
 
-      {/* Lista de alunos */}
-      <div className="space-y-2 md:space-y-2 mb-32 md:mb-6">
+        {/* Lista de alunos */}
+        <div className="space-y-2 md:space-y-2 mb-32 md:mb-6">
         {alunos.map((aluno, idx) => (
           <div key={aluno.id} className={`bg-white rounded-lg md:rounded-2xl border overflow-hidden transition-all ${
             aluno.status === 'presente' ? 'border-green-300' :
@@ -429,8 +429,8 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
         ))}
       </div>
 
-      {/* Botão confirmar / salvar */}
-      <div className="fixed bottom-0 left-0 right-0 md:static bg-white border-t border-slate-200 md:border-0 p-3 md:p-0 flex gap-2 md:gap-3 shadow-lg md:shadow-none z-40 md:z-auto">
+        {/* Botão confirmar / salvar */}
+        <div className="fixed bottom-0 left-0 right-0 md:static bg-white border-t border-slate-200 md:border-0 p-3 md:p-0 flex gap-2 md:gap-3 shadow-lg md:shadow-none z-40 md:z-auto">
         {jaConcluida && (
           <button
             onClick={() => router.push(`/professor/resumo/${chamadaId}`)}
@@ -452,7 +452,7 @@ export default function ChamadaPage({ params: paramsPromise }: Props) {
             ? jaConcluida ? '💾' : '✓'
             : `${total - marcados}`}
         </button>
-      </div>
+        </div>
       </div>
 
       {/* Modal de motivo de alteração */}
