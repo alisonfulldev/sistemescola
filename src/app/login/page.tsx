@@ -47,7 +47,7 @@ export default function LoginPage() {
       professor: '/professor',
       secretaria: '/adm',
       admin: '/admin',
-      diretor: '/adm',
+      diretor: '/admin',
       responsavel: '/responsavel',
       cozinha: '/cozinha',
     }
