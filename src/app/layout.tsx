@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -19,9 +20,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <script src="https://cdn.tailwindcss.com"></script>
-        {/* Captura o evento de instalação do PWA antes do React montar */}
-      <script dangerouslySetInnerHTML={{ __html: `
+        <Script src="https://cdn.tailwindcss.com" strategy="beforeInteractive" />
+        <script dangerouslySetInnerHTML={{ __html: `
         window.__pwaInstallPrompt = null;
         window.addEventListener('beforeinstallprompt', function(e) {
           e.preventDefault();
