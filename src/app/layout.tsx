@@ -17,6 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="manifest" href="/manifest.json" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script src="https://cdn.tailwindcss.com"></script>
         {/* Captura o evento de instalação do PWA antes do React montar */}
       <script dangerouslySetInnerHTML={{ __html: `
         window.__pwaInstallPrompt = null;
@@ -25,8 +28,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           window.__pwaInstallPrompt = e;
         });
       `}} />
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>{children}</body>
     </html>
