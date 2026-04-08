@@ -128,8 +128,12 @@ export async function POST(req: NextRequest) {
       .upsert(rows, { onConflict: 'aluno_id,turma_id,disciplina_id,ano_letivo_id' })
 
     if (upsertError) {
-      await logger.logError('/api/professor/notas_bimestral', upsertError as Error, user.id, { turma_id, disciplina_id })
-      return NextResponse.json({ error: 'Erro ao salvar notas bimestrais' }, { status: 500 })
+      console.error('UPSERT ERROR:', upsertError)
+      await logger.logError('/api/professor/notas_bimestral', upsertError as Error, user.id, { turma_id, disciplina_id, rows })
+      return NextResponse.json({
+        error: 'Erro ao salvar notas bimestrais',
+        detail: upsertError.message
+      }, { status: 500 })
     }
 
     await logger.logAudit(user.id, 'notas_bimestral_salvar', '/api/professor/notas_bimestral', {
@@ -141,7 +145,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (e) {
-    await logger.logError('/api/professor/notas_bimestral', e as Error, user.id)
-    return NextResponse.json({ error: 'Erro interno ao salvar notas bimestrais' }, { status: 500 })
+    const error = e as Error
+    console.error('CATCH ERROR:', error.message, error.stack)
+    await logger.logError('/api/professor/notas_bimestral', error, user.id)
+    return NextResponse.json({
+      error: 'Erro interno ao salvar notas bimestrais',
+      detail: error.message
+    }, { status: 500 })
   }
 }
