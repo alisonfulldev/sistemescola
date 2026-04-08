@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
     const { data: disc } = await admin
       .from('disciplinas')
       .select('id')
-      .eq('professor_id', user.id)
       .limit(1)
       .maybeSingle()
     disciplinaId = disc?.id
