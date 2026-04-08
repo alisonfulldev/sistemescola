@@ -29,7 +29,7 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return router.push('/login')
       const { data } = await supabase.from('usuarios').select('nome, perfil').eq('id', user.id).single()
-      if (!['secretaria', 'admin'].includes(data?.perfil || '')) return router.push('/login')
+      if (!['secretaria', 'admin', 'diretor'].includes(data?.perfil || '')) return router.push('/login')
       setUsuario(data)
       const { count } = await supabase.from('alertas').select('*', { count: 'exact', head: true }).eq('lido', false)
       setBadgeAlertas(count || 0)
@@ -63,7 +63,7 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <h1 className="font-bold text-slate-900 text-sm">Estudapp</h1>
-            <p className="text-xs text-blue-600 font-medium">Secretaria</p>
+            <p className="text-xs text-blue-600 font-medium capitalize">{usuario?.perfil || 'Sistema'}</p>
           </div>
         </div>
       </div>

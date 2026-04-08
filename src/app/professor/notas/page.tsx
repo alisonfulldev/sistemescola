@@ -193,9 +193,49 @@ export default function ProfessorNotasPage() {
             </button>
           </div>
         </div>
+
+        {/* Resumo/Histórico de Notas */}
+        {alunos.length > 0 && (
+          <div className="mt-6 bg-white border border-slate-200 rounded-lg md:rounded-xl overflow-hidden shadow-sm">
+            <div className="px-3 md:px-6 py-3 md:py-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-sm md:text-lg font-bold text-slate-900">Resumo das Notas Lançadas</h3>
+            </div>
+            <div className="p-4 md:p-6">
+              {(() => {
+                const totalAlunos = alunos.length
+                const alunosComNotas = Object.keys(notas).length
+                const percentual = totalAlunos > 0 ? Math.round((alunosComNotas / totalAlunos) * 100) : 0
+
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm md:text-base font-medium text-slate-700">
+                        Alunos com notas lançadas
+                      </p>
+                      <p className="text-lg md:text-xl font-bold text-slate-900">
+                        {alunosComNotas}/{totalAlunos}
+                      </p>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          percentual >= 75 ? 'bg-green-500' : percentual >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${percentual}%` }}
+                      />
+                    </div>
+                    <p className="text-xs md:text-sm text-slate-500 text-center">
+                      {percentual}% completo
+                    </p>
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        )}
       )}
 
-      <Link href="/professor" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 text-sm">
+      <Link href="/professor" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 text-sm mt-6">
         ← Voltar ao dashboard
       </Link>
     </div>
