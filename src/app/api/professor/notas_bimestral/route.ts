@@ -58,13 +58,16 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   const payload = await req.json()
+  console.log('PAYLOAD:', JSON.stringify(payload))
 
   // Validar com Zod
   const validation = SaveNotasSchema.safeParse(payload)
   if (!validation.success) {
+    console.error('VALIDATION ERROR:', validation.error.issues)
     return NextResponse.json({
       error: 'Dados inválidos',
-      details: validation.error.flatten().fieldErrors
+      details: validation.error.flatten().fieldErrors,
+      issues: validation.error.issues
     }, { status: 400 })
   }
 
