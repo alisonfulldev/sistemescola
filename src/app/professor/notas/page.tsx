@@ -148,55 +148,55 @@ export default function ProfessorNotasPage() {
       </div>
 
       {alunos.length > 0 && disciplinaId && anoLetivoId && (
-        <div className="bg-white border border-slate-200 rounded-lg md:rounded-xl overflow-hidden shadow-sm mb-6">
-          <div className="px-3 md:px-6 py-3 md:py-4 border-b border-slate-200 bg-slate-50">
-            <h3 className="text-sm md:text-lg font-bold text-slate-900">{alunos.length} alunos</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50">
-                  <th className="p-2 md:p-4 text-left text-xs md:text-sm font-medium text-slate-500">Aluno</th>
-                  <th className="p-2 md:p-4 text-center text-xs md:text-sm font-medium text-slate-500 w-24 md:w-32">Nota</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alunos.map(aluno => (
-                  <tr key={aluno.id} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="p-2 md:p-4">
-                      <div className="font-medium text-xs md:text-sm text-slate-900 truncate">{aluno.nome_completo}</div>
-                      <div className="text-xs text-slate-500 hidden md:block">{aluno.matricula}</div>
-                    </td>
-                    <td className="p-2 md:p-4 text-center">
-                      <input
-                        type="number"
-                        min="0"
-                        max="10"
-                        step="0.1"
-                        value={editando[aluno.id] || notas[aluno.id]?.nota || ''}
-                        onChange={e => handleNotaChange(aluno.id, e.target.value)}
-                        className="w-24 bg-white border border-slate-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </td>
+        <>
+          <div className="bg-white border border-slate-200 rounded-lg md:rounded-xl overflow-hidden shadow-sm mb-6">
+            <div className="px-3 md:px-6 py-3 md:py-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-sm md:text-lg font-bold text-slate-900">{alunos.length} alunos</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="p-2 md:p-4 text-left text-xs md:text-sm font-medium text-slate-500">Aluno</th>
+                    <th className="p-2 md:p-4 text-center text-xs md:text-sm font-medium text-slate-500 w-24 md:w-32">Nota</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {alunos.map(aluno => (
+                    <tr key={aluno.id} className="border-t border-slate-100 hover:bg-slate-50">
+                      <td className="p-2 md:p-4">
+                        <div className="font-medium text-xs md:text-sm text-slate-900 truncate">{aluno.nome_completo}</div>
+                        <div className="text-xs text-slate-500 hidden md:block">{aluno.matricula}</div>
+                      </td>
+                      <td className="p-2 md:p-4 text-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          step="0.1"
+                          value={editando[aluno.id] || notas[aluno.id]?.nota || ''}
+                          onChange={e => handleNotaChange(aluno.id, e.target.value)}
+                          className="w-24 bg-white border border-slate-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="p-4 border-t border-slate-200 bg-slate-50">
+              <button
+                onClick={salvarNotas}
+                disabled={salvando || Object.keys(editando).length === 0}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
+              >
+                {salvando ? 'Salvando...' : 'Salvar todas notas'}
+              </button>
+            </div>
           </div>
-          <div className="p-4 border-t border-slate-200 bg-slate-50">
-            <button
-              onClick={salvarNotas}
-              disabled={salvando || Object.keys(editando).length === 0}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg disabled:opacity-50 transition-colors"
-            >
-              {salvando ? 'Salvando...' : 'Salvar todas notas'}
-            </button>
-          </div>
-        </div>
 
-        {/* Resumo/Histórico de Notas */}
-        {alunos.length > 0 && (
-          <div className="mt-6 bg-white border border-slate-200 rounded-lg md:rounded-xl overflow-hidden shadow-sm">
+          {/* Resumo/Histórico de Notas */}
+          <div className="bg-white border border-slate-200 rounded-lg md:rounded-xl overflow-hidden shadow-sm">
             <div className="px-3 md:px-6 py-3 md:py-4 border-b border-slate-200 bg-slate-50">
               <h3 className="text-sm md:text-lg font-bold text-slate-900">Resumo das Notas Lançadas</h3>
             </div>
@@ -232,7 +232,7 @@ export default function ProfessorNotasPage() {
               })()}
             </div>
           </div>
-        )}
+        </>
       )}
 
       <Link href="/professor" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 text-sm mt-6">
