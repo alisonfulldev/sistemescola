@@ -1,16 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-  }
+  try {
+    const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+    if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
+      await logger.logAudit(user.id, 'exportar_frequencia', '/api/export/frequencia', {}, false)
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    }
 
   const turmaId = req.nextUrl.searchParams.get('turma_id')
   const bimestre = req.nextUrl.searchParams.get('bimestre') ? parseInt(req.nextUrl.searchParams.get('bimestre')!) : null
@@ -123,6 +126,12 @@ export async function GET(req: NextRequest) {
     const mediaFaltas = alunos.length > 0 ? totalFaltas / alunos.length : 0
     const mediaJustificadas = alunos.length > 0 ? totalJustificadas / alunos.length : 0
 
+    await logger.logAudit(user.id, 'exportar_frequencia', '/api/export/frequencia', {
+      turma_id: turmaId,
+      total_aulas: aulasData.length,
+      total_alunos: alunos.length
+    }, true)
+
     return NextResponse.json({
       aulas: aulasData,
       alunos,
@@ -141,6 +150,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    await logger.logError('/api/export/frequencia', error, user.id)
+    return NextResponse.json({ error: 'Erro ao exportar frequência' }, { status: 500 })
   }
 }

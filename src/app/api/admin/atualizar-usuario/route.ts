@@ -3,6 +3,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { UpdateUsuarioSchema } from '@/lib/schemas/admin'
 import { validateData, errorResponse } from '@/lib/api-utils'
+import { logger } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -10,11 +11,18 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   // Verifica se é admin, secretaria ou diretor
-  const { data: usuario } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+  const { data: usuario } = await supabase.from('usuarios').select('perfil, ativo').eq('id', user.id).single()
   const isAdmin = usuario?.perfil === 'admin'
   const isSecretaria = usuario?.perfil === 'secretaria'
   const isDiretor = usuario?.perfil === 'diretor'
+
+  if (!usuario?.ativo) {
+    await logger.logAudit(user.id, 'usuario_atualizar', '/api/admin/atualizar-usuario', {}, false)
+    return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
+  }
+
   if (!isAdmin && !isSecretaria && !isDiretor) {
+    await logger.logAudit(user.id, 'usuario_atualizar', '/api/admin/atualizar-usuario', {}, false)
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
@@ -48,7 +56,10 @@ export async function POST(req: NextRequest) {
   }
   if (Object.keys(authUpdate).length > 0) {
     const { error } = await admin.auth.admin.updateUserById(user_id, authUpdate)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      await logger.logError('/api/admin/atualizar-usuario', error, user.id, { user_id, updates: authUpdate })
+      return NextResponse.json({ error: 'Erro ao atualizar autenticação' }, { status: 500 })
+    }
   }
 
   // Atualiza nome e/ou perfil na tabela usuarios
@@ -57,8 +68,17 @@ export async function POST(req: NextRequest) {
   if (email?.trim()) dbUpdate.email = email.trim()
   if (perfil) dbUpdate.perfil = perfil
   if (Object.keys(dbUpdate).length > 0) {
-    await admin.from('usuarios').update(dbUpdate).eq('id', user_id)
+    const { error } = await admin.from('usuarios').update(dbUpdate).eq('id', user_id)
+    if (error) {
+      await logger.logError('/api/admin/atualizar-usuario', error, user.id, { user_id, updates: dbUpdate })
+      return NextResponse.json({ error: 'Erro ao atualizar usuário' }, { status: 500 })
+    }
   }
+
+  await logger.logAudit(user.id, 'usuario_atualizar', '/api/admin/atualizar-usuario', {
+    user_id_atualizado: user_id,
+    campos: Object.keys(dbUpdate)
+  }, true)
 
   return NextResponse.json({ ok: true })
 }

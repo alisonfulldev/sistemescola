@@ -1,19 +1,40 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
   const { email, senha, nome } = await req.json()
 
   if (!email || !senha || !nome) {
+    await logger.logAudit('system', 'criar_diretor', '/api/setup/criar-diretor', {}, false)
     return NextResponse.json(
       { error: 'email, senha e nome são obrigatórios' },
       { status: 400 }
     )
   }
 
+  // Validar formato de email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email.trim())) {
+    await logger.logAudit('system', 'criar_diretor', '/api/setup/criar-diretor', { email }, false)
+    return NextResponse.json(
+      { error: 'Email inválido' },
+      { status: 400 }
+    )
+  }
+
   if (senha.length < 8) {
+    await logger.logAudit('system', 'criar_diretor', '/api/setup/criar-diretor', {}, false)
     return NextResponse.json(
       { error: 'Senha deve ter pelo menos 8 caracteres' },
+      { status: 400 }
+    )
+  }
+
+  if (nome.trim().length < 3) {
+    await logger.logAudit('system', 'criar_diretor', '/api/setup/criar-diretor', {}, false)
+    return NextResponse.json(
+      { error: 'Nome deve ter pelo menos 3 caracteres' },
       { status: 400 }
     )
   }
@@ -35,6 +56,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (existing) {
+      await logger.logAudit('system', 'criar_diretor', '/api/setup/criar-diretor', { email: emailLower }, false)
       return NextResponse.json({ error: 'Este email já está cadastrado' }, { status: 409 })
     }
 
@@ -48,6 +70,7 @@ export async function POST(req: NextRequest) {
 
     if (authError) {
       console.error('Auth error:', authError)
+      await logger.logError('/api/setup/criar-diretor', authError, 'system')
       return NextResponse.json({ error: authError.message }, { status: 400 })
     }
 
@@ -65,8 +88,11 @@ export async function POST(req: NextRequest) {
     if (dbError) {
       console.error('DB error:', dbError)
       await adminClient.auth.admin.deleteUser(data.user.id)
+      await logger.logError('/api/setup/criar-diretor', dbError, 'system')
       return NextResponse.json({ error: dbError.message }, { status: 400 })
     }
+
+    await logger.logAudit('system', 'criar_diretor', '/api/setup/criar-diretor', { email: emailLower, usuario: usuarioLogin }, true)
 
     return NextResponse.json({
       ok: true,
@@ -77,6 +103,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     console.error('Erro ao criar diretor:', err)
+    await logger.logError('/api/setup/criar-diretor', err, 'system')
     return NextResponse.json({ error: 'Erro interno: ' + String(err) }, { status: 500 })
   }
 }

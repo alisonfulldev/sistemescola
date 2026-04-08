@@ -1,12 +1,16 @@
 import { z } from 'zod'
 
+// Motivos válidos para justificativa
+const MOTIVOS_VALIDOS = ['medico', 'dentista', 'falecimento', 'acompanhamento_responsavel', 'consulta_especialista', 'atividade_escolar', 'motivo_pessoal', 'outro'] as const
+
 // Schema para criar justificativa
 export const CreateJustificativaSchema = z.object({
   aluno_id: z.string().uuid('aluno_id deve ser UUID válido'),
-  data: z.string().date('data deve ser válida'),
-  motivo: z.string().min(10, 'Motivo deve ter no mínimo 10 caracteres'),
-  documento: z.string().url().optional().nullable(),
-  data_retorno: z.string().date().optional().nullable()
+  data_falta: z.string().date('data_falta deve ser válida'),
+  motivo: z.enum(MOTIVOS_VALIDOS, { message: `Motivo deve ser um de: ${MOTIVOS_VALIDOS.join(', ')}` }),
+  descricao_detalhada: z.string().optional().nullable(),
+  documento_url: z.string().url('documento_url deve ser URL válida').optional().nullable(),
+  tipo_documento: z.string().optional().nullable()
 })
 
 export type CreateJustificativa = z.infer<typeof CreateJustificativaSchema>

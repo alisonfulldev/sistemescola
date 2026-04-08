@@ -1,17 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  const perfil = userData?.perfil || ''
-  const escolaId: string | null = null
-  if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-  }
+
+  try {
+    const { data: userData } = await supabase.from('usuarios').select('perfil, escola_id, ativo').eq('id', user.id).single()
+    const perfil = userData?.perfil || ''
+
+    if (!userData?.ativo) {
+      await logger.logAudit(user.id, 'chamadas_consultar', '/api/adm/chamadas', {}, false)
+      return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
+    }
+
+    if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
+      await logger.logAudit(user.id, 'chamadas_consultar', '/api/adm/chamadas', {}, false)
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    }
+
+    // Isolar por escola para diretor/secretaria
+    const escolaId: string | null = (perfil === 'admin') ? null : (userData?.escola_id || null)
 
   const data = req.nextUrl.searchParams.get('data') || new Date().toISOString().split('T')[0]
 
@@ -41,10 +53,16 @@ export async function GET(req: NextRequest) {
     .in('aula_id', aulaIds)
     .order('iniciada_em', { ascending: false })
 
-  const resultado = (chamadas || []).map((c: any) => ({
-    ...c,
-    aulas: aulaMap.get(c.aula_id),
-  }))
+    const resultado = (chamadas || []).map((c: any) => ({
+      ...c,
+      aulas: aulaMap.get(c.aula_id),
+    }))
 
-  return NextResponse.json({ chamadas: resultado })
+    await logger.logAudit(user.id, 'chamadas_consultar', '/api/adm/chamadas', { chamadas: resultado.length }, true)
+
+    return NextResponse.json({ chamadas: resultado })
+  } catch (error) {
+    await logger.logError('/api/adm/chamadas', error, user.id)
+    return NextResponse.json({ chamadas: [] }, { status: 500 })
+  }
 }

@@ -1,31 +1,33 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-  }
-
-  const turmaId = req.nextUrl.searchParams.get('turma_id')
-  const anoLetivoId = req.nextUrl.searchParams.get('ano_letivo_id')
-
-  if (!turmaId || !anoLetivoId) {
-    return NextResponse.json({ error: 'Parâmetros obrigatórios: turma_id, ano_letivo_id' }, { status: 400 })
-  }
-
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
   try {
+    const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+    if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
+      await logger.logAudit(user.id, 'diario_narandiba_consultar', '/api/export/diario-narandiba', {}, false)
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    }
+
+    const turmaId = req.nextUrl.searchParams.get('turma_id')
+    const anoLetivoId = req.nextUrl.searchParams.get('ano_letivo_id')
+
+    if (!turmaId || !anoLetivoId) {
+      await logger.logAudit(user.id, 'diario_narandiba_consultar', '/api/export/diario-narandiba', {}, false)
+      return NextResponse.json({ error: 'Parâmetros obrigatórios: turma_id, ano_letivo_id' }, { status: 400 })
+    }
+
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
     // 1. Turma e escola
     const { data: turma } = await admin
       .from('turmas')
@@ -167,7 +169,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Montar resposta consolidada
-    return NextResponse.json({
+    const resultado = {
       escola: turma.escola,
       ano_letivo: anoLetivo,
       bimestres: bimestres || [],
@@ -189,8 +191,13 @@ export async function GET(req: NextRequest) {
       justificativas,
       avaliacoes,
       notas_avaliacao: notasAvaliacaoMap
-    })
+    }
+
+    await logger.logAudit(user.id, 'diario_narandiba_consultar', '/api/export/diario-narandiba', { turma_id: turmaId, alunos: (alunos || []).length }, true)
+
+    return NextResponse.json(resultado)
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    await logger.logError('/api/export/diario-narandiba', error, user.id)
+    return NextResponse.json({ error: 'Erro ao gerar diário' }, { status: 500 })
   }
 }

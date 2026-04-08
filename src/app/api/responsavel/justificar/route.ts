@@ -1,24 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { validateData, errorResponse } from '@/lib/api-utils'
+import { logger } from '@/lib/logger'
+
+const JustificarFaltaSchema = z.object({
+  registro_id: z.string().uuid('registro_id deve ser UUID válido'),
+  motivo: z.string().min(3, 'Motivo deve ter no mínimo 3 caracteres').max(1000, 'Motivo máximo 1000 caracteres')
+})
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const body = await req.json()
-  const { registro_id } = body
-  const motivo = typeof body.motivo === 'string' ? body.motivo.trim().slice(0, 1000) : ''
+  const validation = validateData(JustificarFaltaSchema, await req.json())
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  if (!registro_id || !motivo) {
-    return NextResponse.json({ error: 'registro_id e motivo obrigatórios' }, { status: 400 })
-  }
-
-  const { isValidUUID } = await import('@/lib/validate')
-  if (!isValidUUID(registro_id)) {
-    return NextResponse.json({ error: 'registro_id inválido' }, { status: 400 })
-  }
+  const { registro_id, motivo } = validation.data
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (!registro || registro.status !== 'falta') {
+    await logger.logAudit(user.id, 'falta_justificar', '/api/responsavel/justificar', { registro_id }, false)
     return NextResponse.json({ error: 'Registro não encontrado ou não é uma falta' }, { status: 400 })
   }
 
@@ -44,18 +45,34 @@ export async function POST(req: NextRequest) {
     .eq('aluno_id', registro.aluno_id)
     .maybeSingle()
 
-  if (!vinculo) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  if (!vinculo) {
+    await logger.logAudit(user.id, 'falta_justificar', '/api/responsavel/justificar', { registro_id }, false)
+    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  }
 
-  const { error } = await admin
-    .from('justificativas_falta')
-    .upsert({
+  try {
+    const { error } = await admin
+      .from('justificativas_falta')
+      .upsert({
+        registro_id,
+        responsavel_id: user.id,
+        motivo: motivo.trim(),
+        status: 'pendente',
+      }, { onConflict: 'registro_id,responsavel_id' })
+
+    if (error) {
+      await logger.logError('/api/responsavel/justificar', error, user.id, { registro_id })
+      return NextResponse.json({ error: 'Erro ao justificar falta' }, { status: 500 })
+    }
+
+    await logger.logAudit(user.id, 'falta_justificar', '/api/responsavel/justificar', {
       registro_id,
-      responsavel_id: user.id,
-      motivo: motivo.trim(),
-      status: 'pendente',
-    }, { onConflict: 'registro_id,responsavel_id' })
+      aluno_id: registro.aluno_id
+    }, true)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    await logger.logError('/api/responsavel/justificar', error, user.id)
+    return NextResponse.json({ error: 'Erro interno ao justificar falta' }, { status: 500 })
+  }
 }

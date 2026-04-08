@@ -1,29 +1,34 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(_req: NextRequest, { params: paramsPromise }: { params: Promise<{ alunoId: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  const perfil = userData?.perfil || ''
-  if (!['secretaria', 'admin', 'diretor'].includes(perfil)) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-  }
 
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
+  try {
+    const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+    const perfil = userData?.perfil || ''
+    if (!['secretaria', 'admin', 'diretor'].includes(perfil)) {
+      await logger.logAudit(user.id, 'aluno_consultar', '/api/adm/alunos/[alunoId]', {}, false)
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    }
 
-  const { alunoId } = await paramsPromise
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
 
-  const { isValidUUID } = await import('@/lib/validate')
-  if (!isValidUUID(alunoId)) {
-    return NextResponse.json({ error: 'alunoId inválido' }, { status: 400 })
-  }
+    const { alunoId } = await paramsPromise
+
+    const { isValidUUID } = await import('@/lib/validate')
+    if (!isValidUUID(alunoId)) {
+      await logger.logAudit(user.id, 'aluno_consultar', '/api/adm/alunos/[alunoId]', { alunoId }, false)
+      return NextResponse.json({ error: 'alunoId inválido' }, { status: 400 })
+    }
 
   const [
     { data: aluno },
@@ -57,47 +62,60 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: { params
       .order('criado_em', { ascending: false }),
   ])
 
-  if (!aluno) return NextResponse.json({ error: 'Aluno não encontrado' }, { status: 404 })
+    if (!aluno) {
+      await logger.logAudit(user.id, 'aluno_consultar', '/api/adm/alunos/[alunoId]', { alunoId }, false)
+      return NextResponse.json({ error: 'Aluno não encontrado' }, { status: 404 })
+    }
 
-  const regs = registros || []
-  const total = regs.length
-  const presentes = regs.filter((r: any) => r.status === 'presente').length
-  const faltas = regs.filter((r: any) => r.status === 'falta').length
-  const justificadas = regs.filter((r: any) => r.status === 'justificada').length
-  const frequencia = total > 0 ? Math.round(((presentes + justificadas) / total) * 100) : null
+    const regs = (registros || []).filter((r: any) => r?.chamadas?.aulas)  // Descartar registros incompletos
+    const total = regs.length
+    const presentes = regs.filter((r: any) => r.status === 'presente').length
+    const faltas = regs.filter((r: any) => r.status === 'falta').length
+    const justificadas = regs.filter((r: any) => r.status === 'justificada').length
+    const frequencia = total > 0 ? Math.round(((presentes + justificadas) / total) * 100) : null
 
-  const historico = regs.map((r: any) => ({
-    id: r.id,
-    status: r.status,
-    observacao: r.observacao,
-    motivo_alteracao: r.motivo_alteracao,
-    horario_evento: r.horario_evento,
-    data: r.chamadas?.aulas?.data,
-    horario_inicio: r.chamadas?.aulas?.horario_inicio,
-    horario_fim: r.chamadas?.aulas?.horario_fim,
-    turma: r.chamadas?.aulas?.turmas?.nome,
-    disciplina: r.chamadas?.aulas?.disciplinas?.nome,
-    professor: r.chamadas?.aulas?.usuarios?.nome,
-    justificativa: r.justificativas_falta?.[0] ? {
-      motivo: r.justificativas_falta[0].motivo,
-      criada_em: r.justificativas_falta[0].criada_em,
-      responsavel: r.justificativas_falta[0].usuarios?.nome,
-    } : null,
-  })).sort((a: any, b: any) => (b.data || '').localeCompare(a.data || ''))
+    const historico = regs.map((r: any) => {
+      const aula = r.chamadas?.aulas
+      const justif = r.justificativas_falta?.[0]
+      return {
+        id: r.id || null,
+        status: r.status || null,
+        observacao: r.observacao || null,
+        motivo_alteracao: r.motivo_alteracao || null,
+        horario_evento: r.horario_evento || null,
+        data: aula?.data || null,
+        horario_inicio: aula?.horario_inicio || null,
+        horario_fim: aula?.horario_fim || null,
+        turma: aula?.turmas?.nome || null,
+        disciplina: aula?.disciplinas?.nome || null,
+        professor: aula?.usuarios?.nome || null,
+        justificativa: justif ? {
+          motivo: justif.motivo || null,
+          criada_em: justif.criada_em || null,
+          responsavel: justif.usuarios?.nome || null,
+        } : null,
+      }
+    }).sort((a: any, b: any) => (b.data || '').localeCompare(a.data || ''))
 
-  return NextResponse.json({
-    aluno: {
-      ...aluno,
-      turma_nome: aluno.turmas?.nome,
-      turma_turno: aluno.turmas?.turno,
-    },
-    responsaveis: (vinculos || []).map((v: any) => ({
-      id: v.responsavel_id,
-      nome: v.usuarios?.nome,
-      email: v.usuarios?.email,
-    })),
-    frequencia: { total, presentes, faltas, justificadas, pct: frequencia },
-    historico,
-    alertas: alertas || [],
-  })
+    await logger.logAudit(user.id, 'aluno_consultar', '/api/adm/alunos/[alunoId]', { alunoId }, true)
+
+    return NextResponse.json({
+      aluno: {
+        ...aluno,
+        turma_nome: aluno.turmas?.nome,
+        turma_turno: aluno.turmas?.turno,
+      },
+      responsaveis: (vinculos || []).map((v: any) => ({
+        id: v.responsavel_id,
+        nome: v.usuarios?.nome,
+        email: v.usuarios?.email,
+      })),
+      frequencia: { total, presentes, faltas, justificadas, pct: frequencia },
+      historico,
+      alertas: alertas || [],
+    })
+  } catch (error) {
+    await logger.logError('/api/adm/alunos/[alunoId]', error, user.id)
+    return NextResponse.json({ error: 'Erro ao buscar aluno' }, { status: 500 })
+  }
 }

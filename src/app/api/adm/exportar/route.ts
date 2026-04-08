@@ -2,46 +2,61 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (!['secretaria', 'admin', 'diretor'].includes(perfil?.perfil || '')) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+  // Timeout seguro para exports (30 segundos max)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30000)
+
+  try {
+    const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+    if (!['secretaria', 'admin', 'diretor'].includes(perfil?.perfil || '')) {
+      await logger.logAudit(user.id, 'exportar_consultar', '/api/adm/exportar', {}, false)
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    }
+
+    const tipo = req.nextUrl.searchParams.get('tipo') || 'geral'
+    const turmaId = req.nextUrl.searchParams.get('turma_id')
+    const alunoId = req.nextUrl.searchParams.get('aluno_id')
+
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    const wb = XLSX.utils.book_new()
+
+    if (tipo === 'aluno' && alunoId) {
+      await exportarAluno(admin, alunoId, wb)
+    } else if (tipo === 'turma' && turmaId) {
+      await exportarTurma(admin, turmaId, wb)
+    } else {
+      await exportarGeral(admin, wb)
+    }
+
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    const nomeArquivo = `meu-aluno-${tipo}-${new Date().toISOString().split('T')[0]}.xlsx`
+
+    await logger.logAudit(user.id, 'exportar_consultar', '/api/adm/exportar', { tipo }, true)
+
+    return new NextResponse(buf, {
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="${nomeArquivo}"`,
+      },
+    })
+  } catch (error) {
+    await logger.logError('/api/adm/exportar', error, user.id)
+    return NextResponse.json({ error: 'Erro ao exportar dados' }, { status: 500 })
+  } finally {
+    clearTimeout(timeoutId)
   }
-
-  const tipo = req.nextUrl.searchParams.get('tipo') || 'geral'
-  const turmaId = req.nextUrl.searchParams.get('turma_id')
-  const alunoId = req.nextUrl.searchParams.get('aluno_id')
-
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
-  const wb = XLSX.utils.book_new()
-
-  if (tipo === 'aluno' && alunoId) {
-    await exportarAluno(admin, alunoId, wb)
-  } else if (tipo === 'turma' && turmaId) {
-    await exportarTurma(admin, turmaId, wb)
-  } else {
-    await exportarGeral(admin, wb)
-  }
-
-  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
-  const nomeArquivo = `meu-aluno-${tipo}-${new Date().toISOString().split('T')[0]}.xlsx`
-
-  return new NextResponse(buf, {
-    headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': `attachment; filename="${nomeArquivo}"`,
-    },
-  })
 }
 
 // ─── Exportar aluno específico ───────────────────────────────────────────────
@@ -166,24 +181,34 @@ async function exportarTurma(admin: any, turmaId: string, wb: XLSX.WorkBook) {
 
 // ─── Exportar geral (todas as turmas) ───────────────────────────────────────
 async function exportarGeral(admin: any, wb: XLSX.WorkBook) {
+  // Limites de segurança para evitar memory exhaustion
+  const MAX_ALUNOS = 5000
+  const MAX_REGISTROS = 10000
+  const MAX_JUSTIFICATIVAS = 1000
+  const MAX_CHAMADAS = 1000
+
   const { data: alunos } = await admin
     .from('alunos')
     .select('id, nome_completo, matricula, contato_responsavel, ativo, turmas(id, nome, turno)')
     .order('nome_completo')
+    .limit(MAX_ALUNOS)
 
   const { data: registros } = await admin
     .from('registros_chamada')
     .select('aluno_id, status')
+    .limit(MAX_REGISTROS)
 
   const { data: justificativas } = await admin
     .from('justificativas_falta')
     .select('id, motivo, status, criada_em, registro_id, usuarios!responsavel_id(nome), registros_chamada(aluno_id, chamadas(aulas(data, turmas(nome), usuarios(nome))))')
     .order('criada_em', { ascending: false })
+    .limit(MAX_JUSTIFICATIVAS)
 
   const { data: chamadas } = await admin
     .from('chamadas')
     .select('id, status, iniciada_em, concluida_em, aulas(data, turmas(nome), disciplinas(nome), usuarios(nome))')
     .order('iniciada_em', { ascending: false })
+    .limit(MAX_CHAMADAS)
 
   // Aba: Todos os alunos
   const freqMap: Record<string, any> = {}

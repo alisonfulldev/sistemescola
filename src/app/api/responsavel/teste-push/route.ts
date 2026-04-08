@@ -1,11 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  try {
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,34 +56,36 @@ export async function GET() {
       url: '/responsavel',
     })
 
-    const resultados = await Promise.allSettled(
-      subs.map((s: any) => webpush.default.sendNotification(s.subscription, payload))
-    )
+      const resultados = await Promise.allSettled(
+        subs.map((s: any) => webpush.default.sendNotification(s.subscription, payload))
+      )
 
-    const erros = resultados
-      .filter(r => r.status === 'rejected')
-      .map((r: any) => r.reason?.message || String(r.reason))
+      const erros = resultados
+        .filter(r => r.status === 'rejected')
+        .map((r: any) => r.reason?.message || String(r.reason))
 
-    return NextResponse.json({
-      ok: erros.length === 0,
-      subscriptions: subs.length,
-      vinculos: vinculos?.length || 0,
-      vapid: vapidOk,
-      erros: erros.length > 0 ? erros : undefined,
-    })
-  } catch (e: any) {
-    return NextResponse.json({
-      ok: false,
-      erro: e.message,
-      vapid: vapidOk,
-      debug: {
-        keyLength: pubKey.length,
-        keyStart: pubKey.substring(0, 10),
-        keyEnd: pubKey.substring(pubKey.length - 5),
-        hasEquals: pubKey.includes('='),
-        hasPlus: pubKey.includes('+'),
-        hasSlash: pubKey.includes('/'),
-      }
-    })
+      await logger.logAudit(user.id, 'push_teste', '/api/responsavel/teste-push', {
+        subscriptions: subs.length,
+        erros: erros.length
+      }, erros.length === 0)
+
+      return NextResponse.json({
+        ok: erros.length === 0,
+        subscriptions: subs.length,
+        vinculos: vinculos?.length || 0,
+        vapid: vapidOk,
+        erros: erros.length > 0 ? erros : undefined,
+      })
+    } catch (e: any) {
+      await logger.logError('/api/responsavel/teste-push', e, user.id)
+      return NextResponse.json({
+        ok: false,
+        erro: e.message,
+        vapid: vapidOk,
+      })
+    }
+  } catch (error) {
+    await logger.logError('/api/responsavel/teste-push', error, user.id)
+    return NextResponse.json({ error: 'Erro ao testar push' }, { status: 500 })
   }
 }

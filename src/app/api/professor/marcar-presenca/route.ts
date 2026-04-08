@@ -3,6 +3,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { MarcarPresencaSchema } from '@/lib/schemas/chamada'
 import { validateData, errorResponse } from '@/lib/api-utils'
+import { logger } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -28,9 +29,13 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (!chamada || (chamada as any).aulas?.professor_id !== user.id) {
+    await logger.logAudit(user.id, 'presenca_marcar', '/api/professor/marcar-presenca', { chamada_id, aluno_id }, false)
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
+  // Construir dados do UPSERT de forma ATÔMICA
+  // Incluir motivo_alteracao e horario_evento diretamente no UPSERT se chamada_concluida
+  // Assim é uma operação única, não duas operações separadas
   const upsertData: any = {
     chamada_id,
     aluno_id,
@@ -39,39 +44,44 @@ export async function POST(req: NextRequest) {
     registrado_em: new Date().toISOString(),
   }
 
+  // Se é edição (chamada concluída), incluir motivo_alteracao e horario_evento
+  if (chamada_concluida) {
+    upsertData.motivo_alteracao = motivo_alteracao || null
+    upsertData.horario_evento = horario_evento || null
+  }
+
+  // UPSERT atômico — uma única operação
   const { error } = await admin
     .from('registros_chamada')
     .upsert(upsertData, { onConflict: 'chamada_id,aluno_id' })
 
   if (error) {
-    console.error('Erro ao marcar presença:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  // Campos de alteração: UPDATE separado para não interferir no upsert base
-  if (chamada_concluida && motivo_alteracao) {
-    const { error: updateError } = await admin
-      .from('registros_chamada')
-      .update({ motivo_alteracao, horario_evento: horario_evento || null })
-      .eq('chamada_id', chamada_id)
-      .eq('aluno_id', aluno_id)
-    if (updateError) {
-      console.error('Erro ao salvar motivo/horario:', updateError)
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
-    }
+    await logger.logError('/api/professor/marcar-presenca', error, user.id, { chamada_id, aluno_id, status })
+    return NextResponse.json({ error: 'Erro ao marcar presença' }, { status: 500 })
   }
 
   const turmaNome = (chamada as any).aulas?.turmas?.nome || 'aula'
 
-  // Notifica quando é chamada nova com falta
+  // Notifica quando é chamada nova com falta (fire-and-forget com logging)
   if (!chamada_concluida && status === 'falta') {
-    notificarFalta(admin, chamada_id, aluno_id, turmaNome).catch(() => {})
+    notificarFalta(admin, chamada_id, aluno_id, turmaNome).catch((err) => {
+      logger.logError('/api/professor/marcar-presenca', err, user.id, { chamada_id, aluno_id, erro: 'notificacao_falta_falhou' })
+    })
   }
 
   // Notifica quando é EDIÇÃO (chamada concluída) e houve mudança de status
   if (chamada_concluida && status_anterior !== status) {
-    notificarAlteracao(admin, aluno_id, turmaNome, status_anterior, status, motivo_alteracao, horario_evento).catch(() => {})
+    notificarAlteracao(admin, aluno_id, turmaNome, status_anterior, status, motivo_alteracao, horario_evento).catch((err) => {
+      logger.logError('/api/professor/marcar-presenca', err, user.id, { aluno_id, erro: 'notificacao_alteracao_falhou' })
+    })
   }
+
+  await logger.logAudit(user.id, 'presenca_marcar', '/api/professor/marcar-presenca', {
+    chamada_id,
+    aluno_id,
+    status,
+    turma: turmaNome
+  }, true)
 
   return NextResponse.json({ ok: true })
 }

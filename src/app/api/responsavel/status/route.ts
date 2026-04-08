@@ -1,11 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+
+  try {
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -67,32 +70,49 @@ export async function GET() {
   // Get turma IDs
   const turmaIds = Array.from(new Set(alunos.map((a: any) => a.turmas?.id).filter(Boolean)))
 
-  // Get last aula content per turma
+  // Get last aula content per turma — uma única query para todas as turmas
   const ultimaAulaMap = new Map<string, any>()
   if (turmaIds.length > 0) {
-    for (const turmaId of turmaIds) {
-      const { data: ultAula } = await admin
-        .from('chamadas')
-        .select('aulas!inner(conteudo_programatico, atividades_desenvolvidas, data, turma_id, disciplinas(nome))')
-        .eq('aulas.turma_id', turmaId)
-        .eq('status', 'concluida')
-        .order('aulas.data', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (ultAula?.aulas) ultimaAulaMap.set(turmaId, ultAula.aulas)
+    const { data: todasAulas } = await admin
+      .from('chamadas')
+      .select('aulas!inner(conteudo_programatico, atividades_desenvolvidas, data, turma_id, disciplinas(nome))')
+      .in('aulas.turma_id', turmaIds)
+      .eq('status', 'concluida')
+      .order('aulas.data', { ascending: false })
+      .limit(500)
+
+    // Agrupar por turma_id em memória — pegar a primeira (mais recente) de cada turma
+    if (todasAulas && todasAulas.length > 0) {
+      const aulasPorTurma = new Map<string, any>()
+      for (const chamada of todasAulas) {
+        const turmaId = (chamada as any).aulas?.turma_id
+        if (turmaId && !aulasPorTurma.has(turmaId)) {
+          aulasPorTurma.set(turmaId, (chamada as any).aulas)
+        }
+      }
+      // Copiar para ultimaAulaMap
+      for (const [turmaId, aula] of aulasPorTurma.entries()) {
+        ultimaAulaMap.set(turmaId, aula)
+      }
     }
   }
 
-  const resultado = alunos.map((aluno: any) => {
-    const reg = registroMap.get(aluno.id) || null
-    const turmaId = aluno.turmas?.id
-    return {
-      ...aluno,
-      registro: reg,
-      justificativa: reg ? (justificativaMap.get(reg.id) || null) : null,
-      ultima_aula: turmaId ? (ultimaAulaMap.get(turmaId) || null) : null,
-    }
-  })
+    const resultado = alunos.map((aluno: any) => {
+      const reg = registroMap.get(aluno.id) || null
+      const turmaId = aluno.turmas?.id
+      return {
+        ...aluno,
+        registro: reg,
+        justificativa: reg ? (justificativaMap.get(reg.id) || null) : null,
+        ultima_aula: turmaId ? (ultimaAulaMap.get(turmaId) || null) : null,
+      }
+    })
 
-  return NextResponse.json({ alunos: resultado })
+    await logger.logAudit(user.id, 'status_consultar', '/api/responsavel/status', { alunos: resultado.length }, true)
+
+    return NextResponse.json({ alunos: resultado })
+  } catch (error) {
+    await logger.logError('/api/responsavel/status', error, user.id)
+    return NextResponse.json({ alunos: [] }, { status: 500 })
+  }
 }

@@ -1,17 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  const perfil = userData?.perfil || ''
-  const escolaId: string | null = null
-  if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-  }
+
+  try {
+    const { data: userData } = await supabase.from('usuarios').select('perfil, escola_id, ativo').eq('id', user.id).single()
+    const perfil = userData?.perfil || ''
+
+    if (!userData?.ativo) {
+      await logger.logAudit(user.id, 'frequencia_consultar', '/api/adm/frequencia', {}, false)
+      return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
+    }
+
+    if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
+      await logger.logAudit(user.id, 'frequencia_consultar', '/api/adm/frequencia', {}, false)
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    }
+
+    // Isolar por escola para diretor/secretaria
+    const escolaId: string | null = (perfil === 'admin') ? null : (userData?.escola_id || null)
 
   const mesAno = req.nextUrl.searchParams.get('mes') || (() => {
     const d = new Date()
@@ -87,10 +99,16 @@ export async function GET(req: NextRequest) {
     else if (r.status === 'justificada') s.justificadas++
   }
 
-  const dados = turmas.map((t: any) => {
-    const s = stats.get(t.id) || { aulas_realizadas: 0, presentes: 0, faltas: 0, justificadas: 0, totalReg: 0 }
-    return { ...t, ...s, freq: s.totalReg > 0 ? Math.round((s.presentes / s.totalReg) * 100) : 0 }
-  })
+    const dados = turmas.map((t: any) => {
+      const s = stats.get(t.id) || { aulas_realizadas: 0, presentes: 0, faltas: 0, justificadas: 0, totalReg: 0 }
+      return { ...t, ...s, freq: s.totalReg > 0 ? Math.round((s.presentes / s.totalReg) * 100) : 0 }
+    })
 
-  return NextResponse.json({ dados })
+    await logger.logAudit(user.id, 'frequencia_consultar', '/api/adm/frequencia', { turmas: turmas.length }, true)
+
+    return NextResponse.json({ dados })
+  } catch (error) {
+    await logger.logError('/api/adm/frequencia', error, user.id)
+    return NextResponse.json({ dados: [] }, { status: 500 })
+  }
 }

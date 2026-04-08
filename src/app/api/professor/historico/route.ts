@@ -1,13 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const turmaId = req.nextUrl.searchParams.get('turma_id')
+  try {
+    const turmaId = req.nextUrl.searchParams.get('turma_id')
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,20 +54,26 @@ export async function GET(req: NextRequest) {
     regMap.get(r.chamada_id)!.push(r)
   }
 
-  const resultado = chamadas.map((c: any) => {
-    const aula = aulaMap.get(c.aula_id) as any
-    const regs = regMap.get(c.id) || []
-    return {
-      id: c.id,
-      data: aula?.data,
-      turma: aula?.turmas?.nome,
-      status: c.status,
-      total: regs.length,
-      presentes: regs.filter((r: any) => r.status === 'presente').length,
-      faltas: regs.filter((r: any) => r.status === 'falta').length,
-      justificadas: regs.filter((r: any) => r.status === 'justificada').length,
-    }
-  })
+    const resultado = chamadas.map((c: any) => {
+      const aula = aulaMap.get(c.aula_id) as any
+      const regs = regMap.get(c.id) || []
+      return {
+        id: c.id,
+        data: aula?.data,
+        turma: aula?.turmas?.nome,
+        status: c.status,
+        total: regs.length,
+        presentes: regs.filter((r: any) => r.status === 'presente').length,
+        faltas: regs.filter((r: any) => r.status === 'falta').length,
+        justificadas: regs.filter((r: any) => r.status === 'justificada').length,
+      }
+    })
 
-  return NextResponse.json({ chamadas: resultado })
+    await logger.logAudit(user.id, 'historico_consultar', '/api/professor/historico', { chamadas: resultado.length }, true)
+
+    return NextResponse.json({ chamadas: resultado })
+  } catch (error) {
+    await logger.logError('/api/professor/historico', error, user.id)
+    return NextResponse.json({ chamadas: [] }, { status: 500 })
+  }
 }

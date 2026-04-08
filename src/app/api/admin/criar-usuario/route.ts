@@ -3,11 +3,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { CreateUsuarioComSenhaSchema } from '@/lib/schemas/admin'
 import { validateData, errorResponse } from '@/lib/api-utils'
+import { logger } from '@/lib/logger'
+import { ROLES } from '@/lib/middleware/auth'
 
 export async function POST(req: NextRequest) {
+  let user: any = null
+
   try {
     const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    user = currentUser
 
     if (!user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -15,14 +20,21 @@ export async function POST(req: NextRequest) {
 
     const { data: perfilData } = await supabase
       .from('usuarios')
-      .select('perfil, escola_id')
+      .select('perfil, escola_id, ativo')
       .eq('id', user.id)
       .single()
 
     const isAdmin = perfilData?.perfil === 'admin'
     const isSecretaria = perfilData?.perfil === 'secretaria'
     const isDiretor = perfilData?.perfil === 'diretor'
+
+    if (!perfilData?.ativo) {
+      await logger.logAudit(user.id, 'usuario_criar', '/api/admin/criar-usuario', {}, false)
+      return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
+    }
+
     if (!isAdmin && !isSecretaria && !isDiretor) {
+      await logger.logAudit(user.id, 'usuario_criar', '/api/admin/criar-usuario', {}, false)
       return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
     }
 
@@ -77,10 +89,11 @@ export async function POST(req: NextRequest) {
     })
 
     if (error) {
+      await logger.logError('/api/admin/criar-usuario', error, user.id, { email })
       if (error.message.includes('already registered') || error.message.includes('already been registered')) {
         return NextResponse.json({ error: 'Este email já está cadastrado no sistema' }, { status: 409 })
       }
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return NextResponse.json({ error: 'Erro ao criar usuário na autenticação' }, { status: 400 })
     }
 
     const usuarioLogin = email.trim().split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '')
@@ -99,12 +112,20 @@ export async function POST(req: NextRequest) {
 
     if (erroInsert) {
       await adminClient.auth.admin.deleteUser(data.user.id)
-      return NextResponse.json({ error: 'Erro ao salvar usuário: ' + erroInsert.message }, { status: 500 })
+      await logger.logError('/api/admin/criar-usuario', erroInsert, user.id, { email, perfil: novoPerfil })
+      return NextResponse.json({ error: 'Erro ao salvar usuário no banco de dados' }, { status: 500 })
     }
+
+    await logger.logAudit(user.id, 'usuario_criar', '/api/admin/criar-usuario', {
+      email,
+      perfil: novoPerfil,
+      nova_escola_id: novoEscolaId,
+      usuario_id: data.user.id
+    }, true)
 
     return NextResponse.json({ id: data.user.id, email: data.user.email }, { status: 201 })
   } catch (err) {
-    console.error('Erro ao criar usuário:', err)
+    await logger.logError('/api/admin/criar-usuario', err, user.id, { email: (await req.json()).email })
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

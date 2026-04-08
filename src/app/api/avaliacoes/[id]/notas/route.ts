@@ -3,6 +3,14 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { SaveAvaliacaoNotasSchema } from '@/lib/schemas/avaliacoes'
 import { validateData, errorResponse } from '@/lib/api-utils'
+import { logger } from '@/lib/logger'
+import { z } from 'zod'
+
+const AtualizarNotaSchema = z.object({
+  aluno_id: z.string().uuid('aluno_id deve ser UUID válido'),
+  nota: z.number().min(0, 'Nota deve ser positiva').max(10, 'Nota máxima é 10').nullable().optional(),
+  observacao: z.string().optional().nullable()
+})
 
 export async function GET(req: NextRequest, { params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -29,6 +37,7 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
       .single()
 
     if (!avaliacao) {
+      await logger.logAudit(user.id, 'notas_avaliacao_consultar', '/api/avaliacoes/[id]/notas', { avaliacao_id: id }, false)
       return NextResponse.json({ error: 'Avaliação não encontrada' }, { status: 404 })
     }
 
@@ -58,13 +67,16 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
       }
     }))
 
+    await logger.logAudit(user.id, 'notas_avaliacao_consultar', '/api/avaliacoes/[id]/notas', { avaliacao_id: id, total_notas: notas.length }, true)
+
     return NextResponse.json({
       avaliacao,
       notas,
       total_notas: notas.length
     })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    await logger.logError('/api/avaliacoes/[id]/notas', error, user.id, { avaliacao_id: id })
+    return NextResponse.json({ error: 'Erro ao buscar notas da avaliação' }, { status: 500 })
   }
 }
 
@@ -76,11 +88,13 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
   const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
 
   if (!['admin', 'secretaria', 'diretor', 'professor'].includes(userData?.perfil || '')) {
+    await logger.logAudit(user.id, 'notas_avaliacao_salvar', '/api/avaliacoes/[id]/notas', {}, false)
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
   const { id } = await paramsPromise
   if (!id) {
+    await logger.logAudit(user.id, 'notas_avaliacao_salvar', '/api/avaliacoes/[id]/notas', {}, false)
     return NextResponse.json({ error: 'ID da avaliação não fornecido' }, { status: 400 })
   }
 
@@ -114,6 +128,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
     if (userData?.perfil === 'professor') {
       const { data: aula } = await supabase.from('aulas').select('professor_id').eq('id', avaliacao.aula_id).single()
       if (aula?.professor_id !== user.id) {
+        await logger.logAudit(user.id, 'notas_avaliacao_salvar', '/api/avaliacoes/[id]/notas', { avaliacao_id: id }, false)
         return NextResponse.json({ error: 'Você só pode registrar notas em suas aulas' }, { status: 403 })
       }
     }
@@ -134,14 +149,23 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
       .from('notas_avaliacao')
       .upsert(notasParaInserir, { onConflict: 'avaliacao_id,aluno_id' })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      await logger.logError('/api/avaliacoes/[id]/notas', error, user.id, { avaliacao_id: id })
+      return NextResponse.json({ error: 'Erro ao salvar notas' }, { status: 500 })
+    }
+
+    await logger.logAudit(user.id, 'notas_avaliacao_salvar', '/api/avaliacoes/[id]/notas', {
+      avaliacao_id: id,
+      quantidade_notas: notasParaInserir.length
+    }, true)
 
     return NextResponse.json({
       ok: true,
       message: `${notasParaInserir.length} nota(s) registrada(s) com sucesso`
     }, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    await logger.logError('/api/avaliacoes/[id]/notas', error, user.id)
+    return NextResponse.json({ error: 'Erro interno ao salvar notas' }, { status: 500 })
   }
 }
 
@@ -153,15 +177,15 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: { param
   const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
 
   if (!['admin', 'secretaria', 'diretor', 'professor'].includes(userData?.perfil || '')) {
+    await logger.logAudit(user.id, 'nota_avaliacao_atualizar', '/api/avaliacoes/[id]/notas', {}, false)
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
   const { id } = await paramsPromise
-  const { aluno_id, nota, observacao } = await req.json()
+  const validation = validateData(AtualizarNotaSchema, await req.json())
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  if (!aluno_id || nota === undefined) {
-    return NextResponse.json({ error: 'Campos obrigatórios: aluno_id, nota' }, { status: 400 })
-  }
+  const { aluno_id, nota, observacao } = validation.data
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -173,17 +197,27 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: { param
     const { error } = await admin
       .from('notas_avaliacao')
       .update({
-        nota: nota === '' || nota === null ? null : parseFloat(nota),
-        observacao,
+        nota: nota === '' || nota === null ? null : nota,
+        observacao: observacao || null,
         atualizado_em: new Date().toISOString()
       })
       .eq('avaliacao_id', id)
       .eq('aluno_id', aluno_id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      await logger.logError('/api/avaliacoes/[id]/notas', error, user.id, { avaliacao_id: id, aluno_id })
+      return NextResponse.json({ error: 'Erro ao atualizar nota' }, { status: 500 })
+    }
+
+    await logger.logAudit(user.id, 'nota_avaliacao_atualizar', '/api/avaliacoes/[id]/notas', {
+      avaliacao_id: id,
+      aluno_id,
+      nota
+    }, true)
 
     return NextResponse.json({ ok: true, message: 'Nota atualizada com sucesso' })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    await logger.logError('/api/avaliacoes/[id]/notas', error, user.id)
+    return NextResponse.json({ error: 'Erro interno ao atualizar nota' }, { status: 500 })
   }
 }

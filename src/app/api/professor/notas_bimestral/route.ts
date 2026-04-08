@@ -2,40 +2,54 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { SaveNotasSchema } from '@/lib/schemas/notas'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { searchParams } = new URL(req.url)
-  const turma_id = searchParams.get('turma_id')
-  const disciplina_id = searchParams.get('disciplina_id')
-  const ano_letivo_id = searchParams.get('ano_letivo_id')
+  try {
+    const { searchParams } = new URL(req.url)
+    const turma_id = searchParams.get('turma_id')
+    const disciplina_id = searchParams.get('disciplina_id')
+    const ano_letivo_id = searchParams.get('ano_letivo_id')
 
-  if (!turma_id || !disciplina_id || !ano_letivo_id) {
-    return NextResponse.json({ error: 'Parâmetros obrigatórios' }, { status: 400 })
+    if (!turma_id || !disciplina_id || !ano_letivo_id) {
+      await logger.logAudit(user.id, 'notas_bimestral_consultar', '/api/professor/notas_bimestral', {}, false)
+      return NextResponse.json({ error: 'Parâmetros obrigatórios' }, { status: 400 })
+    }
+
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    const { data: notas } = await admin
+      .from('notas')
+      .select('aluno_id, nota')
+      .eq('disciplina_id', disciplina_id)
+      .eq('ano_letivo_id', ano_letivo_id)
+      .eq('turma_id', turma_id)
+
+    const notasMap: Record<string, { nota: any }> = {}
+    for (const n of notas || []) {
+      notasMap[n.aluno_id] = { nota: n.nota }
+    }
+
+    await logger.logAudit(user.id, 'notas_bimestral_consultar', '/api/professor/notas_bimestral', {
+      turma_id,
+      disciplina_id,
+      ano_letivo_id,
+      total_notas: Object.keys(notasMap).length
+    }, true)
+
+    return NextResponse.json({ notas: notasMap })
+  } catch (error) {
+    await logger.logError('/api/professor/notas_bimestral', error, user.id)
+    return NextResponse.json({ error: 'Erro ao buscar notas bimestrais' }, { status: 500 })
   }
-
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
-  const { data: notas } = await admin
-    .from('notas')
-    .select('aluno_id, nota')
-    .eq('disciplina_id', disciplina_id)
-    .eq('ano_letivo_id', ano_letivo_id)
-    .eq('turma_id', turma_id)
-
-  const notasMap: Record<string, { nota: any }> = {}
-  for (const n of notas || []) {
-    notasMap[n.aluno_id] = { nota: n.nota }
-  }
-
-  return NextResponse.json({ notas: notasMap })
 }
 
 export async function POST(req: NextRequest) {
@@ -77,6 +91,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (!turmaData || !disciplinaData) {
+      await logger.logAudit(user.id, 'notas_bimestral_salvar', '/api/professor/notas_bimestral', { turma_id, disciplina_id }, false)
       return NextResponse.json({ error: 'Turma ou disciplina não encontrada' }, { status: 404 })
     }
 
@@ -94,6 +109,7 @@ export async function POST(req: NextRequest) {
     // Apenas registra se turma e disciplina existem
 
     if (!notas || notas.length === 0) {
+      await logger.logAudit(user.id, 'notas_bimestral_salvar', '/api/professor/notas_bimestral', { turma_id, disciplina_id }, false)
       return NextResponse.json({ error: 'Nenhuma nota para salvar' }, { status: 400 })
     }
 
@@ -112,13 +128,20 @@ export async function POST(req: NextRequest) {
       .upsert(rows, { onConflict: 'aluno_id,turma_id,disciplina_id,ano_letivo_id' })
 
     if (upsertError) {
-      console.error('Erro ao fazer upsert:', upsertError)
-      return NextResponse.json({ error: `Erro ao salvar notas: ${upsertError.message}` }, { status: 500 })
+      await logger.logError('/api/professor/notas_bimestral', upsertError, user.id, { turma_id, disciplina_id })
+      return NextResponse.json({ error: 'Erro ao salvar notas bimestrais' }, { status: 500 })
     }
+
+    await logger.logAudit(user.id, 'notas_bimestral_salvar', '/api/professor/notas_bimestral', {
+      turma_id,
+      disciplina_id,
+      ano_letivo_id,
+      quantidade_notas: rows.length
+    }, true)
 
     return NextResponse.json({ ok: true })
   } catch (e) {
-    console.error('Erro interno:', e)
-    return NextResponse.json({ error: `Erro interno: ${String(e)}` }, { status: 500 })
+    await logger.logError('/api/professor/notas_bimestral', e, user.id)
+    return NextResponse.json({ error: 'Erro interno ao salvar notas bimestrais' }, { status: 500 })
   }
 }

@@ -1,25 +1,30 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
+  try {
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
 
-  // Aulas do professor
-  const { data: aulas } = await admin
-    .from('aulas')
-    .select('id, turma_id, turmas(id, nome)')
-    .eq('professor_id', user.id)
+    // Aulas do professor
+    const { data: aulas } = await admin
+      .from('aulas')
+      .select('id, turma_id, turmas(id, nome)')
+      .eq('professor_id', user.id)
 
-  if (!aulas?.length) return NextResponse.json({ totalChamadas: 0, mediaFrequencia: 0, alunosEmRisco: [], turmas: [] })
+    if (!aulas?.length) {
+      await logger.logAudit(user.id, 'visao_geral_consultar', '/api/professor/visao-geral', { chamadas: 0 }, true)
+      return NextResponse.json({ totalChamadas: 0, mediaFrequencia: 0, alunosEmRisco: [], turmas: [] })
+    }
 
   const aulaIds = aulas.map((a: any) => a.id)
 
@@ -54,7 +59,9 @@ export async function GET() {
 
   // Conta chamadas por turma e frequência por turma
   const aulaMap = new Map(aulas.map((a: any) => [a.id, a]))
+  const chamadaMap = new Map(chamadas.map((c: any) => [c.id, c]))  // Evitar O(n²) find()
   const turmaStats = new Map<string, { nome: string; chamadas: number; presentes: number; total: number }>()
+
   for (const c of chamadas) {
     const aula = aulaMap.get(c.aula_id) as any
     if (!aula) continue
@@ -63,8 +70,9 @@ export async function GET() {
     if (!turmaStats.has(turmaId)) turmaStats.set(turmaId, { nome: turmaNome, chamadas: 0, presentes: 0, total: 0 })
     turmaStats.get(turmaId)!.chamadas++
   }
+
   for (const r of registros || []) {
-    const chamada = chamadas.find(c => c.id === r.chamada_id)
+    const chamada = chamadaMap.get(r.chamada_id)  // O(1) lookup ao invés de O(n) find()
     if (!chamada) continue
     const aula = aulaMap.get(chamada.aula_id) as any
     if (!aula) continue
@@ -102,16 +110,24 @@ export async function GET() {
     if (r.status === 'falta') as_.faltas++
   }
 
-  const alunosEmRisco = Array.from(alunoStats.values())
-    .filter(a => a.total >= 2 && (a.presentes / a.total) * 100 < 75)
-    .sort((a, b) => (a.presentes / a.total) - (b.presentes / b.total))
-    .slice(0, 5)
-    .map(a => ({ ...a, frequencia: Math.round((a.presentes / a.total) * 100) }))
+    const alunosEmRisco = Array.from(alunoStats.values())
+      .filter(a => a.total >= 2 && (a.presentes / a.total) * 100 < 75)
+      .sort((a, b) => (a.presentes / a.total) - (b.presentes / b.total))
+      .slice(0, 5)
+      .map(a => ({ ...a, frequencia: Math.round((a.presentes / a.total) * 100) }))
 
-  return NextResponse.json({
-    totalChamadas: chamadas.length,
-    mediaFrequencia,
-    alunosEmRisco,
-    turmas,
-  })
+    const resultado = {
+      totalChamadas: chamadas.length,
+      mediaFrequencia,
+      alunosEmRisco,
+      turmas,
+    }
+
+    await logger.logAudit(user.id, 'visao_geral_consultar', '/api/professor/visao-geral', { chamadas: chamadas.length, turmas: turmas.length }, true)
+
+    return NextResponse.json(resultado)
+  } catch (error) {
+    await logger.logError('/api/professor/visao-geral', error, user.id)
+    return NextResponse.json({ totalChamadas: 0, mediaFrequencia: 0, alunosEmRisco: [], turmas: [] }, { status: 500 })
+  }
 }

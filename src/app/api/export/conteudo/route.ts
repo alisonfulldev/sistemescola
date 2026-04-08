@@ -1,32 +1,34 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-  if (!['admin', 'secretaria', 'diretor', 'professor'].includes(userData?.perfil || '')) {
-    return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-  }
-
-  const turmaId = req.nextUrl.searchParams.get('turma_id')
-  const disciplinaId = req.nextUrl.searchParams.get('disciplina_id')
-  const bimestre = req.nextUrl.searchParams.get('bimestre') ? parseInt(req.nextUrl.searchParams.get('bimestre')!) : null
-
-  if (!turmaId) {
-    return NextResponse.json({ error: 'Parâmetro obrigatório: turma_id' }, { status: 400 })
-  }
-
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
   try {
+    const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
+    if (!['admin', 'secretaria', 'diretor', 'professor'].includes(userData?.perfil || '')) {
+      await logger.logAudit(user.id, 'exportar_conteudo', '/api/export/conteudo', {}, false)
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    }
+
+    const turmaId = req.nextUrl.searchParams.get('turma_id')
+    const disciplinaId = req.nextUrl.searchParams.get('disciplina_id')
+    const bimestre = req.nextUrl.searchParams.get('bimestre') ? parseInt(req.nextUrl.searchParams.get('bimestre')!) : null
+
+    if (!turmaId) {
+      await logger.logAudit(user.id, 'exportar_conteudo', '/api/export/conteudo', {}, false)
+      return NextResponse.json({ error: 'Parâmetro obrigatório: turma_id' }, { status: 400 })
+    }
+
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
     // Montar query
     let aulasQuery = admin
       .from('aulas')
@@ -82,7 +84,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    const resultado = {
       aulas: aulas.map(a => ({
         id: a.id,
         data: a.data,
@@ -97,8 +99,13 @@ export async function GET(req: NextRequest) {
       aulas_com_conteudo: aulas.filter(a => a.conteudo_programatico).length,
       aulas_com_atividades: aulas.filter(a => a.atividades_desenvolvidas).length,
       resumo_por_bimestre: resumoFormatado
-    })
+    }
+
+    await logger.logAudit(user.id, 'exportar_conteudo', '/api/export/conteudo', { turma_id: turmaId, total_aulas: resultado.total_aulas }, true)
+
+    return NextResponse.json(resultado)
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    await logger.logError('/api/export/conteudo', error, user.id)
+    return NextResponse.json({ error: 'Erro ao exportar conteúdo' }, { status: 500 })
   }
 }

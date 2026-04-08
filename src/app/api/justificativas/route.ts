@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { CreateJustificativaSchema } from '@/lib/schemas/justificativas'
+import { validateData, errorResponse } from '@/lib/api-utils'
+import { logger } from '@/lib/logger'
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
@@ -54,11 +57,15 @@ export async function GET(req: NextRequest) {
 
     const { data: justificativas, error } = await query.order('data_falta', { ascending: false })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      await logger.logError('/api/justificativas', error, user.id, { alunoId, status })
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     return NextResponse.json({ justificativas: justificativas || [] })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    await logger.logError('/api/justificativas', error, user.id)
+    return NextResponse.json({ error: 'Erro ao buscar justificativas' }, { status: 500 })
   }
 }
 
@@ -67,22 +74,13 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
+  const validation = validateData(CreateJustificativaSchema, await req.json())
+  if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
+
+  const { aluno_id, data_falta, motivo, descricao_detalhada, documento_url, tipo_documento } = validation.data
+
   const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
   const perfil = userData?.perfil || ''
-
-  const { aluno_id, data_falta, motivo, descricao_detalhada, documento_url, tipo_documento } = await req.json()
-
-  if (!aluno_id || !data_falta || !motivo) {
-    return NextResponse.json({
-      error: 'Campos obrigatórios: aluno_id, data_falta, motivo'
-    }, { status: 400 })
-  }
-
-  // Validar motivo
-  const motivosValidos = ['medico', 'dentista', 'falecimento', 'acompanhamento_responsavel', 'consulta_especialista', 'atividade_escolar', 'motivo_pessoal', 'outro']
-  if (!motivosValidos.includes(motivo)) {
-    return NextResponse.json({ error: `Motivo inválido. Válidos: ${motivosValidos.join(', ')}` }, { status: 400 })
-  }
 
   // Responsável só pode enviar para seus filhos
   if (perfil === 'responsavel') {
@@ -93,9 +91,11 @@ export async function POST(req: NextRequest) {
 
     const meusFilhos = filhos?.map(f => f.aluno_id) || []
     if (!meusFilhos.includes(aluno_id)) {
+      await logger.logAudit(user.id, 'justificativa_criar', '/api/justificativas', { aluno_id }, false)
       return NextResponse.json({ error: 'Sem permissão para justificar este aluno' }, { status: 403 })
     }
   } else if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
+    await logger.logAudit(user.id, 'justificativa_criar', '/api/justificativas', {}, false)
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
 
@@ -122,10 +122,16 @@ export async function POST(req: NextRequest) {
         { onConflict: 'aluno_id,data_falta' }
       )
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      await logger.logError('/api/justificativas', error, user.id, { aluno_id })
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    await logger.logAudit(user.id, 'justificativa_criar', '/api/justificativas', { aluno_id, data_falta, motivo }, true)
 
     return NextResponse.json({ ok: true, message: 'Justificativa enviada com sucesso' }, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    await logger.logError('/api/justificativas', error, user.id)
+    return NextResponse.json({ error: 'Erro ao criar justificativa' }, { status: 500 })
   }
 }
