@@ -59,7 +59,7 @@ export async function GET() {
 
   // Conta chamadas por turma e frequência por turma
   const aulaMap = new Map(aulas.map((a: any) => [a.id, a]))
-  const chamadaMap = new Map(chamadas.map((c: any) => [c.id, c]))  // Evitar O(n²) find()
+  const chamadaLookupMap = new Map(chamadas.map((c: any) => [c.id, c]))  // Evitar O(n²) find()
   const turmaStats = new Map<string, { nome: string; chamadas: number; presentes: number; total: number }>()
 
   for (const c of chamadas) {
@@ -72,7 +72,7 @@ export async function GET() {
   }
 
   for (const r of registros || []) {
-    const chamada = chamadaMap.get(r.chamada_id)  // O(1) lookup ao invés de O(n) find()
+    const chamada = chamadaLookupMap.get(r.chamada_id)  // O(1) lookup ao invés de O(n) find()
     if (!chamada) continue
     const aula = aulaMap.get(chamada.aula_id) as any
     if (!aula) continue

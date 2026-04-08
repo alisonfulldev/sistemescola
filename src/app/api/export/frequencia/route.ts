@@ -15,21 +15,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
-  const turmaId = req.nextUrl.searchParams.get('turma_id')
-  const bimestre = req.nextUrl.searchParams.get('bimestre') ? parseInt(req.nextUrl.searchParams.get('bimestre')!) : null
-  const anoLetivoId = req.nextUrl.searchParams.get('ano_letivo_id')
+    const turmaId = req.nextUrl.searchParams.get('turma_id')
+    const bimestre = req.nextUrl.searchParams.get('bimestre') ? parseInt(req.nextUrl.searchParams.get('bimestre')!) : null
+    const anoLetivoId = req.nextUrl.searchParams.get('ano_letivo_id')
 
-  if (!turmaId || !anoLetivoId) {
-    return NextResponse.json({ error: 'Parâmetros obrigatórios: turma_id, ano_letivo_id' }, { status: 400 })
-  }
+    if (!turmaId || !anoLetivoId) {
+      return NextResponse.json({ error: 'Parâmetros obrigatórios: turma_id, ano_letivo_id' }, { status: 400 })
+    }
 
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
-  try {
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
     // 1. Alunos da turma
     const { data: alunos } = await admin
       .from('alunos')
@@ -154,3 +152,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Erro ao exportar frequência' }, { status: 500 })
   }
 }
+
