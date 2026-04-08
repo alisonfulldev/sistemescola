@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ provas: provas || [] })
   } catch (error) {
-    await logger.logError('/api/professor/provas', error, user.id)
+    await logger.logError('/api/professor/provas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar provas' }, { status: 500 })
   }
 }
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(CreateProvaSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { titulo, turma_id, data, nota_maxima } = validation.data
+  const { titulo, turma_id, data, nota_maxima } = validation.data as any
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      await logger.logError('/api/professor/provas', error, user.id, { titulo, turma_id })
+      await logger.logError('/api/professor/provas', error as Error, user.id, { titulo, turma_id })
       return NextResponse.json({ error: 'Erro ao criar prova' }, { status: 500 })
     }
 
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ prova })
   } catch (error) {
-    await logger.logError('/api/professor/provas', error, user.id)
+    await logger.logError('/api/professor/provas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro interno ao criar prova' }, { status: 500 })
   }
 }

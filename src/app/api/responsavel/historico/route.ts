@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'aluno_id deve ser UUID válido' }, { status: 400 })
   }
 
-  const { aluno_id } = validation.data
+  const { aluno_id } = validation.data as any
 
   try {
     const admin = createAdmin(
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ aluno, historico, stats: { total, presentes, faltas, justificadas } })
   } catch (error) {
-    await logger.logError('/api/responsavel/historico', error, user.id, { aluno_id })
+    await logger.logError('/api/responsavel/historico', error as Error, user.id, { aluno_id })
     return NextResponse.json({ error: 'Erro ao buscar histórico' }, { status: 500 })
   }
 }

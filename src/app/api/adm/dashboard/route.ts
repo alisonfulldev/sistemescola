@@ -101,7 +101,7 @@ export async function GET() {
       alertas: alertas || [],
     })
   } catch (error) {
-    await logger.logError('/api/adm/dashboard', error, user.id)
+    await logger.logError('/api/adm/dashboard', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao carregar dashboard' }, { status: 500 })
   }
 }

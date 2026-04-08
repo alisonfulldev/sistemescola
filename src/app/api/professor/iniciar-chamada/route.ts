@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(IniciarChamadaSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { turma_id } = validation.data
+  const { turma_id } = validation.data as any
 
   const hoje = new Date().toISOString().split('T')[0]
 

@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ chamada, alunos: alunos || [], registros: registros || [], entradas: entradas || [] })
   } catch (error) {
-    await logger.logError('/api/professor/carregar-chamada', error, user.id)
+    await logger.logError('/api/professor/carregar-chamada', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao carregar chamada' }, { status: 500 })
   }
 }

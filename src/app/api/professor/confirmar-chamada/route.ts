@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(ConfirmarChamadaSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { chamada_id } = validation.data
+  const { chamada_id } = validation.data as any
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       .eq('id', chamada_id)
 
     if (error) {
-      await logger.logError('/api/professor/confirmar-chamada', error, user.id, { chamada_id })
+      await logger.logError('/api/professor/confirmar-chamada', error as Error, user.id, { chamada_id })
       return NextResponse.json({ error: 'Erro ao confirmar chamada' }, { status: 500 })
     }
 
@@ -67,12 +67,12 @@ export async function POST(req: NextRequest) {
       })
     } catch (notificacaoError) {
       // Log falha de notificação mas não falha a confirmação
-      await logger.logError('/api/professor/confirmar-chamada', notificacaoError, user.id, { chamada_id, erro: 'notificacao_falhou' })
+      await logger.logError('/api/professor/confirmar-chamada', notificacaoError as Error, user.id, { chamada_id, erro: 'notificacao_falhou' })
     } finally {
       clearTimeout(timeoutId)
     }
   } catch (error) {
-    await logger.logError('/api/professor/confirmar-chamada', error, user.id, { chamada_id })
+    await logger.logError('/api/professor/confirmar-chamada', error as Error, user.id, { chamada_id })
     return NextResponse.json({ error: 'Erro ao confirmar chamada' }, { status: 500 })
   }
 

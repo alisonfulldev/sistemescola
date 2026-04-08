@@ -44,7 +44,7 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: { params
 
     return NextResponse.json({ disciplina })
   } catch (error) {
-    await logger.logError('/api/admin/disciplinas/[disciplinaId]', error, user.id)
+    await logger.logError('/api/admin/disciplinas/[disciplinaId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar disciplina' }, { status: 500 })
   }
 }
@@ -74,13 +74,13 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
     const db = admin()
     const { data: disciplina, error } = await db
       .from('disciplinas')
-      .update(validation.data)
+      .update(validation.data as any)
       .eq('id', disciplinaId)
       .select()
       .single()
 
     if (error) {
-      await logger.logError('/api/admin/disciplinas/[disciplinaId]', error, user.id)
+      await logger.logError('/api/admin/disciplinas/[disciplinaId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao atualizar disciplina' }, { status: 500 })
     }
 
@@ -88,7 +88,7 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
 
     return NextResponse.json({ disciplina })
   } catch (error) {
-    await logger.logError('/api/admin/disciplinas/[disciplinaId]', error, user.id)
+    await logger.logError('/api/admin/disciplinas/[disciplinaId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao atualizar disciplina' }, { status: 500 })
   }
 }
@@ -116,7 +116,7 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: { par
     const { error } = await db.from('disciplinas').update({ ativo: false }).eq('id', disciplinaId)
 
     if (error) {
-      await logger.logError('/api/admin/disciplinas/[disciplinaId]', error, user.id)
+      await logger.logError('/api/admin/disciplinas/[disciplinaId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao deletar disciplina' }, { status: 500 })
     }
 
@@ -124,7 +124,7 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: { par
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/admin/disciplinas/[disciplinaId]', error, user.id)
+    await logger.logError('/api/admin/disciplinas/[disciplinaId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao deletar disciplina' }, { status: 500 })
   }
 }

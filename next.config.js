@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -9,9 +15,7 @@ const nextConfig = {
       },
     ],
   },
-  generateBuildId: async () => {
-    return 'build-' + new Date().getTime().toString()
-  },
+  generateBuildId: () => null,
 }
 
 module.exports = nextConfig

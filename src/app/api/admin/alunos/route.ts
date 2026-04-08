@@ -49,13 +49,13 @@ export async function GET(req: NextRequest) {
     const { data: alunos, error } = await query.order('nome_completo').limit(500)
 
     if (error) {
-      await logger.logError('/api/admin/alunos', error, user.id)
+      await logger.logError('/api/admin/alunos', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao buscar alunos' }, { status: 500 })
     }
 
     return NextResponse.json({ alunos: alunos || [] })
   } catch (error) {
-    await logger.logError('/api/admin/alunos', error, user.id)
+    await logger.logError('/api/admin/alunos', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar alunos' }, { status: 500 })
   }
 }
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     const validation = validateData(CreateAlunoSchema, body)
     if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-    const { nome_completo, data_nascimento, matricula, turma_id, contato_responsavel, situacao, foto_url } = validation.data
+    const { nome_completo, data_nascimento, matricula, turma_id, contato_responsavel, situacao, foto_url } = validation.data as any
 
     const db = admin()
     const { data: aluno, error } = await db
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      await logger.logError('/api/admin/alunos', error, user.id)
+      await logger.logError('/api/admin/alunos', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao criar aluno' }, { status: 500 })
     }
 
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ aluno }, { status: 201 })
   } catch (error) {
-    await logger.logError('/api/admin/alunos', error, user.id)
+    await logger.logError('/api/admin/alunos', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao criar aluno' }, { status: 500 })
   }
 }

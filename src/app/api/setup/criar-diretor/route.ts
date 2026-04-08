@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     if (authError) {
       console.error('Auth error:', authError)
-      await logger.logError('/api/setup/criar-diretor', authError, 'system')
+      await logger.logError('/api/setup/criar-diretor', authError as Error, 'system')
       return NextResponse.json({ error: authError.message }, { status: 400 })
     }
 
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     if (dbError) {
       console.error('DB error:', dbError)
       await adminClient.auth.admin.deleteUser(data.user.id)
-      await logger.logError('/api/setup/criar-diretor', dbError, 'system')
+      await logger.logError('/api/setup/criar-diretor', dbError as Error, 'system')
       return NextResponse.json({ error: dbError.message }, { status: 400 })
     }
 
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     console.error('Erro ao criar diretor:', err)
-    await logger.logError('/api/setup/criar-diretor', err, 'system')
+    await logger.logError('/api/setup/criar-diretor', err as Error, 'system')
     return NextResponse.json({ error: 'Erro interno: ' + String(err) }, { status: 500 })
   }
 }

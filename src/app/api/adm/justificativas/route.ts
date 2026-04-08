@@ -55,7 +55,7 @@ export async function GET() {
 
     return NextResponse.json({ justificativas: resultado })
   } catch (error) {
-    await logger.logError('/api/adm/justificativas', error, user.id)
+    await logger.logError('/api/adm/justificativas', error as Error, user.id)
     return NextResponse.json({ justificativas: [] }, { status: 500 })
   }
 }

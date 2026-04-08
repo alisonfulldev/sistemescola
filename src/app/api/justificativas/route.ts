@@ -58,13 +58,13 @@ export async function GET(req: NextRequest) {
     const { data: justificativas, error } = await query.order('data_falta', { ascending: false })
 
     if (error) {
-      await logger.logError('/api/justificativas', error, user.id, { alunoId, status })
+      await logger.logError('/api/justificativas', error as Error, user.id, { alunoId, status })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ justificativas: justificativas || [] })
   } catch (error) {
-    await logger.logError('/api/justificativas', error, user.id)
+    await logger.logError('/api/justificativas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar justificativas' }, { status: 500 })
   }
 }
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(CreateJustificativaSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { aluno_id, data_falta, motivo, descricao_detalhada, documento_url, tipo_documento } = validation.data
+  const { aluno_id, data_falta, motivo, descricao_detalhada, documento_url, tipo_documento } = validation.data as any
 
   const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
   const perfil = userData?.perfil || ''
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       )
 
     if (error) {
-      await logger.logError('/api/justificativas', error, user.id, { aluno_id })
+      await logger.logError('/api/justificativas', error as Error, user.id, { aluno_id })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, message: 'Justificativa enviada com sucesso' }, { status: 201 })
   } catch (error) {
-    await logger.logError('/api/justificativas', error, user.id)
+    await logger.logError('/api/justificativas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao criar justificativa' }, { status: 500 })
   }
 }

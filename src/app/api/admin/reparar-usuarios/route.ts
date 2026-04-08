@@ -49,7 +49,7 @@ export async function POST() {
 
     return NextResponse.json({ inseridos, total: inseridos.length })
   } catch (error) {
-    await logger.logError('/api/admin/reparar-usuarios', error, user.id)
+    await logger.logError('/api/admin/reparar-usuarios', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao reparar usuários' }, { status: 500 })
   }
 }

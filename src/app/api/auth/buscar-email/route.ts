@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Usuário obrigatório' }, { status: 400 })
     }
 
-    const { usuario } = validation.data
+    const { usuario } = validation.data as any
 
     const adminClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ email: data.email })
   } catch (error) {
-    await logger.logError('/api/auth/buscar-email', error)
+    await logger.logError('/api/auth/buscar-email', error as Error)
     return NextResponse.json({ error: 'Erro ao buscar email' }, { status: 500 })
   }
 }

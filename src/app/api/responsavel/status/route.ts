@@ -112,7 +112,7 @@ export async function GET() {
 
     return NextResponse.json({ alunos: resultado })
   } catch (error) {
-    await logger.logError('/api/responsavel/status', error, user.id)
+    await logger.logError('/api/responsavel/status', error as Error, user.id)
     return NextResponse.json({ alunos: [] }, { status: 500 })
   }
 }

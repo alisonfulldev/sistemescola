@@ -44,7 +44,7 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: { params
 
     return NextResponse.json({ ano_letivo: anoLetivo })
   } catch (error) {
-    await logger.logError('/api/admin/anos-letivos/[anoId]', error, user.id)
+    await logger.logError('/api/admin/anos-letivos/[anoId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar ano letivo' }, { status: 500 })
   }
 }
@@ -74,13 +74,13 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
     const db = admin()
     const { data: anoLetivo, error } = await db
       .from('anos_letivos')
-      .update(validation.data)
+      .update(validation.data as any)
       .eq('id', anoId)
       .select()
       .single()
 
     if (error) {
-      await logger.logError('/api/admin/anos-letivos/[anoId]', error, user.id)
+      await logger.logError('/api/admin/anos-letivos/[anoId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao atualizar ano letivo' }, { status: 500 })
     }
 
@@ -88,7 +88,7 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
 
     return NextResponse.json({ ano_letivo: anoLetivo })
   } catch (error) {
-    await logger.logError('/api/admin/anos-letivos/[anoId]', error, user.id)
+    await logger.logError('/api/admin/anos-letivos/[anoId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao atualizar ano letivo' }, { status: 500 })
   }
 }
@@ -116,7 +116,7 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: { par
     const { error } = await db.from('anos_letivos').update({ ativo: false }).eq('id', anoId)
 
     if (error) {
-      await logger.logError('/api/admin/anos-letivos/[anoId]', error, user.id)
+      await logger.logError('/api/admin/anos-letivos/[anoId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao deletar ano letivo' }, { status: 500 })
     }
 
@@ -124,7 +124,7 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: { par
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/admin/anos-letivos/[anoId]', error, user.id)
+    await logger.logError('/api/admin/anos-letivos/[anoId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao deletar ano letivo' }, { status: 500 })
   }
 }

@@ -75,7 +75,7 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
       total_notas: notas.length
     })
   } catch (error) {
-    await logger.logError('/api/avaliacoes/[id]/notas', error, user.id, { avaliacao_id: id })
+    await logger.logError('/api/avaliacoes/[id]/notas', error as Error, user.id, { avaliacao_id: id })
     return NextResponse.json({ error: 'Erro ao buscar notas da avaliação' }, { status: 500 })
   }
 }
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
   const validation = validateData(SaveAvaliacaoNotasSchema, payload)
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { notas: notasData } = validation.data
+  const { notas: notasData } = validation.data as any
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
     }
 
     // Preparar dados para insert (upsert)
-    const notasParaInserir = notasData.map(nota => ({
+    const notasParaInserir = notasData.map((nota: any) => ({
       avaliacao_id: id,
       aluno_id: nota.aluno_id,
       nota: nota.nota === '' || nota.nota === null ? null : parseFloat(nota.nota),
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
       .upsert(notasParaInserir, { onConflict: 'avaliacao_id,aluno_id' })
 
     if (error) {
-      await logger.logError('/api/avaliacoes/[id]/notas', error, user.id, { avaliacao_id: id })
+      await logger.logError('/api/avaliacoes/[id]/notas', error as Error, user.id, { avaliacao_id: id })
       return NextResponse.json({ error: 'Erro ao salvar notas' }, { status: 500 })
     }
 
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: { params
       message: `${notasParaInserir.length} nota(s) registrada(s) com sucesso`
     }, { status: 201 })
   } catch (error) {
-    await logger.logError('/api/avaliacoes/[id]/notas', error, user.id)
+    await logger.logError('/api/avaliacoes/[id]/notas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro interno ao salvar notas' }, { status: 500 })
   }
 }
@@ -185,7 +185,7 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: { param
   const validation = validateData(AtualizarNotaSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { aluno_id, nota, observacao } = validation.data
+  const { aluno_id, nota, observacao } = validation.data as any
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -205,7 +205,7 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: { param
       .eq('aluno_id', aluno_id)
 
     if (error) {
-      await logger.logError('/api/avaliacoes/[id]/notas', error, user.id, { avaliacao_id: id, aluno_id })
+      await logger.logError('/api/avaliacoes/[id]/notas', error as Error, user.id, { avaliacao_id: id, aluno_id })
       return NextResponse.json({ error: 'Erro ao atualizar nota' }, { status: 500 })
     }
 
@@ -217,7 +217,7 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: { param
 
     return NextResponse.json({ ok: true, message: 'Nota atualizada com sucesso' })
   } catch (error) {
-    await logger.logError('/api/avaliacoes/[id]/notas', error, user.id)
+    await logger.logError('/api/avaliacoes/[id]/notas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro interno ao atualizar nota' }, { status: 500 })
   }
 }

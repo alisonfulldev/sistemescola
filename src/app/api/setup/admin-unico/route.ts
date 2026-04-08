@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     if (authError) {
       console.error('Auth error:', authError)
-      await logger.logError('/api/setup/admin-unico', authError, 'system')
+      await logger.logError('/api/setup/admin-unico', authError as Error, 'system')
       return NextResponse.json({ error: authError.message }, { status: 400 })
     }
 
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     if (dbError) {
       console.error('DB error:', dbError)
       await adminClient.auth.admin.deleteUser(data.user.id)
-      await logger.logError('/api/setup/admin-unico', dbError, 'system')
+      await logger.logError('/api/setup/admin-unico', dbError as Error, 'system')
       return NextResponse.json({ error: dbError.message }, { status: 400 })
     }
 
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (err) {
     console.error('Erro:', err)
-    await logger.logError('/api/setup/admin-unico', err, 'system')
+    await logger.logError('/api/setup/admin-unico', err as Error, 'system')
     return NextResponse.json({ error: 'Erro interno: ' + String(err) }, { status: 500 })
   }
 }

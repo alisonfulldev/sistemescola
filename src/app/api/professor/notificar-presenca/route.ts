@@ -9,15 +9,17 @@ const NotificarPresencaSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  let user: any = null
   try {
     const supabaseAuth = await createServerClient()
-    const { data: { user } } = await supabaseAuth.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    const { data: { user: authUser } } = await supabaseAuth.auth.getUser()
+    if (!authUser) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    user = authUser
 
     const validation = NotificarPresencaSchema.safeParse(await req.json())
     if (!validation.success) return NextResponse.json({ ok: true })
 
-    const { chamada_id } = validation.data
+    const { chamada_id } = validation.data as any
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
     await logger.logAudit(user.id, 'presenca_notificar', '/api/professor/notificar-presenca', { chamada_id }, true)
     return NextResponse.json({ ok: true })
   } catch (err) {
-    await logger.logError('/api/professor/notificar-presenca', err, user.id)
+    await logger.logError('/api/professor/notificar-presenca', err as Error, user.id)
     return NextResponse.json({ ok: true })
   }
 }

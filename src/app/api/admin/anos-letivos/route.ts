@@ -37,13 +37,13 @@ export async function GET(req: NextRequest) {
       .limit(100)
 
     if (error) {
-      await logger.logError('/api/admin/anos-letivos', error, user.id)
+      await logger.logError('/api/admin/anos-letivos', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao buscar anos letivos' }, { status: 500 })
     }
 
     return NextResponse.json({ anos_letivos: anosLetivos || [] })
   } catch (error) {
-    await logger.logError('/api/admin/anos-letivos', error, user.id)
+    await logger.logError('/api/admin/anos-letivos', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar anos letivos' }, { status: 500 })
   }
 }
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const validation = validateData(CreateAnoLetivoSchema, body)
     if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-    const { ano, data_inicio, data_fim, ativo, nome } = validation.data
+    const { ano, data_inicio, data_fim, ativo, nome } = validation.data as any
 
     const db = admin()
     const { data: anoLetivo, error } = await db
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      await logger.logError('/api/admin/anos-letivos', error, user.id)
+      await logger.logError('/api/admin/anos-letivos', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao criar ano letivo' }, { status: 500 })
     }
 
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ano_letivo: anoLetivo }, { status: 201 })
   } catch (error) {
-    await logger.logError('/api/admin/anos-letivos', error, user.id)
+    await logger.logError('/api/admin/anos-letivos', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao criar ano letivo' }, { status: 500 })
   }
 }

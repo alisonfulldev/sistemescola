@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(resultado)
   } catch (error) {
-    await logger.logError('/api/export/conteudo', error, user.id)
+    await logger.logError('/api/export/conteudo', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao exportar conteúdo' }, { status: 500 })
   }
 }

@@ -106,7 +106,7 @@ export async function GET() {
 
     return NextResponse.json({ turmas: turmasResumo })
   } catch (error) {
-    await logger.logError('/api/adm/relatorio', error, user.id)
+    await logger.logError('/api/adm/relatorio', error as Error, user.id)
     return NextResponse.json({ turmas: [] }, { status: 500 })
   }
 }

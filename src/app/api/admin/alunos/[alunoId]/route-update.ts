@@ -43,13 +43,13 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
     const db = admin()
     const { data: aluno, error } = await db
       .from('alunos')
-      .update(validation.data)
+      .update(validation.data as any)
       .eq('id', alunoId)
       .select()
       .single()
 
     if (error) {
-      await logger.logError('/api/admin/alunos/[alunoId]', error, user.id)
+      await logger.logError('/api/admin/alunos/[alunoId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao atualizar aluno' }, { status: 500 })
     }
 
@@ -57,7 +57,7 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
 
     return NextResponse.json({ aluno })
   } catch (error) {
-    await logger.logError('/api/admin/alunos/[alunoId]', error, user.id)
+    await logger.logError('/api/admin/alunos/[alunoId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao atualizar aluno' }, { status: 500 })
   }
 }
@@ -91,7 +91,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
     const { error } = await db.from('alunos').update({ situacao: 'inativo' }).eq('id', alunoId)
 
     if (error) {
-      await logger.logError('/api/admin/alunos/[alunoId]', error, user.id)
+      await logger.logError('/api/admin/alunos/[alunoId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao deletar aluno' }, { status: 500 })
     }
 
@@ -99,7 +99,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/admin/alunos/[alunoId]', error, user.id)
+    await logger.logError('/api/admin/alunos/[alunoId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao deletar aluno' }, { status: 500 })
   }
 }

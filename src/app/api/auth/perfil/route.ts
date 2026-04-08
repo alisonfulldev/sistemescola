@@ -33,7 +33,7 @@ export async function GET() {
       ativo: data.ativo || false,
     })
   } catch (error) {
-    await logger.logError('/api/auth/perfil', error, user.id)
+    await logger.logError('/api/auth/perfil', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar perfil' }, { status: 500 })
   }
 }

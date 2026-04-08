@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email e senha (mín. 8 caracteres) obrigatórios' }, { status: 400 })
   }
 
-  const { token, email, nova_senha } = validation.data
+  const { token, email, nova_senha } = validation.data as any
 
   const secret = process.env.RECOVERY_SECRET
   if (!secret || token !== secret) {
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     // Busca o usuário pelo email
     const { data: { users }, error: listErr } = await admin.auth.admin.listUsers({ perPage: 1000 })
     if (listErr) {
-      await logger.logError('/api/recuperar-admin', listErr)
+      await logger.logError('/api/recuperar-admin', listErr as Error)
       return NextResponse.json({ error: 'Erro ao buscar usuários' }, { status: 500 })
     }
 
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     // Troca a senha
     const { error } = await admin.auth.admin.updateUserById(usuario.id, { password: nova_senha })
     if (error) {
-      await logger.logError('/api/recuperar-admin', error, usuario.id)
+      await logger.logError('/api/recuperar-admin', error as Error, usuario.id)
       return NextResponse.json({ error: 'Erro ao atualizar senha' }, { status: 500 })
     }
 
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, mensagem: `Senha de ${email} atualizada com sucesso.` })
   } catch (error) {
-    await logger.logError('/api/recuperar-admin', error)
+    await logger.logError('/api/recuperar-admin', error as Error)
     return NextResponse.json({ error: 'Erro interno ao recuperar admin' }, { status: 500 })
   }
 }

@@ -127,7 +127,7 @@ export async function GET() {
 
     return NextResponse.json(resultado)
   } catch (error) {
-    await logger.logError('/api/professor/visao-geral', error, user.id)
+    await logger.logError('/api/professor/visao-geral', error as Error, user.id)
     return NextResponse.json({ totalChamadas: 0, mediaFrequencia: 0, alunosEmRisco: [], turmas: [] }, { status: 500 })
   }
 }

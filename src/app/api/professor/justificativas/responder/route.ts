@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/professor/justificativas/responder', error, user.id)
+    await logger.logError('/api/professor/justificativas/responder', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao responder justificativa' }, { status: 500 })
   }
 }

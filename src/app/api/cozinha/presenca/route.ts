@@ -112,7 +112,7 @@ export async function GET() {
       atualizadoEm: new Date().toISOString(),
     })
   } catch (error) {
-    await logger.logError('/api/cozinha/presenca', error, user.id)
+    await logger.logError('/api/cozinha/presenca', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar presença' }, { status: 500 })
   }
 }

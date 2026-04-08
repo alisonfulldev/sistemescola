@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ chamadas: resultado })
   } catch (error) {
-    await logger.logError('/api/professor/historico', error, user.id)
+    await logger.logError('/api/professor/historico', error as Error, user.id)
     return NextResponse.json({ chamadas: [] }, { status: 500 })
   }
 }

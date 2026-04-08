@@ -1,0 +1,14 @@
+
+> sistema-chamada-escolar@1.0.0 build
+> next build
+
+
+> Build error occurred
+TypeError: generate is not a function
+    at generateBuildId (C:\Users\Home\Desktop\sistema escola\node_modules\next\dist\build\generate-build-id.js:12:25)
+    at C:\Users\Home\Desktop\sistema escola\node_modules\next\dist\build\index.js:349:117
+    at Span.traceAsyncFn (C:\Users\Home\Desktop\sistema escola\node_modules\next\dist\trace\trace.js:154:26)
+    at getBuildId (C:\Users\Home\Desktop\sistema escola\node_modules\next\dist\build\index.js:349:63)
+    at C:\Users\Home\Desktop\sistema escola\node_modules\next\dist\build\index.js:386:35
+    at async Span.traceAsyncFn (C:\Users\Home\Desktop\sistema escola\node_modules\next\dist\trace\trace.js:154:20)
+    at async build (C:\Users\Home\Desktop\sistema escola\node_modules\next\dist\build\index.js:366:9)

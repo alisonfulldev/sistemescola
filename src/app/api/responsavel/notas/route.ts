@@ -63,7 +63,7 @@ export async function GET() {
 
     return NextResponse.json({ notas: resultado })
   } catch (error) {
-    await logger.logError('/api/responsavel/notas', error, user.id)
+    await logger.logError('/api/responsavel/notas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar notas' }, { status: 500 })
   }
 }

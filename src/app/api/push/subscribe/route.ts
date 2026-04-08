@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     }, { onConflict: 'responsavel_id,endpoint' })
 
     if (error) {
-      await logger.logError('/api/push/subscribe', error, user.id)
+      await logger.logError('/api/push/subscribe', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao salvar subscription' }, { status: 500 })
     }
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/push/subscribe', error, user.id)
+    await logger.logError('/api/push/subscribe', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao subscrever push' }, { status: 500 })
   }
 }

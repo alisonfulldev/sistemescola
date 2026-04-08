@@ -77,7 +77,7 @@ export async function GET() {
         erros: erros.length > 0 ? erros : undefined,
       })
     } catch (e: any) {
-      await logger.logError('/api/responsavel/teste-push', e, user.id)
+      await logger.logError('/api/responsavel/teste-push', e as Error, user.id)
       return NextResponse.json({
         ok: false,
         erro: e.message,
@@ -85,7 +85,7 @@ export async function GET() {
       })
     }
   } catch (error) {
-    await logger.logError('/api/responsavel/teste-push', error, user.id)
+    await logger.logError('/api/responsavel/teste-push', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao testar push' }, { status: 500 })
   }
 }

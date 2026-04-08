@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ notas: notasMap })
   } catch (error) {
-    await logger.logError('/api/professor/notas_bimestral', error, user.id)
+    await logger.logError('/api/professor/notas_bimestral', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar notas bimestrais' }, { status: 500 })
   }
 }
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     }, { status: 400 })
   }
 
-  const { turma_id, disciplina_id, ano_letivo_id, notas } = validation.data
+  const { turma_id, disciplina_id, ano_letivo_id, notas } = validation.data as any
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
       .upsert(rows, { onConflict: 'aluno_id,turma_id,disciplina_id,ano_letivo_id' })
 
     if (upsertError) {
-      await logger.logError('/api/professor/notas_bimestral', upsertError, user.id, { turma_id, disciplina_id })
+      await logger.logError('/api/professor/notas_bimestral', upsertError as Error, user.id, { turma_id, disciplina_id })
       return NextResponse.json({ error: 'Erro ao salvar notas bimestrais' }, { status: 500 })
     }
 
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (e) {
-    await logger.logError('/api/professor/notas_bimestral', e, user.id)
+    await logger.logError('/api/professor/notas_bimestral', e as Error, user.id)
     return NextResponse.json({ error: 'Erro interno ao salvar notas bimestrais' }, { status: 500 })
   }
 }

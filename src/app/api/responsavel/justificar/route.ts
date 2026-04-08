@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(JustificarFaltaSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { registro_id, motivo } = validation.data
+  const { registro_id, motivo } = validation.data as any
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       }, { onConflict: 'registro_id,responsavel_id' })
 
     if (error) {
-      await logger.logError('/api/responsavel/justificar', error, user.id, { registro_id })
+      await logger.logError('/api/responsavel/justificar', error as Error, user.id, { registro_id })
       return NextResponse.json({ error: 'Erro ao justificar falta' }, { status: 500 })
     }
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/responsavel/justificar', error, user.id)
+    await logger.logError('/api/responsavel/justificar', error as Error, user.id)
     return NextResponse.json({ error: 'Erro interno ao justificar falta' }, { status: 500 })
   }
 }

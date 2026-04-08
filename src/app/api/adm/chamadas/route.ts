@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ chamadas: resultado })
   } catch (error) {
-    await logger.logError('/api/adm/chamadas', error, user.id)
+    await logger.logError('/api/adm/chamadas', error as Error, user.id)
     return NextResponse.json({ chamadas: [] }, { status: 500 })
   }
 }

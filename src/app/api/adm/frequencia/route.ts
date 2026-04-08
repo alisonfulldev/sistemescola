@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ dados })
   } catch (error) {
-    await logger.logError('/api/adm/frequencia', error, user.id)
+    await logger.logError('/api/adm/frequencia', error as Error, user.id)
     return NextResponse.json({ dados: [] }, { status: 500 })
   }
 }

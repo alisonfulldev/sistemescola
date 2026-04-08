@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(UpdateUsuarioSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { user_id, nome, email, perfil, senha, turma_id } = validation.data
+  const { user_id, nome, email, perfil, senha, turma_id } = validation.data as any
 
   // Secretaria não pode alterar perfis — apenas admin/diretor pode
   if (perfil && !isAdmin && !isDiretor) {
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   if (Object.keys(authUpdate).length > 0) {
     const { error } = await admin.auth.admin.updateUserById(user_id, authUpdate)
     if (error) {
-      await logger.logError('/api/admin/atualizar-usuario', error, user.id, { user_id, updates: authUpdate })
+      await logger.logError('/api/admin/atualizar-usuario', error as Error, user.id, { user_id, updates: authUpdate })
       return NextResponse.json({ error: 'Erro ao atualizar autenticação' }, { status: 500 })
     }
   }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
   if (Object.keys(dbUpdate).length > 0) {
     const { error } = await admin.from('usuarios').update(dbUpdate).eq('id', user_id)
     if (error) {
-      await logger.logError('/api/admin/atualizar-usuario', error, user.id, { user_id, updates: dbUpdate })
+      await logger.logError('/api/admin/atualizar-usuario', error as Error, user.id, { user_id, updates: dbUpdate })
       return NextResponse.json({ error: 'Erro ao atualizar usuário' }, { status: 500 })
     }
   }

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(MarcarPresencaSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { chamada_id, aluno_id, status, observacao, motivo_alteracao, horario_evento, status_anterior, chamada_concluida } = validation.data
+  const { chamada_id, aluno_id, status, observacao, motivo_alteracao, horario_evento, status_anterior, chamada_concluida } = validation.data as any
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     .upsert(upsertData, { onConflict: 'chamada_id,aluno_id' })
 
   if (error) {
-    await logger.logError('/api/professor/marcar-presenca', error, user.id, { chamada_id, aluno_id, status })
+    await logger.logError('/api/professor/marcar-presenca', error as Error, user.id, { chamada_id, aluno_id, status })
     return NextResponse.json({ error: 'Erro ao marcar presença' }, { status: 500 })
   }
 
@@ -65,14 +65,14 @@ export async function POST(req: NextRequest) {
   // Notifica quando é chamada nova com falta (fire-and-forget com logging)
   if (!chamada_concluida && status === 'falta') {
     notificarFalta(admin, chamada_id, aluno_id, turmaNome).catch((err) => {
-      logger.logError('/api/professor/marcar-presenca', err, user.id, { chamada_id, aluno_id, erro: 'notificacao_falta_falhou' })
+      logger.logError('/api/professor/marcar-presenca', err as Error, user.id, { chamada_id, aluno_id, erro: 'notificacao_falta_falhou' })
     })
   }
 
   // Notifica quando é EDIÇÃO (chamada concluída) e houve mudança de status
   if (chamada_concluida && status_anterior !== status) {
     notificarAlteracao(admin, aluno_id, turmaNome, status_anterior, status, motivo_alteracao, horario_evento).catch((err) => {
-      logger.logError('/api/professor/marcar-presenca', err, user.id, { aluno_id, erro: 'notificacao_alteracao_falhou' })
+      logger.logError('/api/professor/marcar-presenca', err as Error, user.id, { aluno_id, erro: 'notificacao_alteracao_falhou' })
     })
   }
 

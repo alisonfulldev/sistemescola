@@ -7,8 +7,8 @@ import { logger } from '@/lib/logger'
 import { ROLES } from '@/lib/middleware/auth'
 
 export async function POST(req: NextRequest) {
-  let user: any = null
 
+  let user: any = null
   try {
     const supabase = await createServerClient()
     const { data: { user: currentUser } } = await supabase.auth.getUser()
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-    const { email, nome, senha, perfil: novoPerfil, turma_id } = validation.data
+    const { email, nome, senha, perfil: novoPerfil, turma_id } = validation.data as any
 
     // Apenas admin pode criar conta admin
     if (!isAdmin && novoPerfil === 'admin') {
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (error) {
-      await logger.logError('/api/admin/criar-usuario', error, user.id, { email })
+      await logger.logError('/api/admin/criar-usuario', error as Error, user.id, { email })
       if (error.message.includes('already registered') || error.message.includes('already been registered')) {
         return NextResponse.json({ error: 'Este email já está cadastrado no sistema' }, { status: 409 })
       }
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     if (erroInsert) {
       await adminClient.auth.admin.deleteUser(data.user.id)
-      await logger.logError('/api/admin/criar-usuario', erroInsert, user.id, { email, perfil: novoPerfil })
+      await logger.logError('/api/admin/criar-usuario', erroInsert as Error, user.id, { email, perfil: novoPerfil })
       return NextResponse.json({ error: 'Erro ao salvar usuário no banco de dados' }, { status: 500 })
     }
 
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: data.user.id, email: data.user.email }, { status: 201 })
   } catch (err) {
-    await logger.logError('/api/admin/criar-usuario', err, user.id, { email: (await req.json()).email })
+    await logger.logError('/api/admin/criar-usuario', err as Error, user.id, { email: (await req.json()).email })
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

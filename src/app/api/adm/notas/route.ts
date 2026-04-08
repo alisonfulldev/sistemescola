@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ alunos: alunos || [], notas: notasPorAluno, faltas: faltasMap })
   } catch (error) {
-    await logger.logError('/api/adm/notas', error, user.id)
+    await logger.logError('/api/adm/notas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar notas' }, { status: 500 })
   }
 }
@@ -116,14 +116,14 @@ export async function POST(req: NextRequest) {
     }, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id' })
 
     if (error) {
-      await logger.logError('/api/adm/notas', error, user.id)
+      await logger.logError('/api/adm/notas', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao salvar notas' }, { status: 500 })
     }
 
     await logger.logAudit(user.id, 'notas_atualizar', '/api/adm/notas', { aluno_id, disciplina_id, ano_letivo_id }, true)
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/adm/notas', error, user.id)
+    await logger.logError('/api/adm/notas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao atualizar notas' }, { status: 500 })
   }
 }

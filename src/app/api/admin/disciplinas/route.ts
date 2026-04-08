@@ -38,13 +38,13 @@ export async function GET(req: NextRequest) {
       .limit(500)
 
     if (error) {
-      await logger.logError('/api/admin/disciplinas', error, user.id)
+      await logger.logError('/api/admin/disciplinas', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao buscar disciplinas' }, { status: 500 })
     }
 
     return NextResponse.json({ disciplinas: disciplinas || [] })
   } catch (error) {
-    await logger.logError('/api/admin/disciplinas', error, user.id)
+    await logger.logError('/api/admin/disciplinas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar disciplinas' }, { status: 500 })
   }
 }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     const validation = validateData(CreateDisciplinaSchema, body)
     if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-    const { nome, codigo, descricao, carga_horaria, ativo } = validation.data
+    const { nome, codigo, descricao, carga_horaria, ativo } = validation.data as any
 
     const db = admin()
     const { data: disciplina, error } = await db
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      await logger.logError('/api/admin/disciplinas', error, user.id)
+      await logger.logError('/api/admin/disciplinas', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao criar disciplina' }, { status: 500 })
     }
 
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ disciplina }, { status: 201 })
   } catch (error) {
-    await logger.logError('/api/admin/disciplinas', error, user.id)
+    await logger.logError('/api/admin/disciplinas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao criar disciplina' }, { status: 500 })
   }
 }

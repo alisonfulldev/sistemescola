@@ -115,7 +115,7 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: { params
       alertas: alertas || [],
     })
   } catch (error) {
-    await logger.logError('/api/adm/alunos/[alunoId]', error, user.id)
+    await logger.logError('/api/adm/alunos/[alunoId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar aluno' }, { status: 500 })
   }
 }

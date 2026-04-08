@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (error) {
-      await logger.logError('/api/admin/gerar-link-reset', error, user.id)
+      await logger.logError('/api/admin/gerar-link-reset', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao gerar link' }, { status: 500 })
     }
 
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ link: (data as any).properties?.action_link })
   } catch (error) {
-    await logger.logError('/api/admin/gerar-link-reset', error, user.id)
+    await logger.logError('/api/admin/gerar-link-reset', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao gerar link' }, { status: 500 })
   }
 }

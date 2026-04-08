@@ -43,7 +43,7 @@ export async function POST() {
 
     return NextResponse.json({ status: res.status, result })
   } catch (error) {
-    await logger.logError('/api/admin/migrar', error, user.id)
+    await logger.logError('/api/admin/migrar', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao executar migração' }, { status: 500 })
   }
 }

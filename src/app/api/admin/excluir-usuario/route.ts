@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(DeleteUsuarioSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { user_id } = validation.data
+  const { user_id } = validation.data as any
 
   // Impede auto-exclusão
   if (user_id === user.id) {
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       .eq('id', user_id)
 
     if (erroSoftDelete) {
-      await logger.logError('/api/admin/excluir-usuario', erroSoftDelete, user.id, { user_id })
+      await logger.logError('/api/admin/excluir-usuario', erroSoftDelete as Error, user.id, { user_id })
       return NextResponse.json({ error: 'Erro ao desativar usuário' }, { status: 500 })
     }
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     const { error: authError } = await admin.auth.admin.deleteUser(user_id)
     if (authError) {
       // Nota: Já marcamos como inativo, então ao menos a conta está desativada
-      await logger.logError('/api/admin/excluir-usuario', authError, user.id, { user_id, status: 'soft_deleted_but_auth_failed' })
+      await logger.logError('/api/admin/excluir-usuario', authError as Error, user.id, { user_id, status: 'soft_deleted_but_auth_failed' })
       return NextResponse.json({
         error: 'Usuário desativado mas erro ao remover autenticação. Contate o suporte.',
         status: 500
@@ -70,14 +70,14 @@ export async function POST(req: NextRequest) {
     const { error: erroDelete } = await admin.from('usuarios').delete().eq('id', user_id)
     if (erroDelete) {
       // Aqui já deletamos do auth, então apenas logamos mas continuamos
-      await logger.logError('/api/admin/excluir-usuario', erroDelete, user.id, { user_id, status: 'auth_deleted_but_db_failed' })
+      await logger.logError('/api/admin/excluir-usuario', erroDelete as Error, user.id, { user_id, status: 'auth_deleted_but_db_failed' })
       // Retornamos OK mesmo assim — a conta foi deletada do Auth
     }
 
     await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id, metodo: 'soft_then_hard_delete' }, true)
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/admin/excluir-usuario', error, user.id, { user_id })
+    await logger.logError('/api/admin/excluir-usuario', error as Error, user.id, { user_id })
     return NextResponse.json({ error: 'Erro interno ao excluir usuário' }, { status: 500 })
   }
 }

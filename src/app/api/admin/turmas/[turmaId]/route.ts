@@ -53,7 +53,7 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: { params
 
     return NextResponse.json({ turma })
   } catch (error) {
-    await logger.logError('/api/admin/turmas/[turmaId]', error, user.id)
+    await logger.logError('/api/admin/turmas/[turmaId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar turma' }, { status: 500 })
   }
 }
@@ -100,13 +100,13 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
 
     const { data: updated, error } = await db
       .from('turmas')
-      .update(validation.data)
+      .update(validation.data as any)
       .eq('id', turmaId)
       .select()
       .single()
 
     if (error) {
-      await logger.logError('/api/admin/turmas/[turmaId]', error, user.id)
+      await logger.logError('/api/admin/turmas/[turmaId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao atualizar turma' }, { status: 500 })
     }
 
@@ -114,7 +114,7 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
 
     return NextResponse.json({ turma: updated })
   } catch (error) {
-    await logger.logError('/api/admin/turmas/[turmaId]', error, user.id)
+    await logger.logError('/api/admin/turmas/[turmaId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao atualizar turma' }, { status: 500 })
   }
 }
@@ -158,7 +158,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
     const { error } = await db.from('turmas').update({ ativo: false }).eq('id', turmaId)
 
     if (error) {
-      await logger.logError('/api/admin/turmas/[turmaId]', error, user.id)
+      await logger.logError('/api/admin/turmas/[turmaId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao deletar turma' }, { status: 500 })
     }
 
@@ -166,7 +166,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/admin/turmas/[turmaId]', error, user.id)
+    await logger.logError('/api/admin/turmas/[turmaId]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao deletar turma' }, { status: 500 })
   }
 }

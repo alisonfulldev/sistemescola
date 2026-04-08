@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (error) {
-    await logger.logError('/api/adm/exportar', error, user.id)
+    await logger.logError('/api/adm/exportar', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao exportar dados' }, { status: 500 })
   } finally {
     clearTimeout(timeoutId)

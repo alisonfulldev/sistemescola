@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    await logger.logError('/api/export/frequencia', error, user.id)
+    await logger.logError('/api/export/frequencia', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao exportar frequência' }, { status: 500 })
   }
 }

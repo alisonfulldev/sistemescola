@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'user_id e ativo obrigatórios' }, { status: 400 })
     }
 
-    const { user_id, ativo } = validation.data
+    const { user_id, ativo } = validation.data as any
 
     const admin = createAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (error) {
-      await logger.logError('/api/admin/toggle-ativo', error, user.id, { user_id })
+      await logger.logError('/api/admin/toggle-ativo', error as Error, user.id, { user_id })
       return NextResponse.json({ error: 'Erro ao atualizar usuário' }, { status: 500 })
     }
 
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/admin/toggle-ativo', error, user.id)
+    await logger.logError('/api/admin/toggle-ativo', error as Error, user.id)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

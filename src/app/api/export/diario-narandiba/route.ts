@@ -197,7 +197,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(resultado)
   } catch (error) {
-    await logger.logError('/api/export/diario-narandiba', error, user.id)
+    await logger.logError('/api/export/diario-narandiba', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao gerar diário' }, { status: 500 })
   }
 }

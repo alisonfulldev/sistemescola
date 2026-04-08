@@ -40,13 +40,13 @@ export async function GET(req: NextRequest) {
     const { data: avaliacoes, error } = await query.order('data_aplicacao', { ascending: false })
 
     if (error) {
-      await logger.logError('/api/avaliacoes', error, user.id, { turmaId, disciplinaId })
+      await logger.logError('/api/avaliacoes', error as Error, user.id, { turmaId, disciplinaId })
       return NextResponse.json({ error: 'Erro ao buscar avaliações' }, { status: 500 })
     }
 
     return NextResponse.json({ avaliacoes: avaliacoes || [] })
   } catch (error) {
-    await logger.logError('/api/avaliacoes', error, user.id)
+    await logger.logError('/api/avaliacoes', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar avaliações' }, { status: 500 })
   }
 }
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(CreateAvaliacaoSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { aula_id, disciplina_id, turma_id, titulo, tipo, data_aplicacao, data_entrega, valor_maximo, peso } = validation.data
+  const { aula_id, disciplina_id, turma_id, titulo, tipo, data_aplicacao, data_entrega, valor_maximo, peso } = validation.data as any
 
   // Se for professor, validar que é sua aula
   if (userData?.perfil === 'professor') {
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ avaliacao: novaAvaliacao }, { status: 201 })
   } catch (error) {
-    await logger.logError('/api/avaliacoes', error, user.id)
+    await logger.logError('/api/avaliacoes', error as Error, user.id)
     return NextResponse.json({ error: 'Erro interno ao criar avaliação' }, { status: 500 })
   }
 }

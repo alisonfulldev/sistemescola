@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: { param
       .eq('id', id)
 
     if (error) {
-      await logger.logError('/api/justificativas/[id]', error, user.id)
+      await logger.logError('/api/justificativas/[id]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao atualizar justificativa' }, { status: 500 })
     }
 
@@ -57,7 +57,7 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: { param
       message: `Justificativa ${status === 'aprovada' ? 'aprovada' : 'rejeitada'} com sucesso`
     })
   } catch (error) {
-    await logger.logError('/api/justificativas/[id]', error, user.id)
+    await logger.logError('/api/justificativas/[id]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao atualizar justificativa' }, { status: 500 })
   }
 }
@@ -102,7 +102,7 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
 
     return NextResponse.json({ justificativa })
   } catch (error) {
-    await logger.logError('/api/justificativas/[id]', error, user.id)
+    await logger.logError('/api/justificativas/[id]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar justificativa' }, { status: 500 })
   }
 }
@@ -133,7 +133,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
       .eq('id', id)
 
     if (error) {
-      await logger.logError('/api/justificativas/[id]', error, user.id)
+      await logger.logError('/api/justificativas/[id]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao deletar justificativa' }, { status: 500 })
     }
 
@@ -141,7 +141,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
 
     return NextResponse.json({ ok: true, message: 'Justificativa removida com sucesso' })
   } catch (error) {
-    await logger.logError('/api/justificativas/[id]', error, user.id)
+    await logger.logError('/api/justificativas/[id]', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao deletar justificativa' }, { status: 500 })
   }
 }

@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const validation = validateData(SaveNotasSchema, await req.json())
   if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-  const { prova_id, turma_id, disciplina_id, ano_letivo_id, notas } = validation.data
+  const { prova_id, turma_id, disciplina_id, ano_letivo_id, notas } = validation.data as any
 
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
         .upsert(rows, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id' })
 
       if (error) {
-        await logger.logError('/api/professor/notas', error, user.id, { turma_id, disciplina_id, ano_letivo_id })
+        await logger.logError('/api/professor/notas', error as Error, user.id, { turma_id, disciplina_id, ano_letivo_id })
         return NextResponse.json({ error: 'Erro ao salvar notas' }, { status: 500 })
       }
 
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
 
       const { error } = await admin.from('notas').upsert(rows, { onConflict: 'prova_id,aluno_id' })
       if (error) {
-        await logger.logError('/api/professor/notas', error, user.id, { prova_id })
+        await logger.logError('/api/professor/notas', error as Error, user.id, { prova_id })
         return NextResponse.json({ error: 'Erro ao salvar notas' }, { status: 500 })
       }
 
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (error) {
-    await logger.logError('/api/professor/notas', error, user.id)
+    await logger.logError('/api/professor/notas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro interno ao salvar notas' }, { status: 500 })
   }
 }

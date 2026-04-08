@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     const { data: turmas, error } = await query.order('nome')
 
     if (error) {
-      await logger.logError('/api/admin/turmas', error, user.id)
+      await logger.logError('/api/admin/turmas', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao buscar turmas' }, { status: 500 })
     }
 
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ turmas: turmas || [] })
   } catch (error) {
-    await logger.logError('/api/admin/turmas', error, user.id)
+    await logger.logError('/api/admin/turmas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao buscar turmas' }, { status: 500 })
   }
 }
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const validation = validateData(CreateTurmaSchema, body)
     if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
 
-    const { nome, serie, turno, turma_letra, escola_id, ativo } = validation.data
+    const { nome, serie, turno, turma_letra, escola_id, ativo } = validation.data as any
 
     // Diretor/secretaria só pode criar em sua escola
     if (userData.perfil !== 'admin' && escola_id !== userData.escola_id) {
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) {
-      await logger.logError('/api/admin/turmas', error, user.id)
+      await logger.logError('/api/admin/turmas', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao criar turma' }, { status: 500 })
     }
 
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ turma }, { status: 201 })
   } catch (error) {
-    await logger.logError('/api/admin/turmas', error, user.id)
+    await logger.logError('/api/admin/turmas', error as Error, user.id)
     return NextResponse.json({ error: 'Erro ao criar turma' }, { status: 500 })
   }
 }

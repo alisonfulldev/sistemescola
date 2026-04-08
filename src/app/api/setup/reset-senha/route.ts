@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email e senha obrigatórios' }, { status: 400 })
   }
 
-  const { email, senha } = validation.data
+  const { email, senha } = validation.data as any
 
   const adminClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,12 +22,13 @@ export async function POST(req: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
+  let user: any = null
   try {
     // Buscar usuário por email
     const { data: { users }, error: searchError } = await adminClient.auth.admin.listUsers()
 
     if (searchError) {
-      await logger.logError('/api/setup/reset-senha', searchError, undefined, { email })
+      await logger.logError('/api/setup/reset-senha', searchError as Error, undefined, { email })
       return NextResponse.json({ error: 'Erro ao buscar usuário' }, { status: 400 })
     }
 
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
     )
 
     if (updateError) {
-      await logger.logError('/api/setup/reset-senha', updateError, user.id, { email })
+      await logger.logError('/api/setup/reset-senha', updateError as Error, user.id, { email })
       return NextResponse.json({ error: 'Erro ao atualizar senha' }, { status: 400 })
     }
 
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       email: email.toLowerCase(),
     })
   } catch (err) {
-    await logger.logError('/api/setup/reset-senha', err)
+    await logger.logError('/api/setup/reset-senha', err as Error)
     return NextResponse.json({ error: 'Erro interno ao resetar senha' }, { status: 500 })
   }
 }
