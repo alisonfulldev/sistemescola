@@ -12,9 +12,9 @@ const cards = [
 
 export default function AdminPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <div className="w-full bg-slate-900 text-white px-6 py-12">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50">
+      <div className="w-screen bg-slate-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-6">
           <Link href="/" className="inline-flex items-center gap-2 text-slate-300 hover:text-white font-medium text-sm mb-6">
             <Home className="w-4 h-4" />
             <span>Voltar para Home</span>
