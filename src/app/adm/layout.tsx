@@ -65,7 +65,7 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
         {nav.map(item => {
           const Icon = item.icon
           const active = isActive(item.href, item.exact)
@@ -171,7 +171,7 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
       {sidebarOpen && (
         <div className="fixed inset-0 z-30 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-72 h-full overflow-y-auto">
+          <aside className="relative w-72 h-full overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
             <button
               onClick={() => setSidebarOpen(false)}
               className="absolute top-4 right-4 z-10 p-2 hover:bg-slate-700 rounded-lg transition-colors"
