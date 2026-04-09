@@ -12,9 +12,9 @@ const cards = [
 
 export default function AdminPage() {
   return (
-    <>
-      <div className="w-screen relative left-1/2 -translate-x-1/2 bg-slate-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-slate-900 text-white py-12 -mx-8 px-8">
+        <div className="max-w-7xl mx-auto">
           <Link href="/" className="inline-flex items-center gap-2 text-slate-300 hover:text-white font-medium text-sm mb-6">
             <Home className="w-4 h-4" />
             <span>Voltar para Home</span>
@@ -27,31 +27,28 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {cards.map(card => {
-              const Icon = card.icon
-              return (
-                <Link
-                  key={card.href}
-                  href={card.href}
-                  className="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-md transition-all group"
-                >
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
-                    <Icon className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold text-slate-900 text-base group-hover:text-blue-700 transition-colors">
-                    {card.label}
-                  </h3>
-                  <p className="text-slate-500 text-sm mt-2">{card.desc}</p>
-                </Link>
-              )
-            })}
-          </div>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {cards.map(card => {
+            const Icon = card.icon
+            return (
+              <Link
+                key={card.href}
+                href={card.href}
+                className="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-md transition-all group"
+              >
+                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                  <Icon className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-slate-900 text-base group-hover:text-blue-700 transition-colors">
+                  {card.label}
+                </h3>
+                <p className="text-slate-500 text-sm mt-2">{card.desc}</p>
+              </Link>
+            )
+          })}
         </div>
       </div>
-    </>
+    </div>
   )
 }

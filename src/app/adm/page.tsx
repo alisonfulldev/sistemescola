@@ -105,9 +105,9 @@ export default function AdmDashboard() {
   )
 
   return (
-    <>
-      <div className="w-screen relative left-1/2 -translate-x-1/2 bg-slate-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-slate-900 text-white py-8 -mx-8 px-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
             <p className="text-slate-300 text-sm">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
@@ -128,8 +128,7 @@ export default function AdmDashboard() {
         </div>
       </div>
 
-      <div className="bg-slate-50">
-        <div className="animate-fade-in max-w-7xl mx-auto px-6 py-8">
+      <div className="animate-fade-in max-w-7xl mx-auto px-6 py-8">
 
       {/* Dias letivos por bimestre */}
       {bimestres.length > 0 && (
@@ -391,8 +390,7 @@ export default function AdmDashboard() {
           </div>
         </div>
       )}
-        </div>
       </div>
-    </>
+    </div>
   )
 }
