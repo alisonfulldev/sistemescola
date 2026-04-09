@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
         p_data_entrega: data_entrega || null,
         p_valor_maximo: valor_maximo || 10,
         p_peso: peso || 1,
+        p_registrado_por: user.id,
       })
 
     if (rpcError || !avaliacao_id) {

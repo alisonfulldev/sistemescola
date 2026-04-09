@@ -47,12 +47,21 @@ CREATE OR REPLACE FUNCTION criar_avaliacao_completa(
   p_data_aplicacao DATE,
   p_data_entrega DATE DEFAULT NULL,
   p_valor_maximo NUMERIC DEFAULT 10,
-  p_peso NUMERIC DEFAULT 1
+  p_peso NUMERIC DEFAULT 1,
+  p_registrado_por UUID DEFAULT NULL
 ) RETURNS UUID AS $$
 DECLARE
   v_avaliacao_id UUID;
   v_alunos_count INT;
+  v_registrado_por UUID;
 BEGIN
+  -- Usar o professor que cria (p_registrado_por) ou o professor da aula como fallback
+  IF p_registrado_por IS NOT NULL THEN
+    v_registrado_por := p_registrado_por;
+  ELSE
+    SELECT professor_id INTO v_registrado_por FROM aulas WHERE id = p_aula_id;
+  END IF;
+
   -- 1. Inserir avaliação
   INSERT INTO avaliacoes (
     aula_id, disciplina_id, turma_id, titulo, tipo,
@@ -73,8 +82,8 @@ BEGIN
 
   -- 3. Inserir registros de notas_avaliacao para cada aluno
   IF v_alunos_count > 0 THEN
-    INSERT INTO notas_avaliacao (avaliacao_id, aluno_id, nota, registrado_em, atualizado_em)
-    SELECT v_avaliacao_id, id, NULL, NOW(), NOW()
+    INSERT INTO notas_avaliacao (avaliacao_id, aluno_id, nota, registrado_por, registrado_em, atualizado_em)
+    SELECT v_avaliacao_id, id, NULL, v_registrado_por, NOW(), NOW()
     FROM alunos
     WHERE turma_id = p_turma_id AND situacao = 'ativo'
     ON CONFLICT (avaliacao_id, aluno_id) DO NOTHING;
