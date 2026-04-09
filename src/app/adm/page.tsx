@@ -105,8 +105,8 @@ export default function AdmDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-slate-900 text-white px-6 py-8">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <div className="w-full bg-slate-900 text-white px-6 py-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
