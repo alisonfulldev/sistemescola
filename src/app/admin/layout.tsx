@@ -92,29 +92,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isActive = (href: string) => pathname.startsWith(href)
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-white">
-      <div className="px-6 py-8 border-b border-blue-100">
+    <div className="flex flex-col h-full bg-black text-white">
+      <div className="px-6 py-8 border-b border-slate-800/50">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-md text-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/50 text-lg">
               📚
-            </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow text-xs">
-              +
             </div>
           </div>
           <div>
-            <h1 className="font-bold text-slate-900 text-sm">Estudapp</h1>
-            <p className="text-xs text-blue-600 font-medium">Administração</p>
+            <h1 className="font-bold text-white text-base">Estudapp</h1>
+            <p className="text-xs text-slate-400 font-medium">ADMINISTRAÇÃO</p>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 p-6 space-y-8 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-6 overflow-y-auto scrollbar-hide">
         {navGroups.map(group => (
           <div key={group.label}>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest px-3 mb-3">{group.label}</p>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {group.items.map(item => {
                 const Icon = item.icon
                 const active = isActive(item.href)
@@ -123,14 +120,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     key={item.href}
                     href={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium ${
+                    className={`group flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-sm font-medium relative overflow-hidden ${
                       active
-                        ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/50'
+                        : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
+                    {!active && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    )}
+                    <Icon className="w-4 h-4 relative z-10" />
+                    <span className="relative z-10">{item.label}</span>
                   </Link>
                 )
               })}
@@ -139,19 +139,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         ))}
       </nav>
 
-      <div className="p-6 border-t border-blue-100 bg-gradient-to-r from-blue-50 to-transparent">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">{usuario?.nome?.[0] || 'A'}</span>
+      <div className="p-4 border-t border-slate-800/50 bg-gradient-to-r from-slate-900/50 to-slate-900/20 backdrop-blur-sm">
+        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-900/50 transition-colors cursor-pointer">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-sm">
+            {usuario?.nome?.[0]?.toUpperCase() || 'A'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate">{usuario?.nome}</p>
-            <p className="text-xs text-blue-600 font-medium">Diretor</p>
+            <p className="text-sm font-semibold text-white truncate">{usuario?.nome}</p>
+            <p className="text-xs text-slate-400 truncate capitalize">{usuario?.perfil || 'Admin'}</p>
           </div>
           <button
             onClick={logout}
             title="Sair"
-            className="text-slate-400 hover:text-red-600 transition-colors p-1 flex-shrink-0"
+            className="text-slate-500 hover:text-red-400 transition-colors p-1.5 hover:bg-slate-900/50 rounded-lg flex-shrink-0"
           >
             <LogOut className="w-4 h-4" />
           </button>
