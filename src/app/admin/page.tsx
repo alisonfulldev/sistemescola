@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen, Users, User, Users2, Calendar, BarChart3 } from 'lucide-react'
+import { BookOpen, Users, User, Users2, Calendar, BarChart3, Home } from 'lucide-react'
 
 const cards = [
   { href: '/admin/turmas', icon: BookOpen, label: 'Turmas', desc: 'Gerenciar turmas e turnos' },
@@ -13,6 +13,11 @@ const cards = [
 export default function AdminPage() {
   return (
     <div>
+      <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm mb-6">
+        <Home className="w-4 h-4" />
+        <span>Voltar para Home</span>
+      </Link>
+
       <div className="mb-10">
         <h1 className="text-3xl font-bold text-slate-900">Administração</h1>
         <p className="text-slate-600 mt-2 text-sm">Gerencie todos os aspectos do sistema escolar</p>
