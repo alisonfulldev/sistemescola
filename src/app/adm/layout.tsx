@@ -94,18 +94,26 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
           )
         })}
 
-        {usuario?.perfil === 'admin' && (
-          <div className="pt-4 mt-4 border-t border-blue-100">
+        <div className="pt-4 mt-4 border-t border-blue-100 space-y-2">
+          {['admin', 'diretor'].includes(usuario?.perfil || '') && (
             <Link
               href="/admin"
               onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50"
             >
               <Settings className="w-4 h-4" />
-              <span>Administração</span>
+              <span>Cadastros</span>
             </Link>
-          </div>
-        )}
+          )}
+          <Link
+            href="/"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+          >
+            <Home className="w-4 h-4" />
+            <span>Home</span>
+          </Link>
+        </div>
       </nav>
 
       <div className="p-6 border-t border-blue-100 bg-gradient-to-r from-blue-50 to-transparent">

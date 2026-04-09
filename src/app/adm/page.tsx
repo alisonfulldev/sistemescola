@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatDate, formatTime } from '@/lib/utils'
-import { Users, CheckCircle2, XCircle, Clock, FileText, Inbox, User, Bell, BarChart3, Eye } from 'lucide-react'
+import { Users, CheckCircle2, XCircle, Clock, FileText, Inbox, User, Bell, BarChart3, Eye, Settings } from 'lucide-react'
 
 function KPI({ label, value, color, Icon, sub }: { label: string; value: number | string; color: string; Icon: React.ReactNode; sub?: string }) {
   return (
@@ -110,9 +111,18 @@ export default function AdmDashboard() {
           <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
           <p className="text-slate-600 text-sm mt-1">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1.5 rounded-lg">
-          <span className="w-2 h-2 bg-green-500 rounded-full live-dot" />
-          <span className="font-medium">Ao vivo</span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin"
+            className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Cadastros</span>
+          </Link>
+          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1.5 rounded-lg">
+            <span className="w-2 h-2 bg-green-500 rounded-full live-dot" />
+            <span className="font-medium">Ao vivo</span>
+          </div>
         </div>
       </div>
 
