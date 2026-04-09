@@ -82,7 +82,15 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (erroAula || !novaAula) {
-    await logger.logError('/api/professor/iniciar-chamada', erroAula || new Error('Erro criar aula'), user.id, { turma_id })
+    const erro = erroAula || new Error('Erro criar aula')
+    console.error('[iniciar-chamada] Erro ao upsert aula:', {
+      erro: erro?.message,
+      details: erroAula?.details,
+      code: erroAula?.code,
+      hint: erroAula?.hint,
+      payload: { professor_id: user.id, turma_id, disciplina_id: disciplinaId, data: hoje }
+    })
+    await logger.logError('/api/professor/iniciar-chamada', erro, user.id, { turma_id, erroAula })
     return NextResponse.json({ error: 'Erro ao criar aula' }, { status: 500 })
   }
 
