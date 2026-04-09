@@ -50,25 +50,24 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
   const isActive = (href: string, exact = false) => exact ? pathname === href : pathname.startsWith(href)
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full bg-gradient-to-b from-slate-800 to-slate-900 text-white">
-      <div className="px-6 py-8 border-b border-slate-700">
+    <div className="flex flex-col h-full bg-black text-white">
+      {/* Logo */}
+      <div className="px-6 py-6 border-b border-slate-800/50">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md text-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/50 text-lg">
               📚
-            </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center shadow text-xs">
-              +
             </div>
           </div>
           <div>
-            <h1 className="font-bold text-white text-sm">Estudapp</h1>
-            <p className="text-xs text-blue-300 font-medium capitalize">{usuario?.perfil || 'Sistema'}</p>
+            <h1 className="font-bold text-white text-base">Estudapp</h1>
+            <p className="text-xs text-slate-400">{usuario?.perfil ? usuario.perfil.toUpperCase() : 'SISTEMA'}</p>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 p-6 space-y-1 overflow-y-auto">
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-hide">
         {nav.map(item => {
           const Icon = item.icon
           const active = isActive(item.href, item.exact)
@@ -77,16 +76,19 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium ${
+              className={`group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium relative overflow-hidden ${
                 active
-                  ? 'bg-blue-600 text-white border-l-4 border-blue-400'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/50'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Icon className="w-4 h-4" />
-              <span className="flex-1">{item.label}</span>
+              {!active && (
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              )}
+              <Icon className="w-4 h-4 relative z-10" />
+              <span className="flex-1 relative z-10">{item.label}</span>
               {item.href === '/adm/alertas' && badgeAlertas > 0 && (
-                <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[24px] h-5 flex items-center justify-center px-1.5">
+                <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-5 flex items-center justify-center px-1.5 relative z-10">
                   {badgeAlertas > 9 ? '9+' : badgeAlertas}
                 </span>
               )}
@@ -94,41 +96,45 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
           )
         })}
 
-        <div className="pt-4 mt-4 border-t border-slate-700 space-y-2">
+        {/* Bottom Links */}
+        <div className="pt-2 mt-auto space-y-2 border-t border-slate-800/50">
           {['admin', 'diretor'].includes(usuario?.perfil || '') && (
             <Link
               href="/admin"
               onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700"
+              className="group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium text-slate-400 hover:text-white relative overflow-hidden"
             >
-              <Settings className="w-4 h-4" />
-              <span>Cadastros</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-600/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              <Settings className="w-4 h-4 relative z-10" />
+              <span className="relative z-10">Cadastros</span>
             </Link>
           )}
           <Link
             href="/"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700"
+            className="group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium text-slate-400 hover:text-white relative overflow-hidden"
           >
-            <Home className="w-4 h-4" />
-            <span>Home</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            <Home className="w-4 h-4 relative z-10" />
+            <span className="relative z-10">Home</span>
           </Link>
         </div>
       </nav>
 
-      <div className="p-6 border-t border-slate-700 bg-gradient-to-r from-slate-900 to-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">{usuario?.nome?.[0] || 'A'}</span>
+      {/* User Profile */}
+      <div className="p-4 border-t border-slate-800/50 bg-gradient-to-r from-slate-900/50 to-slate-900/20 backdrop-blur-sm">
+        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-900/50 transition-colors cursor-pointer">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-sm">
+            {usuario?.nome?.[0]?.toUpperCase() || 'A'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{usuario?.nome}</p>
-            <p className="text-xs text-blue-300 font-medium capitalize">{usuario?.perfil}</p>
+            <p className="text-xs text-slate-400 truncate">{usuario?.email}</p>
           </div>
           <button
             onClick={logout}
             title="Sair"
-            className="text-slate-400 hover:text-red-400 transition-colors p-1 flex-shrink-0"
+            className="text-slate-500 hover:text-red-400 transition-colors p-1.5 hover:bg-slate-900/50 rounded-lg flex-shrink-0"
           >
             <LogOut className="w-4 h-4" />
           </button>
