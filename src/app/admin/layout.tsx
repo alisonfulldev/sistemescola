@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Settings, Calendar, Users, BookOpen, GraduationCap, ClipboardList, LogOut, Menu, X, FileText } from 'lucide-react'
+import { Settings, Calendar, Users, BookOpen, GraduationCap, ClipboardList, LogOut, Menu, X, FileText, Home } from 'lucide-react'
 
 const navGroups = [
   {
@@ -106,6 +106,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+        <Link
+          href="/adm"
+          onClick={() => setSidebarOpen(false)}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 border-b border-slate-700 pb-4 mb-4"
+        >
+          <Home className="w-4 h-4" />
+          <span>Dashboard</span>
+        </Link>
+
         {navGroups.map(group => (
           <div key={group.label}>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest px-3 mb-3">{group.label}</p>
