@@ -26,16 +26,16 @@ export async function GET(req: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { data: notas } = await admin
+    const { data: notasData } = await admin
       .from('notas')
-      .select('aluno_id, nota')
+      .select('aluno_id, b1, b2, b3, b4')
       .eq('disciplina_id', disciplina_id)
       .eq('ano_letivo_id', ano_letivo_id)
       .eq('turma_id', turma_id)
 
-    const notasMap: Record<string, { nota: any }> = {}
-    for (const n of notas || []) {
-      notasMap[n.aluno_id] = { nota: n.nota }
+    const notasMap: Record<string, { b1: any, b2: any, b3: any, b4: any }> = {}
+    for (const n of notasData || []) {
+      notasMap[n.aluno_id] = { b1: n.b1, b2: n.b2, b3: n.b3, b4: n.b4 }
     }
 
     await logger.logAudit(user.id, 'notas_bimestral_consultar', '/api/professor/notas_bimestral', {
@@ -122,7 +122,10 @@ export async function POST(req: NextRequest) {
       turma_id,
       disciplina_id,
       ano_letivo_id,
-      nota: n.nota === '' || n.nota === null ? null : parseFloat(String(n.nota)),
+      b1: n.b1 === '' || n.b1 === null ? null : parseFloat(String(n.b1)),
+      b2: n.b2 === '' || n.b2 === null ? null : parseFloat(String(n.b2)),
+      b3: n.b3 === '' || n.b3 === null ? null : parseFloat(String(n.b3)),
+      b4: n.b4 === '' || n.b4 === null ? null : parseFloat(String(n.b4)),
       atualizado_em: new Date().toISOString()
     }))
 

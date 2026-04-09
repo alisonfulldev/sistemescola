@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// Schema para notas simples bimestrais - com campo nota único (usado por notas_bimestral)
+// Schema para notas bimestrais - com campos b1, b2, b3, b4 (usado por notas_bimestral)
 // Este é o formato que o endpoint /api/professor/notas_bimestral espera
 export const SaveNotasSimpleSchema = z.object({
   turma_id: z.string().uuid('turma_id deve ser UUID válido'),
@@ -9,7 +9,10 @@ export const SaveNotasSimpleSchema = z.object({
   notas: z.array(
     z.object({
       aluno_id: z.string().uuid('aluno_id deve ser UUID válido'),
-      nota: z.union([z.string(), z.number(), z.null(), z.undefined()]).optional().nullable()
+      b1: z.union([z.string(), z.number(), z.null(), z.undefined()]).optional().nullable(),
+      b2: z.union([z.string(), z.number(), z.null(), z.undefined()]).optional().nullable(),
+      b3: z.union([z.string(), z.number(), z.null(), z.undefined()]).optional().nullable(),
+      b4: z.union([z.string(), z.number(), z.null(), z.undefined()]).optional().nullable()
     })
   ).min(1, 'Deve haver pelo menos uma nota para salvar')
 })

@@ -14,7 +14,7 @@ export default function ProfessorNotasPage() {
   const [anoLetivoId, setAnoLetivoId] = useState('')
   const [alunos, setAlunos] = useState<any[]>([])
   const [notas, setNotas] = useState<Record<string, any>>({})
-  const [editando, setEditando] = useState<Record<string, string>>({})
+  const [editando, setEditando] = useState<Record<string, {b1?: string, b2?: string, b3?: string, b4?: string}>>({})
   const [salvando, setSalvando] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -87,10 +87,15 @@ export default function ProfessorNotasPage() {
   useEffect(() => { carregarAlunos() }, [carregarAlunos])
   useEffect(() => { carregarNotas() }, [carregarNotas])
 
-  const handleNotaChange = (alunoId: string, nota: string) => {
-    setEditando(prev => ({ ...prev, [alunoId]: nota }))
+  const handleNotaChange = (alunoId: string, bimestre: 'b1' | 'b2' | 'b3' | 'b4', valor: string) => {
+    setEditando(prev => ({
+      ...prev,
+      [alunoId]: {
+        ...prev[alunoId],
+        [bimestre]: valor
+      }
+    }))
   }
-
 
   const salvarNotas = async () => {
     setSalvando(true)
@@ -98,7 +103,13 @@ export default function ProfessorNotasPage() {
       turma_id: turmaId,
       disciplina_id: disciplinaId,
       ano_letivo_id: anoLetivoId,
-      notas: Object.entries(editando).map(([alunoId, nota]) => ({ aluno_id: alunoId, nota }))
+      notas: Object.entries(editando).map(([alunoId, valores]) => ({
+        aluno_id: alunoId,
+        b1: valores.b1 || notas[alunoId]?.b1 || null,
+        b2: valores.b2 || notas[alunoId]?.b2 || null,
+        b3: valores.b3 || notas[alunoId]?.b3 || null,
+        b4: valores.b4 || notas[alunoId]?.b4 || null,
+      }))
     }
     const res = await fetch('/api/professor/notas_bimestral', {
       method: 'POST',
@@ -158,7 +169,10 @@ export default function ProfessorNotasPage() {
                 <thead>
                   <tr className="bg-slate-50">
                     <th className="p-2 md:p-4 text-left text-xs md:text-sm font-medium text-slate-500">Aluno</th>
-                    <th className="p-2 md:p-4 text-center text-xs md:text-sm font-medium text-slate-500 w-24 md:w-32">Nota</th>
+                    <th className="p-2 md:p-4 text-center text-xs md:text-sm font-medium text-slate-500 w-20 md:w-24">B1</th>
+                    <th className="p-2 md:p-4 text-center text-xs md:text-sm font-medium text-slate-500 w-20 md:w-24">B2</th>
+                    <th className="p-2 md:p-4 text-center text-xs md:text-sm font-medium text-slate-500 w-20 md:w-24">B3</th>
+                    <th className="p-2 md:p-4 text-center text-xs md:text-sm font-medium text-slate-500 w-20 md:w-24">B4</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -168,17 +182,20 @@ export default function ProfessorNotasPage() {
                         <div className="font-medium text-xs md:text-sm text-slate-900 truncate">{aluno.nome_completo}</div>
                         <div className="text-xs text-slate-500 hidden md:block">{aluno.matricula}</div>
                       </td>
-                      <td className="p-2 md:p-4 text-center">
-                        <input
-                          type="number"
-                          min="0"
-                          max="10"
-                          step="0.1"
-                          value={editando[aluno.id] || notas[aluno.id]?.nota || ''}
-                          onChange={e => handleNotaChange(aluno.id, e.target.value)}
-                          className="w-24 bg-white border border-slate-300 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </td>
+                      {(['b1', 'b2', 'b3', 'b4'] as const).map(bimestre => (
+                        <td key={bimestre} className="p-2 md:p-4 text-center">
+                          <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            step="0.1"
+                            placeholder="—"
+                            value={editando[aluno.id]?.[bimestre] ?? notas[aluno.id]?.[bimestre] ?? ''}
+                            onChange={e => handleNotaChange(aluno.id, bimestre, e.target.value)}
+                            className="w-20 bg-white border border-slate-300 rounded-lg px-2 py-2 text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
