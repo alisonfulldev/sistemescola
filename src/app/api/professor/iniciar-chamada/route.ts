@@ -66,35 +66,43 @@ export async function POST(req: NextRequest) {
   const horaInicio = `${pad(agora.getHours())}:${pad(agora.getMinutes())}:00`
   const horaFim = `${pad((agora.getHours() + 1) % 24)}:${pad(agora.getMinutes())}:00`
 
-  const { data: novaAula, error: erroAula } = await admin
+  // Primeiro, tenta buscar aula existente para hoje
+  const { data: aulaExistente } = await admin
     .from('aulas')
-    .upsert({
-      professor_id: user.id,
-      turma_id,
-      disciplina_id: disciplinaId,
-      data: hoje,
-      horario_inicio: horaInicio,
-      horario_fim: horaFim,
-    }, {
-      onConflict: 'professor_id,turma_id,data'
-    })
     .select('id')
-    .single()
+    .eq('professor_id', user.id)
+    .eq('turma_id', turma_id)
+    .eq('data', hoje)
+    .maybeSingle()
 
-  if (erroAula || !novaAula) {
-    const erro = erroAula || new Error('Erro criar aula')
-    console.error('[iniciar-chamada] Erro ao upsert aula:', {
-      erro: erro?.message,
-      details: erroAula?.details,
-      code: erroAula?.code,
-      hint: erroAula?.hint,
-      payload: { professor_id: user.id, turma_id, disciplina_id: disciplinaId, data: hoje }
-    })
-    await logger.logError('/api/professor/iniciar-chamada', erro, user.id, { turma_id, erroAula })
-    return NextResponse.json({ error: 'Erro ao criar aula' }, { status: 500 })
+  let aulaId: string
+
+  if (aulaExistente) {
+    // Aula já existe, usa essa
+    aulaId = aulaExistente.id
+  } else {
+    // Cria nova aula
+    const { data: novaAula, error: erroAula } = await admin
+      .from('aulas')
+      .insert({
+        professor_id: user.id,
+        turma_id,
+        disciplina_id: disciplinaId,
+        data: hoje,
+        horario_inicio: horaInicio,
+        horario_fim: horaFim,
+      })
+      .select('id')
+      .single()
+
+    if (erroAula || !novaAula) {
+      console.error('[iniciar-chamada] Erro ao criar aula:', erroAula)
+      await logger.logError('/api/professor/iniciar-chamada', erroAula || new Error('Erro criar aula'), user.id, { turma_id })
+      return NextResponse.json({ error: 'Erro ao criar aula' }, { status: 500 })
+    }
+
+    aulaId = novaAula.id
   }
-
-  const aulaId = novaAula.id
 
   // Verifica se já existe chamada para esta aula
   const { data: chamadaExistente } = await admin
