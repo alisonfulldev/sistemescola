@@ -171,13 +171,21 @@ export default function NotasPage() {
                         {aluno.numero_chamada?.toString().padStart(2, '0') || '—'}
                       </td>
                       <td className="p-3 text-slate-900 text-sm">{aluno.nome_completo}</td>
-                      {['B1', 'B2', 'B3', 'B4'].map((bim) => (
+                      {['b1', 'b2', 'b3', 'b4'].map((bim) => (
                         <td key={bim} className="p-3 text-center">
-                          <span className="text-xs font-mono text-slate-400">—</span>
+                          <span className="text-xs font-mono text-slate-900 font-medium">
+                            {notas[aluno.id]?.[bim] !== null && notas[aluno.id]?.[bim] !== undefined
+                              ? parseFloat(notas[aluno.id][bim]).toFixed(1)
+                              : '—'}
+                          </span>
                         </td>
                       ))}
                       <td className="p-3 text-center">
-                        <span className="text-xs font-mono text-slate-400">—</span>
+                        <span className="text-xs font-mono text-slate-900 font-medium">
+                          {notas[aluno.id]?.recuperacao !== null && notas[aluno.id]?.recuperacao !== undefined
+                            ? parseFloat(notas[aluno.id].recuperacao).toFixed(1)
+                            : '—'}
+                        </span>
                       </td>
                       <td className="p-3 text-center">
                         {med !== null ? (
