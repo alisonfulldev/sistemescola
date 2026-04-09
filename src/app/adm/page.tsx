@@ -105,26 +105,30 @@ export default function AdmDashboard() {
   )
 
   return (
-    <div className="animate-fade-in">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-600 text-sm mt-1">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin"
-            className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Cadastros</span>
-          </Link>
-          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-1.5 rounded-lg">
-            <span className="w-2 h-2 bg-green-500 rounded-full live-dot" />
-            <span className="font-medium">Ao vivo</span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white px-6 py-8 mb-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
+            <p className="text-blue-200 text-sm">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+            >
+              <Settings className="w-4 h-4" />
+              <span>Cadastros</span>
+            </Link>
+            <div className="flex items-center gap-2 text-sm text-green-100 bg-green-900 bg-opacity-50 px-3 py-1.5 rounded-lg">
+              <span className="w-2 h-2 bg-green-400 rounded-full live-dot" />
+              <span className="font-medium">Ao vivo</span>
+            </div>
           </div>
         </div>
       </div>
+
+      <div className="animate-fade-in max-w-7xl mx-auto px-6 pb-12">
 
       {/* Dias letivos por bimestre */}
       {bimestres.length > 0 && (
@@ -386,6 +390,7 @@ export default function AdmDashboard() {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

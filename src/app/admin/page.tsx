@@ -12,36 +12,43 @@ const cards = [
 
 export default function AdminPage() {
   return (
-    <div>
-      <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm mb-6">
-        <Home className="w-4 h-4" />
-        <span>Voltar para Home</span>
-      </Link>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white px-6 py-12 mb-12">
+        <div className="max-w-7xl mx-auto">
+          <Link href="/" className="inline-flex items-center gap-2 text-blue-200 hover:text-blue-100 font-medium text-sm mb-6">
+            <Home className="w-4 h-4" />
+            <span>Voltar para Home</span>
+          </Link>
 
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-slate-900">Administração</h1>
-        <p className="text-slate-600 mt-2 text-sm">Gerencie todos os aspectos do sistema escolar</p>
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Administração</h1>
+            <p className="text-blue-200 text-base">Gerencie todos os aspectos do sistema escolar</p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {cards.map(card => {
-          const Icon = card.icon
-          return (
-            <Link
-              key={card.href}
-              href={card.href}
-              className="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-md transition-all group"
-            >
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
-                <Icon className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-slate-900 text-base group-hover:text-blue-700 transition-colors">
-                {card.label}
-              </h3>
-              <p className="text-slate-500 text-sm mt-2">{card.desc}</p>
-            </Link>
-          )
-        })}
+      <div className="max-w-7xl mx-auto px-6 pb-12">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {cards.map(card => {
+            const Icon = card.icon
+            return (
+              <Link
+                key={card.href}
+                href={card.href}
+                className="bg-white border border-slate-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-md transition-all group"
+              >
+                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                  <Icon className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-slate-900 text-base group-hover:text-blue-700 transition-colors">
+                  {card.label}
+                </h3>
+                <p className="text-slate-500 text-sm mt-2">{card.desc}</p>
+              </Link>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
