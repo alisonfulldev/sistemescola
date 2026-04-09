@@ -100,7 +100,14 @@ export async function POST(req: NextRequest) {
       })
 
     if (rpcError || !avaliacao_id) {
-      await logger.logError('/api/avaliacoes', rpcError || new Error('RPC retornou null'), user.id, { titulo, turma_id, tipo })
+      console.error('[avaliacoes POST] Erro ao chamar RPC criar_avaliacao_completa:', {
+        erro: rpcError?.message,
+        details: rpcError?.details,
+        code: rpcError?.code,
+        hint: rpcError?.hint,
+        avaliacao_id
+      })
+      await logger.logError('/api/avaliacoes', rpcError || new Error('RPC retornou null'), user.id, { titulo, turma_id, tipo, rpcError })
       return NextResponse.json({ error: 'Erro ao criar avaliação' }, { status: 500 })
     }
 
