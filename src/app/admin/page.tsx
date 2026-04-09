@@ -13,21 +13,21 @@ const cards = [
 export default function AdminPage() {
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="bg-slate-900 text-white px-6 py-12 mb-12">
+      <div className="bg-slate-900 text-white px-6 py-12">
         <div className="max-w-7xl mx-auto">
-          <Link href="/" className="inline-flex items-center gap-2 text-blue-200 hover:text-blue-100 font-medium text-sm mb-6">
+          <Link href="/" className="inline-flex items-center gap-2 text-slate-300 hover:text-white font-medium text-sm mb-6">
             <Home className="w-4 h-4" />
             <span>Voltar para Home</span>
           </Link>
 
           <div>
             <h1 className="text-4xl font-bold mb-2">Administração</h1>
-            <p className="text-blue-200 text-base">Gerencie todos os aspectos do sistema escolar</p>
+            <p className="text-slate-300 text-base">Gerencie todos os aspectos do sistema escolar</p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 pb-12">
+      <div className="max-w-7xl mx-auto px-6 py-12">
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {cards.map(card => {
