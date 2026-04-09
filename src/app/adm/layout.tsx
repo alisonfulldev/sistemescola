@@ -50,14 +50,12 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
   const isActive = (href: string, exact = false) => exact ? pathname === href : pathname.startsWith(href)
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full bg-black text-white">
+    <div className="flex flex-col h-full bg-slate-900 text-white">
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-slate-800/50">
+      <div className="px-6 py-6 border-b border-slate-700">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/50 text-lg">
-              📚
-            </div>
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-lg font-semibold">
+            📚
           </div>
           <div>
             <h1 className="font-bold text-white text-base">Estudapp</h1>
@@ -67,7 +65,7 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-hide">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {nav.map(item => {
           const Icon = item.icon
           const active = isActive(item.href, item.exact)
@@ -76,19 +74,16 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               onClick={() => setSidebarOpen(false)}
-              className={`group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium relative overflow-hidden ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium ${
                 active
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/50'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
             >
-              {!active && (
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-              )}
-              <Icon className="w-4 h-4 relative z-10" />
-              <span className="flex-1 relative z-10">{item.label}</span>
+              <Icon className="w-4 h-4" />
+              <span className="flex-1">{item.label}</span>
               {item.href === '/adm/alertas' && badgeAlertas > 0 && (
-                <span className="bg-red-500 text-white text-xs font-bold rounded-full min-w-[22px] h-5 flex items-center justify-center px-1.5 relative z-10">
+                <span className="bg-red-600 text-white text-xs font-bold rounded-full min-w-[22px] h-5 flex items-center justify-center px-1.5">
                   {badgeAlertas > 9 ? '9+' : badgeAlertas}
                 </span>
               )}
@@ -97,44 +92,42 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
         })}
 
         {/* Bottom Links */}
-        <div className="pt-2 mt-auto space-y-2 border-t border-slate-800/50">
+        <div className="pt-4 mt-auto space-y-1 border-t border-slate-700">
           {['admin', 'diretor'].includes(usuario?.perfil || '') && (
             <Link
               href="/admin"
               onClick={() => setSidebarOpen(false)}
-              className="group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium text-slate-400 hover:text-white relative overflow-hidden"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-600/20 to-orange-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-              <Settings className="w-4 h-4 relative z-10" />
-              <span className="relative z-10">Cadastros</span>
+              <Settings className="w-4 h-4" />
+              <span>Cadastros</span>
             </Link>
           )}
           <Link
             href="/"
             onClick={() => setSidebarOpen(false)}
-            className="group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-sm font-medium text-slate-400 hover:text-white relative overflow-hidden"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-green-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-            <Home className="w-4 h-4 relative z-10" />
-            <span className="relative z-10">Home</span>
+            <Home className="w-4 h-4" />
+            <span>Home</span>
           </Link>
         </div>
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-slate-800/50 bg-gradient-to-r from-slate-900/50 to-slate-900/20 backdrop-blur-sm">
-        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-900/50 transition-colors cursor-pointer">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-sm">
+      <div className="p-4 border-t border-slate-700">
+        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
+          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-sm">
             {usuario?.nome?.[0]?.toUpperCase() || 'A'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{usuario?.nome}</p>
-            <p className="text-xs text-slate-400 truncate">{usuario?.email}</p>
+            <p className="text-xs text-slate-400 truncate capitalize">{usuario?.perfil || 'Usuário'}</p>
           </div>
           <button
             onClick={logout}
             title="Sair"
-            className="text-slate-500 hover:text-red-400 transition-colors p-1.5 hover:bg-slate-900/50 rounded-lg flex-shrink-0"
+            className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 hover:bg-slate-800 rounded-lg flex-shrink-0"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -146,12 +139,12 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900" style={{ fontFamily: 'Sora, sans-serif' }}>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-72 z-20 border-r border-blue-100">
+      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-72 z-20 border-r border-slate-200">
         <Sidebar />
       </aside>
 
       {/* Mobile header */}
-      <header className="lg:hidden sticky top-0 z-10 bg-white border-b border-blue-100 flex items-center justify-between px-4 h-16 shadow-sm">
+      <header className="lg:hidden sticky top-0 z-10 bg-white border-b border-slate-200 flex items-center justify-between px-4 h-16 shadow-sm">
         <button
           onClick={() => setSidebarOpen(true)}
           className="text-slate-600 hover:text-slate-900 p-2 hover:bg-slate-100 rounded-lg transition-colors"
@@ -167,7 +160,7 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
         <Link href="/adm/alertas" className="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
           <Bell className="w-5 h-5 text-slate-600" />
           {badgeAlertas > 0 && (
-            <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="absolute top-1 right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
               {badgeAlertas > 9 ? '9' : badgeAlertas}
             </span>
           )}
@@ -181,9 +174,9 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
           <aside className="relative w-72 h-full overflow-y-auto">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              className="absolute top-4 right-4 z-10 p-2 hover:bg-slate-700 rounded-lg transition-colors"
             >
-              <X className="w-5 h-5 text-slate-600" />
+              <X className="w-5 h-5 text-white" />
             </button>
             <Sidebar />
           </aside>

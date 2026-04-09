@@ -31,27 +31,22 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed md:static w-64 md:w-72 h-screen md:h-auto bg-white border-r border-blue-100 flex flex-col z-40 transition-transform md:translate-x-0 ${
+      <aside className={`fixed md:static w-64 md:w-72 h-screen md:h-auto bg-slate-900 border-r border-slate-700 flex flex-col z-40 transition-transform md:translate-x-0 text-white ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Logo */}
-        <div className="px-4 md:px-6 py-6 md:py-8 border-b border-blue-100">
+        <div className="px-4 md:px-6 py-6 md:py-8 border-b border-slate-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-md text-lg">
-                  📚
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center shadow text-xs">
-                  +
-                </div>
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-lg font-semibold">
+                📚
               </div>
               <div>
-                <div className="font-bold text-slate-900 text-xs md:text-sm">Estudapp</div>
-                <div className="text-xs text-blue-600 font-medium hidden md:block">Professor</div>
+                <div className="font-bold text-white text-xs md:text-sm">Estudapp</div>
+                <div className="text-xs text-slate-400 font-medium">PROFESSOR</div>
               </div>
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="md:hidden">
+            <button onClick={() => setSidebarOpen(false)} className="md:hidden hover:bg-slate-800 p-1.5 rounded-lg transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -61,28 +56,33 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
         <nav className="flex-1 px-3 md:px-4 py-4 md:py-6 space-y-1">
           {menuItems.map(item => {
             const Icon = item.icon
+            const isActive = false // Você pode adicionar lógica de rota ativa aqui
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-medium text-slate-700 md:text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all"
+                className={`flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-medium transition-all duration-150 ${
+                  isActive
+                    ? 'bg-blue-600 text-white'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
-                <span className="text-slate-700 md:text-slate-600">{item.label}</span>
+                <span>{item.label}</span>
               </Link>
             )
           })}
         </nav>
 
         {/* Logout */}
-        <div className="px-3 md:px-4 py-4 md:py-6 border-t border-blue-100 bg-gradient-to-r from-blue-50 to-transparent">
+        <div className="px-3 md:px-4 py-4 md:py-6 border-t border-slate-700">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center md:justify-start gap-3 px-3 md:px-4 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center justify-center md:justify-start gap-3 px-3 md:px-4 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-150"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />
-            <span className="text-red-600">{' Sair'}</span>
+            <span>Sair</span>
           </button>
         </div>
       </aside>
@@ -90,7 +90,7 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <div className="flex-1 flex flex-col w-full">
         {/* Header */}
-        <header className="bg-white border-b border-blue-100 sticky top-0 z-20 shadow-sm">
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
           <div className="px-4 md:px-8 h-14 md:h-16 flex items-center justify-between gap-4">
             <button onClick={() => setSidebarOpen(true)} className="md:hidden p-1.5">
               <Menu className="w-5 h-5" />

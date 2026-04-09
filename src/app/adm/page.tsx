@@ -105,12 +105,12 @@ export default function AdmDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white px-6 py-8 mb-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-slate-900 text-white px-6 py-8 mb-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
-            <p className="text-blue-200 text-sm">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
+            <p className="text-slate-300 text-sm">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
           </div>
           <div className="flex items-center gap-3">
             <Link

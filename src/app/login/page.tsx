@@ -56,23 +56,18 @@ export default function LoginPage() {
   }
 
 return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4" style={{ fontFamily: 'Sora, sans-serif' }}>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4" style={{ fontFamily: 'Sora, sans-serif' }}>
       <div className="w-full max-w-sm">
 
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center mb-4">
-            <div className="relative">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center">
-                <div className="text-white font-bold text-xl">📚</div>
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-400 rounded-full flex items-center justify-center shadow">
-                <span className="text-white text-xs font-bold">+</span>
-              </div>
+            <div className="w-14 h-14 bg-blue-600 rounded-lg shadow-md flex items-center justify-center text-white font-bold text-xl">
+              📚
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-1">Estudapp</h1>
-          <p className="text-blue-200 text-sm">Plataforma educacional integrada</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-1">Estudapp</h1>
+          <p className="text-slate-600 text-sm">Plataforma educacional integrada</p>
         </div>
 
         {/* Login Card */}
@@ -115,7 +110,7 @@ return (
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-8"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-8"
             >
               {loading ? (
                 <>

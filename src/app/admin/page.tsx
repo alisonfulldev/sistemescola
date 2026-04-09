@@ -12,8 +12,8 @@ const cards = [
 
 export default function AdminPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white px-6 py-12 mb-12">
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-slate-900 text-white px-6 py-12 mb-12">
         <div className="max-w-7xl mx-auto">
           <Link href="/" className="inline-flex items-center gap-2 text-blue-200 hover:text-blue-100 font-medium text-sm mb-6">
             <Home className="w-4 h-4" />
