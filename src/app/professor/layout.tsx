@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Home, BookOpen, CheckCircle2, BarChart3, LogOut, Menu, X } from 'lucide-react'
@@ -37,16 +38,17 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
         {/* Logo */}
         <div className="px-4 md:px-6 py-6 md:py-8 border-b border-slate-700">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-lg font-semibold">
-                📚
-              </div>
-              <div>
-                <div className="font-bold text-white text-xs md:text-sm">Estudapp</div>
-                <div className="text-xs text-slate-400 font-medium">PROFESSOR</div>
-              </div>
+            <div className="flex-1">
+              <Image
+                src="/logo-estudapp.png"
+                alt="EstudApp"
+                width={200}
+                height={80}
+                className="w-full h-auto"
+                priority
+              />
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="md:hidden hover:bg-slate-800 p-1.5 rounded-lg transition-colors">
+            <button onClick={() => setSidebarOpen(false)} className="md:hidden hover:bg-slate-800 p-1.5 rounded-lg transition-colors flex-shrink-0">
               <X className="w-5 h-5" />
             </button>
           </div>
