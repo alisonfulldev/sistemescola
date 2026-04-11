@@ -40,7 +40,7 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <Image
-                src="/logo-estudapp-sidebar.png"
+                src="/logo-estudapp.png"
                 alt="EstudApp"
                 width={200}
                 height={80}

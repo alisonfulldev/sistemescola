@@ -32,7 +32,7 @@ export default async function CozinhaLayout({ children }: { children: React.Reac
           <div className="flex items-center gap-3 flex-1">
             <div className="w-32">
               <Image
-                src="/logo-estudapp-sidebar.png"
+                src="/logo-estudapp.png"
                 alt="EstudApp"
                 width={200}
                 height={80}

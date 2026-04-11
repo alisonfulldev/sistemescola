@@ -96,7 +96,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex flex-col h-full bg-slate-900 text-white">
       <div className="px-4 py-4 border-b border-slate-700">
         <Image
-          src="/logo-estudapp-sidebar.png"
+          src="/logo-estudapp.png"
           alt="EstudApp"
           width={200}
           height={80}
