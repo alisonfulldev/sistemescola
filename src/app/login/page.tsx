@@ -62,13 +62,13 @@ return (
 
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="mb-6 flex justify-center">
+          <div className="mb-8 flex justify-center">
             <Image
               src="/logo-estudapp-login.png"
               alt="EstudApp"
-              width={200}
-              height={100}
-              className="h-20 w-auto"
+              width={280}
+              height={140}
+              className="h-40 w-auto"
               priority
             />
           </div>
