@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Home, ClipboardList, BarChart3, BookOpen, Users, AlertCircle, FileText, Settings, Menu, X, LogOut, Bell } from 'lucide-react'
@@ -52,16 +53,16 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
   const Sidebar = () => (
     <div className="flex flex-col h-full bg-slate-900 text-white">
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-slate-700">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-lg font-semibold">
-            📚
-          </div>
-          <div>
-            <h1 className="font-bold text-white text-base">Estudapp</h1>
-            <p className="text-xs text-slate-400">{usuario?.perfil ? usuario.perfil.toUpperCase() : 'SISTEMA'}</p>
-          </div>
-        </div>
+      <div className="px-4 py-4 border-b border-slate-700">
+        <Image
+          src="/logo-estudapp.png"
+          alt="EstudApp"
+          width={200}
+          height={80}
+          className="w-full h-auto"
+          priority
+        />
+        <p className="text-xs text-slate-400 mt-2 text-center">{usuario?.perfil ? usuario.perfil.toUpperCase() : 'SISTEMA'}</p>
       </div>
 
       {/* Navigation */}
