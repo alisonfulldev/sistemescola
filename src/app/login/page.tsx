@@ -61,18 +61,17 @@ return (
       <div className="w-full max-w-sm">
 
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-12">
           <div className="mb-8 flex justify-center">
             <Image
               src="/logo-estudapp-login.png"
               alt="EstudApp"
-              width={280}
-              height={140}
-              className="h-40 w-auto"
+              width={360}
+              height={180}
+              className="h-56 w-auto"
               priority
             />
           </div>
-          <p className="text-slate-400 text-sm">Plataforma educacional integrada</p>
         </div>
 
         {/* Login Card */}
