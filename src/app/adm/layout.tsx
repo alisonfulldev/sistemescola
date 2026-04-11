@@ -55,7 +55,7 @@ export default function AdmLayout({ children }: { children: React.ReactNode }) {
       {/* Logo */}
       <div className="px-4 py-4 border-b border-slate-700">
         <Image
-          src="/logo-estudapp.png"
+          src="/logo-estudapp-sidebar.png"
           alt="EstudApp"
           width={200}
           height={80}
