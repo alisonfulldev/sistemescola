@@ -64,11 +64,11 @@ return (
         <div className="text-center mb-10">
           <div className="mb-6 flex justify-center">
             <Image
-              src="/logo-estudapp.png"
+              src="/logo-estudapp-login.png"
               alt="EstudApp"
-              width={180}
-              height={72}
-              className="h-16 w-auto"
+              width={200}
+              height={100}
+              className="h-20 w-auto"
               priority
             />
           </div>
