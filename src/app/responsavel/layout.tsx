@@ -30,10 +30,10 @@ export default async function ResponsavelLayout({ children }: { children: React.
           <div className="flex items-center gap-3 flex-1">
             <div className="w-32">
               <Image
-                src="/logo-estudapp-sidebar.png"
+                src="/logo-estudapp.png"
                 alt="EstudApp"
-                width={280}
-                height={140}
+                width={400}
+                height={220}
                 className="w-full h-auto"
                 priority
               />
