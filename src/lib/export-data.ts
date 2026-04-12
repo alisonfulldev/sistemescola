@@ -3,34 +3,59 @@ import * as XLSX from 'xlsx'
 
 export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'completo') {
   try {
-    // Buscar todas as tabelas do banco
-    const [
-      { data: alunos },
-      { data: turmas },
-      { data: disciplinas },
-      { data: notas },
-      { data: aulas },
-      { data: chamadas },
-      { data: registros },
-      { data: responsaveis },
-      { data: usuarios },
-      { data: escola },
-      { data: anosLetivos },
-      { data: bimestres },
-    ] = await Promise.all([
-      supabase.from('alunos').select('*'),
-      supabase.from('turmas').select('*'),
-      supabase.from('disciplinas').select('*'),
-      supabase.from('notas').select('*'),
-      supabase.from('aulas').select('*'),
-      supabase.from('chamadas').select('*'),
-      supabase.from('registros_chamada').select('*'),
-      supabase.from('responsaveis').select('*'),
-      supabase.from('usuarios').select('*'),
+    // Buscar todas as tabelas do banco com tratamento de erro individual
+    const resultados = await Promise.allSettled([
       supabase.from('escola').select('*'),
       supabase.from('anos_letivos').select('*'),
       supabase.from('bimestres').select('*'),
+      supabase.from('turmas').select('*'),
+      supabase.from('disciplinas').select('*'),
+      supabase.from('alunos').select('*'),
+      supabase.from('responsaveis').select('*'),
+      supabase.from('usuarios').select('*'),
+      supabase.from('aulas').select('*'),
+      supabase.from('notas').select('*'),
+      supabase.from('chamadas').select('*'),
+      supabase.from('registros_chamada').select('*'),
     ])
+
+    // Extrair dados com tratamento de erros
+    const extrairDados = (index: number) => {
+      const resultado = resultados[index]
+      if (resultado.status === 'fulfilled') {
+        return resultado.value.data || []
+      }
+      console.error(`Erro ao buscar dados do índice ${index}:`, resultado.reason)
+      return []
+    }
+
+    const escola = extrairDados(0)
+    const anosLetivos = extrairDados(1)
+    const bimestres = extrairDados(2)
+    const turmas = extrairDados(3)
+    const disciplinas = extrairDados(4)
+    const alunos = extrairDados(5)
+    const responsaveis = extrairDados(6)
+    const usuarios = extrairDados(7)
+    const aulas = extrairDados(8)
+    const notas = extrairDados(9)
+    const chamadas = extrairDados(10)
+    const registros = extrairDados(11)
+
+    console.log('Dados carregados:', {
+      escola: escola.length,
+      anosLetivos: anosLetivos.length,
+      bimestres: bimestres.length,
+      turmas: turmas.length,
+      disciplinas: disciplinas.length,
+      alunos: alunos.length,
+      responsaveis: responsaveis.length,
+      usuarios: usuarios.length,
+      aulas: aulas.length,
+      notas: notas.length,
+      chamadas: chamadas.length,
+      registros: registros.length,
+    })
 
     // Filtrar por data se for "dia"
     const hoje = new Date().toISOString().split('T')[0]
@@ -213,18 +238,23 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
     const wb = XLSX.utils.book_new()
 
     // Adicionar abas em ordem
-    Object.keys(sheets).forEach(sheetName => {
-      const ws = XLSX.utils.json_to_sheet(sheets[sheetName])
+    const sheetOrder = ['Escola', 'Anos Letivos', 'Bimestres', 'Turmas', 'Disciplinas', 'Alunos', 'Responsáveis', 'Usuários', 'Aulas', 'Notas', 'Chamadas', 'Frequência']
+
+    sheetOrder.forEach(sheetName => {
+      const data = sheets[sheetName] || []
+      const ws = XLSX.utils.json_to_sheet(data, { header: 1 })
 
       // Auto-ajustar largura das colunas
-      const colWidths = sheets[sheetName].length > 0
-        ? Object.keys(sheets[sheetName][0]).map(key => ({
-            wch: Math.min(Math.max(key.length, 12), 50)
-          }))
-        : []
-      ws['!cols'] = colWidths
+      if (data.length > 0) {
+        const colWidths = Object.keys(data[0]).map(key => ({
+          wch: Math.min(Math.max(key.length, 12), 50)
+        }))
+        ws['!cols'] = colWidths
+      }
 
       XLSX.utils.book_append_sheet(wb, ws, sheetName)
+
+      console.log(`Aba '${sheetName}' criada com ${data.length} registros`)
     })
 
     // Gerar nome do arquivo
