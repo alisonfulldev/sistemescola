@@ -2,247 +2,152 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { FileText, Download } from 'lucide-react'
+import { FileText, Download, Database } from 'lucide-react'
+import { exportarDados } from '@/lib/export-data'
 
 export default function DiarioPage() {
-  const [turmas, setTurmas] = useState<any[]>([])
-  const [disciplinas, setDisciplinas] = useState<any[]>([])
-  const [anosLetivos, setAnosLetivos] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [gerando, setGerando] = useState(false)
-  const [erro, setErro] = useState('')
-
-  const [turmaSelecionada, setTurmaSelecionada] = useState('')
-  const [disciplinaSelecionada, setDisciplinaSelecionada] = useState('')
-  const [anoSelecionado, setAnoSelecionado] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [exportandoDia, setExportandoDia] = useState(false)
+  const [exportandoCompleto, setExportandoCompleto] = useState(false)
+  const [mensagem, setMensagem] = useState<{ tipo: 'sucesso' | 'erro', texto: string } | null>(null)
 
   const supabase = createClient()
 
-  useEffect(() => {
-    async function carregar() {
-      const [{ data: turmasData }, { data: disciplinasData }, { data: anosData }] = await Promise.all([
-        supabase.from('turmas').select('id, nome, serie, turma_letra').eq('ativo', true).order('nome'),
-        supabase.from('disciplinas').select('id, nome').eq('ativo', true).order('nome'),
-        supabase.from('anos_letivos').select('id, ano').order('ano', { ascending: false }),
-      ])
+  async function handleExportar(tipo: 'dia' | 'completo') {
+    if (tipo === 'dia') setExportandoDia(true)
+    else setExportandoCompleto(true)
 
-      setTurmas(turmasData || [])
-      setDisciplinas(disciplinasData || [])
-      setAnosLetivos(anosData || [])
-
-      // Selecionar ano atual por padrão
-      if (anosData && anosData.length > 0) {
-        setAnoSelecionado(anosData[0].id)
-      }
-
-      setLoading(false)
-    }
-
-    carregar()
-  }, [])
-
-  async function gerarPDF() {
-    if (!turmaSelecionada || !disciplinaSelecionada || !anoSelecionado) {
-      setErro('Selecione turma, disciplina e ano letivo')
-      return
-    }
-
-    setGerando(true)
-    setErro('')
+    setMensagem(null)
 
     try {
-      const [turmaRes, disciplinaRes, anoRes, alunosRes, aulasRes, notasRes, bimestresRes] = await Promise.all([
-        supabase.from('turmas').select('*').eq('id', turmaSelecionada).single(),
-        supabase.from('disciplinas').select('*').eq('id', disciplinaSelecionada).single(),
-        supabase.from('anos_letivos').select('*').eq('id', anoSelecionado).single(),
-        supabase.from('alunos').select('id, numero_chamada, nome_completo')
-          .eq('turma_id', turmaSelecionada).eq('ativo', true).order('numero_chamada'),
-        supabase.from('aulas').select('*')
-          .eq('turma_id', turmaSelecionada).eq('disciplina_id', disciplinaSelecionada).order('data'),
-        supabase.from('notas').select('aluno_id, b1, b2, b3, b4, recuperacao').eq('disciplina_id', disciplinaSelecionada),
-        supabase.from('bimestres').select('*').eq('ano_letivo_id', anoSelecionado).order('numero'),
-      ])
-
-      const { data: professor } = await supabase
-        .from('usuarios')
-        .select('nome')
-        .eq('id', (disciplinaRes.data as any)?.professor_id)
-        .single()
-
-      const { data: escola } = await supabase.from('escola').select('*').limit(1).single()
-
-      // Buscar frequência
-      const frequenciaMap: { [alunoId: string]: { [date: string]: string } } = {}
-      const aulasData = aulasRes.data || []
-      if (aulasData.length > 0) {
-        const { data: chamadas } = await supabase
-          .from('chamadas')
-          .select('id, aula_id')
-          .in('aula_id', (aulasData as any[]).map((a: any) => a.id))
-
-        if (chamadas) {
-          const { data: registros } = await supabase
-            .from('registros_chamada')
-            .select('aluno_id, status, chamada_id')
-            .in('chamada_id', (chamadas as any[]).map((c: any) => c.id))
-
-          if (registros) {
-            (registros as any[]).forEach((reg: any) => {
-              const aula = (aulasData as any[]).find((a: any) =>
-                (chamadas as any[]).find((c: any) => c.id === reg.chamada_id)?.aula_id === a.id
-              )
-              if (aula) {
-                if (!frequenciaMap[reg.aluno_id]) frequenciaMap[reg.aluno_id] = {}
-                frequenciaMap[reg.aluno_id][aula.data] = reg.status || 'falta'
-              }
-            })
-          }
-        }
-      }
-
-      // Montar dados
-      const notasMap: { [alunoId: string]: any } = {}
-      ;(notasRes.data as any[]).forEach((nota: any) => {
-        notasMap[nota.aluno_id] = nota
+      const resultado = await exportarDados(supabase, tipo)
+      setMensagem({
+        tipo: resultado.sucesso ? 'sucesso' : 'erro',
+        texto: resultado.mensagem
       })
-
-      const diarioData = {
-        turma: turmaRes.data,
-        disciplina: disciplinaRes.data,
-        ano_letivo: anoRes.data,
-        alunos: alunosRes.data || [],
-        aulas: aulasData,
-        notas: notasMap,
-        frequencia: frequenciaMap,
-        bimestres: bimestresRes.data || [],
-        professor,
-        escola,
-      }
-
-      // Gerar PDF client-side
-      const { gerarDiarioPDF } = await import('./pdf-generator')
-      gerarDiarioPDF(diarioData)
     } catch (err) {
-      setErro((err as Error).message || 'Erro ao gerar PDF')
+      setMensagem({
+        tipo: 'erro',
+        texto: (err as Error).message || 'Erro ao exportar dados'
+      })
     } finally {
-      setGerando(false)
+      if (tipo === 'dia') setExportandoDia(false)
+      else setExportandoCompleto(false)
     }
   }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
-      </div>
-    )
-  }
-
-  const turmaAtual = turmas.find((t) => t.id === turmaSelecionada)
-  const anoAtual = anosLetivos.find((a) => a.id === anoSelecionado)
 
   return (
     <div>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <FileText className="w-6 h-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-slate-900">Gerar Diário Escolar</h1>
+          <Database className="w-6 h-6 text-blue-600" />
+          <h1 className="text-2xl font-bold text-slate-900">Exportar Dados</h1>
         </div>
-        <p className="text-slate-600 text-sm">Gere o diário em PDF com frequência, notas e conteúdo programático</p>
+        <p className="text-slate-600 text-sm">Exporte todos os dados do sistema em Excel para análise e backup</p>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {/* Seletor de Turma */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Turma *</label>
-            <select
-              value={turmaSelecionada}
-              onChange={(e) => setTurmaSelecionada(e.target.value)}
-              className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">Selecione uma turma...</option>
-              {turmas.map((turma) => (
-                <option key={turma.id} value={turma.id}>
-                  {turma.serie}º {turma.turma_letra || 'A'} — {turma.nome}
-                </option>
-              ))}
-            </select>
+      {/* Mensagem */}
+      {mensagem && (
+        <div className={`mb-6 p-4 border rounded-lg flex items-start gap-3 ${
+          mensagem.tipo === 'sucesso'
+            ? 'bg-green-50 border-green-200'
+            : 'bg-red-50 border-red-200'
+        }`}>
+          <div className={mensagem.tipo === 'sucesso' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+            {mensagem.tipo === 'sucesso' ? '✓' : '✕'}
+          </div>
+          <p className={`text-sm ${mensagem.tipo === 'sucesso' ? 'text-green-700' : 'text-red-700'}`}>
+            {mensagem.texto}
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Card: Dados do Dia */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:border-blue-300 transition-colors">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Dados do Dia</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Exporta apenas os registros de hoje (aulas, chamadas e frequência)
+              </p>
+            </div>
+            <div className="text-3xl">📅</div>
           </div>
 
-          {/* Seletor de Disciplina */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Disciplina *</label>
-            <select
-              value={disciplinaSelecionada}
-              onChange={(e) => setDisciplinaSelecionada(e.target.value)}
-              className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">Selecione uma disciplina...</option>
-              {disciplinas.map((disciplina) => (
-                <option key={disciplina.id} value={disciplina.id}>
-                  {disciplina.nome}
-                </option>
-              ))}
-            </select>
+          <div className="bg-slate-50 rounded-lg p-4 mb-4 text-sm text-slate-600 space-y-1">
+            <p><strong>Inclui:</strong></p>
+            <ul className="list-disc list-inside space-y-1 text-slate-600">
+              <li>Aulas de hoje</li>
+              <li>Chamadas e frequência</li>
+              <li>Configurações da escola</li>
+            </ul>
           </div>
 
-          {/* Seletor de Ano Letivo */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Ano Letivo *</label>
-            <select
-              value={anoSelecionado}
-              onChange={(e) => setAnoSelecionado(e.target.value)}
-              className="w-full bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">Selecione um ano...</option>
-              {anosLetivos.map((ano) => (
-                <option key={ano.id} value={ano.id}>
-                  {ano.ano}
-                </option>
-              ))}
-            </select>
-          </div>
+          <button
+            onClick={() => handleExportar('dia')}
+            disabled={exportandoDia || exportandoCompleto}
+            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <Download className="w-5 h-5" />
+            {exportandoDia ? 'Exportando...' : 'Exportar Dados do Dia'}
+          </button>
         </div>
 
-        {/* Erro */}
-        {erro && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <div className="text-red-600 font-semibold">Erro:</div>
-            <p className="text-red-700 text-sm">{erro}</p>
+        {/* Card: Dados Completos */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:border-blue-300 transition-colors">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900">Dados Completos</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Backup completo de todos os dados do banco (desde o início)
+              </p>
+            </div>
+            <div className="text-3xl">💾</div>
           </div>
-        )}
 
-        {/* Resumo */}
-        {turmaSelecionada && disciplinaSelecionada && anoAtual && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-slate-700">
-              <strong>Você está gerando:</strong> {turmaAtual?.nome} — {disciplinas.find((d) => d.id === disciplinaSelecionada)?.nome}{' '}
-              ({anoAtual.ano})
-            </p>
+          <div className="bg-slate-50 rounded-lg p-4 mb-4 text-sm text-slate-600 space-y-1">
+            <p><strong>Inclui:</strong></p>
+            <ul className="list-disc list-inside space-y-1 text-slate-600">
+              <li>Todos os alunos e responsáveis</li>
+              <li>Todas as turmas e disciplinas</li>
+              <li>Todas as notas e frequência</li>
+              <li>Todas as aulas e conteúdo</li>
+              <li>Usuários e configurações</li>
+            </ul>
           </div>
-        )}
 
-        {/* Botão Gerar */}
-        <button
-          onClick={gerarPDF}
-          disabled={gerando || !turmaSelecionada || !disciplinaSelecionada || !anoSelecionado}
-          className="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-        >
-          <Download className="w-5 h-5" />
-          {gerando ? 'Gerando PDF...' : 'Gerar Diário em PDF'}
-        </button>
+          <button
+            onClick={() => handleExportar('completo')}
+            disabled={exportandoDia || exportandoCompleto}
+            className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <Download className="w-5 h-5" />
+            {exportandoCompleto ? 'Exportando...' : 'Exportar Dados Completos'}
+          </button>
+        </div>
       </div>
 
       {/* Informações */}
       <div className="mt-8 bg-slate-50 border border-slate-200 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Informações sobre o Diário</h2>
-        <ul className="space-y-2 text-sm text-slate-600">
-          <li>✓ O PDF contém a lista completa de alunos da turma</li>
-          <li>✓ Inclui frequência (presença/falta) organizada por bimestre</li>
-          <li>✓ Mostra o conteúdo programático de cada aula</li>
-          <li>✓ Registra as notas dos 4 bimestres</li>
-          <li>✓ Pronto para assinatura do professor e arquivo</li>
-        </ul>
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Sobre as Exportações</h2>
+        <div className="space-y-4 text-sm text-slate-600">
+          <p>
+            <strong>Formato:</strong> Os dados são exportados em Excel (.xlsx) com múltiplas abas, uma para cada tabela do sistema.
+          </p>
+          <p>
+            <strong>Estrutura:</strong> Cada aba contém dados bem organizados com cabeçalhos e formatação adequada para análise de dados.
+          </p>
+          <p>
+            <strong>Uso:</strong> Ideal para o time de análise de dados, backup e relatórios em ferramentas como Power BI, Tableau ou Google Sheets.
+          </p>
+          <p>
+            <strong>Dados do Dia:</strong> Útil para acompanhamento diário de atividades (aulas, frequência do dia).
+          </p>
+          <p>
+            <strong>Dados Completos:</strong> Recomendado como backup periódico (semanal/mensal) de todos os dados do sistema.
+          </p>
+        </div>
       </div>
     </div>
   )
