@@ -37,6 +37,7 @@ export default async function CozinhaLayout({ children }: { children: React.Reac
                 width={400}
                 height={220}
                 className="w-full h-auto"
+                style={{ filter: 'invert(1) hue-rotate(220deg) brightness(0.9)' }}
                 priority
               />
             </div>
