@@ -319,8 +319,12 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       'Entradas', 'Push Subscriptions'
     ]
 
-    sheetOrder.forEach(sheetName => {
+    console.log(`📊 Criando ${sheetOrder.length} abas...`)
+
+    sheetOrder.forEach((sheetName, idx) => {
       const data = sheets[sheetName] || []
+      console.log(`  [${idx + 1}/${sheetOrder.length}] ${sheetName}: ${data.length} registros`)
+
       const ws = XLSX.utils.json_to_sheet(data)
 
       // Auto-ajustar largura das colunas
@@ -332,6 +336,7 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       }
 
       XLSX.utils.book_append_sheet(wb, ws, sheetName)
+      console.log(`    ✓ Aba adicionada ao workbook`)
     })
 
     // Gerar nome do arquivo
