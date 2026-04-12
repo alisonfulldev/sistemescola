@@ -25,10 +25,10 @@ export default async function ResponsavelLayout({ children }: { children: React.
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900" style={{ fontFamily: 'Sora, sans-serif' }}>
-      <header className="bg-white border-b border-blue-100 sticky top-0 z-10 shadow-sm">
+      <header className="bg-slate-900 border-b border-slate-700 sticky top-0 z-10 shadow-sm">
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
-            <div className="w-32 bg-slate-900 rounded-lg p-2">
+            <div className="w-32">
               <Image
                 src="/logo-estudapp-sidebar.png"
                 alt="EstudApp"
@@ -40,7 +40,7 @@ export default async function ResponsavelLayout({ children }: { children: React.
             </div>
           </div>
           <div className="flex items-center gap-4 flex-shrink-0">
-            <span className="text-sm text-slate-600 hidden sm:block">{usuario?.nome}</span>
+            <span className="text-sm text-slate-300 hidden sm:block">{usuario?.nome}</span>
             <LogoutButton email={user.email} />
           </div>
         </div>
