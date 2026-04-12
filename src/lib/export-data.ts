@@ -39,11 +39,13 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
     const extrairDados = (index: number, nomeTabela: string) => {
       const resultado = resultados[index]
       if (resultado.status === 'fulfilled') {
-        const dados = resultado.value.data || []
-        console.log(`✓ ${nomeTabela}: ${dados.length} registros`)
+        const { data, error } = resultado.value
+        const dados = data || []
+        console.log(`✓ ${nomeTabela}: ${dados.length} registros`, error ? `(ERRO: ${error.message})` : '')
+        if (error) console.error(`  Erro em ${nomeTabela}:`, error)
         return dados
       }
-      console.warn(`⚠️ ${nomeTabela}: erro ao buscar`)
+      console.error(`❌ ${nomeTabela}: Promessa rejeitada -`, resultado.reason)
       return []
     }
 
