@@ -30,9 +30,6 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       supabase.from('alertas').select('*'),
       supabase.from('entradas').select('*'),
       supabase.from('push_subscriptions').select('*'),
-      supabase.from('audit_logs').select('*'),
-      supabase.from('error_logs').select('*'),
-      supabase.from('info_logs').select('*'),
     ])
 
     // Extrair dados com tratamento de erros
@@ -72,9 +69,6 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
     const alertas = extrairDados(20, 'Alertas')
     const entradas = extrairDados(21, 'Entradas')
     const pushSubscriptions = extrairDados(22, 'Push Subscriptions')
-    const auditLogs = extrairDados(23, 'Audit Logs')
-    const errorLogs = extrairDados(24, 'Error Logs')
-    const infoLogs = extrairDados(25, 'Info Logs')
 
     // Filtrar por data se for "dia"
     const hoje = new Date().toISOString().split('T')[0]
@@ -312,29 +306,6 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       'Criado em': ps.created_at,
     }))
 
-    sheets['Audit Logs'] = auditLogs.slice(0, 1000).map((al: any) => ({
-      ID: al.id,
-      Ação: al.acao,
-      Tabela: al.tabela,
-      'ID Registro': al.id_registro,
-      'Usuário ID': al.usuario_id,
-      'Criado em': al.created_at,
-    }))
-
-    sheets['Error Logs'] = errorLogs.slice(0, 1000).map((el: any) => ({
-      ID: el.id,
-      Erro: el.erro,
-      Stack: el.stack?.substring(0, 100) || '',
-      'Criado em': el.created_at,
-    }))
-
-    sheets['Info Logs'] = infoLogs.slice(0, 1000).map((il: any) => ({
-      ID: il.id,
-      Mensagem: il.mensagem,
-      Contexto: il.contexto || '',
-      'Criado em': il.created_at,
-    }))
-
     // Criar workbook
     const wb = XLSX.utils.book_new()
 
@@ -345,7 +316,7 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       'Usuários', 'Aulas', 'Avaliações', 'Provas',
       'Notas', 'Notas Avaliação', 'Chamadas', 'Frequência',
       'Justificativas', 'Justificativas Falta', 'Alertas',
-      'Entradas', 'Push Subscriptions', 'Audit Logs', 'Error Logs', 'Info Logs'
+      'Entradas', 'Push Subscriptions'
     ]
 
     sheetOrder.forEach(sheetName => {
