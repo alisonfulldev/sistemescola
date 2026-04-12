@@ -19,7 +19,6 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       supabase.from('responsaveis_alunos').select('*'),
       supabase.from('usuarios').select('*'),
       supabase.from('aulas').select('*'),
-      supabase.from('conteudo_aulas').select('*').catch(() => ({ data: [], error: null })),
       supabase.from('notas').select('*'),
       supabase.from('notas_avaliacao').select('*'),
       supabase.from('avaliacoes').select('*'),
@@ -60,21 +59,20 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
     const responsaveisAlunos = extrairDados(9, 'Responsáveis-Alunos')
     const usuarios = extrairDados(10, 'Usuários')
     const aulas = extrairDados(11, 'Aulas')
-    const conteudoAulas = extrairDados(12, 'Conteúdo Aulas')
-    const notas = extrairDados(13, 'Notas')
-    const notasAvaliacao = extrairDados(14, 'Notas Avaliação')
-    const avaliacoes = extrairDados(15, 'Avaliações')
-    const provas = extrairDados(16, 'Provas')
-    const chamadas = extrairDados(17, 'Chamadas')
-    const registros = extrairDados(18, 'Registros de Chamada')
-    const justificativas = extrairDados(19, 'Justificativas')
-    const justificativasFalta = extrairDados(20, 'Justificativas Falta')
-    const alertas = extrairDados(21, 'Alertas')
-    const entradas = extrairDados(22, 'Entradas')
-    const pushSubscriptions = extrairDados(23, 'Push Subscriptions')
-    const auditLogs = extrairDados(24, 'Audit Logs')
-    const errorLogs = extrairDados(25, 'Error Logs')
-    const infoLogs = extrairDados(26, 'Info Logs')
+    const notas = extrairDados(12, 'Notas')
+    const notasAvaliacao = extrairDados(13, 'Notas Avaliação')
+    const avaliacoes = extrairDados(14, 'Avaliações')
+    const provas = extrairDados(15, 'Provas')
+    const chamadas = extrairDados(16, 'Chamadas')
+    const registros = extrairDados(17, 'Registros de Chamada')
+    const justificativas = extrairDados(18, 'Justificativas')
+    const justificativasFalta = extrairDados(19, 'Justificativas Falta')
+    const alertas = extrairDados(20, 'Alertas')
+    const entradas = extrairDados(21, 'Entradas')
+    const pushSubscriptions = extrairDados(22, 'Push Subscriptions')
+    const auditLogs = extrairDados(23, 'Audit Logs')
+    const errorLogs = extrairDados(24, 'Error Logs')
+    const infoLogs = extrairDados(25, 'Info Logs')
 
     // Filtrar por data se for "dia"
     const hoje = new Date().toISOString().split('T')[0]
@@ -207,12 +205,6 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       }
     })
 
-    sheets['Conteúdo Aulas'] = conteudoAulas.map((c: any) => ({
-      'Aula ID': c.aula_id,
-      Tipo: c.tipo,
-      Conteúdo: c.conteudo,
-      'Criado em': c.created_at,
-    }))
 
     sheets['Notas'] = notas.map((n: any) => {
       const aluno = alunos.find((a: any) => a.id === n.aluno_id)
@@ -348,7 +340,7 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
     const sheetOrder = [
       'Escola', 'Anos Letivos', 'Bimestres', 'Calendário Escolar',
       'Turmas', 'Disciplinas', 'Alunos', 'Fotos Alunos', 'Responsáveis', 'Responsáveis-Alunos',
-      'Usuários', 'Aulas', 'Conteúdo Aulas', 'Avaliações', 'Provas',
+      'Usuários', 'Aulas', 'Avaliações', 'Provas',
       'Notas', 'Notas Avaliação', 'Chamadas', 'Frequência',
       'Justificativas', 'Justificativas Falta', 'Alertas',
       'Entradas', 'Push Subscriptions', 'Audit Logs', 'Error Logs', 'Info Logs'
