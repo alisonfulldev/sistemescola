@@ -20,27 +20,32 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
     ])
 
     // Extrair dados com tratamento de erros
-    const extrairDados = (index: number) => {
+    const extrairDados = (index: number, nomeTabela: string) => {
       const resultado = resultados[index]
       if (resultado.status === 'fulfilled') {
-        return resultado.value.data || []
+        const dados = resultado.value.data || []
+        console.log(`[${nomeTabela}] Status: ${resultado.value.status}, Erro: ${resultado.value.error}, Dados: ${dados.length}`)
+        if (resultado.value.error) {
+          console.error(`Erro em ${nomeTabela}:`, resultado.value.error)
+        }
+        return dados
       }
-      console.error(`Erro ao buscar dados do índice ${index}:`, resultado.reason)
+      console.error(`Erro ao buscar ${nomeTabela} (índice ${index}):`, resultado.reason)
       return []
     }
 
-    const escola = extrairDados(0)
-    const anosLetivos = extrairDados(1)
-    const bimestres = extrairDados(2)
-    const turmas = extrairDados(3)
-    const disciplinas = extrairDados(4)
-    const alunos = extrairDados(5)
-    const responsaveis = extrairDados(6)
-    const usuarios = extrairDados(7)
-    const aulas = extrairDados(8)
-    const notas = extrairDados(9)
-    const chamadas = extrairDados(10)
-    const registros = extrairDados(11)
+    const escola = extrairDados(0, 'escola')
+    const anosLetivos = extrairDados(1, 'anos_letivos')
+    const bimestres = extrairDados(2, 'bimestres')
+    const turmas = extrairDados(3, 'turmas')
+    const disciplinas = extrairDados(4, 'disciplinas')
+    const alunos = extrairDados(5, 'alunos')
+    const responsaveis = extrairDados(6, 'responsaveis')
+    const usuarios = extrairDados(7, 'usuarios')
+    const aulas = extrairDados(8, 'aulas')
+    const notas = extrairDados(9, 'notas')
+    const chamadas = extrairDados(10, 'chamadas')
+    const registros = extrairDados(11, 'registros_chamada')
 
     console.log('Dados carregados:', {
       escola: escola.length,
