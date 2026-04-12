@@ -32,12 +32,11 @@ export default async function CozinhaLayout({ children }: { children: React.Reac
           <div className="flex items-center gap-3 flex-1">
             <div className="w-32 bg-slate-900 rounded-lg p-2">
               <Image
-                src="/logo-estudapp.png"
+                src="/logo-estudapp-sidebar.png"
                 alt="EstudApp"
                 width={400}
                 height={220}
                 className="w-full h-auto"
-                style={{ filter: 'invert(1) hue-rotate(220deg) brightness(0.9)' }}
                 priority
               />
             </div>
