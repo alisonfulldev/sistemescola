@@ -35,6 +35,7 @@ export default async function ResponsavelLayout({ children }: { children: React.
                 width={400}
                 height={220}
                 className="w-full h-auto"
+                style={{ filter: 'invert(1) hue-rotate(220deg) brightness(0.9)' }}
                 priority
               />
             </div>
