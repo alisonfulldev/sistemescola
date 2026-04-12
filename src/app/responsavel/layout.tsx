@@ -28,7 +28,7 @@ export default async function ResponsavelLayout({ children }: { children: React.
       <header className="bg-white border-b border-blue-100 sticky top-0 z-10 shadow-sm">
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
-            <div className="w-32">
+            <div className="w-32 bg-slate-900 rounded-lg p-2">
               <Image
                 src="/logo-estudapp.png"
                 alt="EstudApp"
