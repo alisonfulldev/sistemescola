@@ -5,352 +5,283 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
   try {
     console.log(`🔄 Exportando dados (tipo: ${tipo})...`)
 
-    // Buscar todas as tabelas do banco com tratamento de erro individual
-    const resultados = await Promise.allSettled([
+    // Buscar todas as tabelas
+    const [
+      escolaRes,
+      anosRes,
+      bimestresRes,
+      turmasRes,
+      disciplinasRes,
+      alunosRes,
+      responsaveisRes,
+      usuariosRes,
+      aulasRes,
+      notasRes,
+      chamaddasRes,
+      registrosRes,
+      justificativasRes,
+      avaliacoesRes,
+      alertasRes,
+      notasAvaliacaoRes,
+      fotosRes,
+      responsaveisAlunosRes,
+      calendarioRes,
+      provasRes,
+      justificativasFaltaRes,
+      entradasRes,
+      pushRes,
+    ] = await Promise.all([
       supabase.from('escola').select('*'),
       supabase.from('anos_letivos').select('*'),
       supabase.from('bimestres').select('*'),
-      supabase.from('calendario_escolar').select('*'),
       supabase.from('turmas').select('*'),
       supabase.from('disciplinas').select('*'),
       supabase.from('alunos').select('*'),
-      supabase.from('alunos-fotos').select('*'),
       supabase.from('responsaveis').select('*'),
-      supabase.from('responsaveis_alunos').select('*'),
       supabase.from('usuarios').select('*'),
       supabase.from('aulas').select('*'),
       supabase.from('notas').select('*'),
-      supabase.from('notas_avaliacao').select('*'),
-      supabase.from('avaliacoes').select('*'),
-      supabase.from('provas').select('*'),
       supabase.from('chamadas').select('*'),
       supabase.from('registros_chamada').select('*'),
       supabase.from('justificativas').select('*'),
-      supabase.from('justificativas_falta').select('*'),
+      supabase.from('avaliacoes').select('*'),
       supabase.from('alertas').select('*'),
+      supabase.from('notas_avaliacao').select('*'),
+      supabase.from('alunos-fotos').select('*'),
+      supabase.from('responsaveis_alunos').select('*'),
+      supabase.from('calendario_escolar').select('*'),
+      supabase.from('provas').select('*'),
+      supabase.from('justificativas_falta').select('*'),
       supabase.from('entradas').select('*'),
       supabase.from('push_subscriptions').select('*'),
     ])
 
-    // Extrair dados com tratamento de erros
-    const extrairDados = (index: number, nomeTabela: string) => {
-      const resultado = resultados[index]
-      if (resultado.status === 'fulfilled') {
-        const { data, error } = resultado.value
-        const dados = data || []
-        console.log(`✓ ${nomeTabela}: ${dados.length} registros`, error ? `(ERRO: ${error.message})` : '')
-        if (error) console.error(`  Erro em ${nomeTabela}:`, error)
-        return dados
-      }
-      console.error(`❌ ${nomeTabela}: Promessa rejeitada -`, resultado.reason)
-      return []
-    }
+    // Extrair dados
+    const escola = escolaRes.data || []
+    const anos = anosRes.data || []
+    const bimestres = bimestresRes.data || []
+    const turmas = turmasRes.data || []
+    const disciplinas = disciplinasRes.data || []
+    const alunos = alunosRes.data || []
+    const responsaveis = responsaveisRes.data || []
+    const usuarios = usuariosRes.data || []
+    const aulas = aulasRes.data || []
+    const notas = notasRes.data || []
+    const chamadas = chamaddasRes.data || []
+    const registros = registrosRes.data || []
+    const justificativas = justificativasRes.data || []
+    const avaliacoes = avaliacoesRes.data || []
+    const alertas = alertasRes.data || []
+    const notasAvaliacao = notasAvaliacaoRes.data || []
+    const fotos = fotosRes.data || []
+    const responsaveisAlunos = responsaveisAlunosRes.data || []
+    const calendario = calendarioRes.data || []
+    const provas = provasRes.data || []
+    const justificativasFalta = justificativasFaltaRes.data || []
+    const entradas = entradasRes.data || []
+    const push = pushRes.data || []
 
-    const escola = extrairDados(0, 'Escola')
-    const anosLetivos = extrairDados(1, 'Anos Letivos')
-    const bimestres = extrairDados(2, 'Bimestres')
-    const calendarioEscolar = extrairDados(3, 'Calendário Escolar')
-    const turmas = extrairDados(4, 'Turmas')
-    const disciplinas = extrairDados(5, 'Disciplinas')
-    const alunos = extrairDados(6, 'Alunos')
-    const alunosFotos = extrairDados(7, 'Alunos Fotos')
-    const responsaveis = extrairDados(8, 'Responsáveis')
-    const responsaveisAlunos = extrairDados(9, 'Responsáveis-Alunos')
-    const usuarios = extrairDados(10, 'Usuários')
-    const aulas = extrairDados(11, 'Aulas')
-    const notas = extrairDados(12, 'Notas')
-    const notasAvaliacao = extrairDados(13, 'Notas Avaliação')
-    const avaliacoes = extrairDados(14, 'Avaliações')
-    const provas = extrairDados(15, 'Provas')
-    const chamadas = extrairDados(16, 'Chamadas')
-    const registros = extrairDados(17, 'Registros de Chamada')
-    const justificativas = extrairDados(18, 'Justificativas')
-    const justificativasFalta = extrairDados(19, 'Justificativas Falta')
-    const alertas = extrairDados(20, 'Alertas')
-    const entradas = extrairDados(21, 'Entradas')
-    const pushSubscriptions = extrairDados(22, 'Push Subscriptions')
-
-    // Filtrar por data se for "dia"
-    const hoje = new Date().toISOString().split('T')[0]
-    let aulasFiltered = aulas
-    let aulaIdsFiltered: string[] = []
-
-    if (tipo === 'dia') {
-      aulasFiltered = aulasFiltered.filter((a: any) => a.data === hoje)
-      aulaIdsFiltered = aulasFiltered.map((a: any) => a.id)
-    }
-
-    // Preparar dados por aba
-    const sheets: { [key: string]: any[] } = {}
-
-    // Configuração
-    sheets['Escola'] = escola.map((e: any) => ({
-      Nome: e.nome,
-      Email: e.email,
-      Telefone: e.telefone,
-      CEP: e.cep,
-      Endereço: e.endereco,
-      Número: e.numero,
-      Complemento: e.complemento,
-      Bairro: e.bairro,
-      Cidade: e.cidade,
-      Estado: e.estado,
-      CNPJ: e.cnpj,
-      'Criado em': e.created_at,
-    }))
-
-    sheets['Anos Letivos'] = anosLetivos.map((a: any) => ({
-      Ano: a.ano,
-      'Data Início': a.data_inicio,
-      'Data Fim': a.data_fim,
-      Ativo: a.ativo ? 'Sim' : 'Não',
-      'Criado em': a.created_at,
-    }))
-
-    sheets['Bimestres'] = bimestres.map((b: any) => ({
-      'Ano Letivo ID': b.ano_letivo_id,
-      Número: b.numero,
-      'Data Início': b.data_inicio,
-      'Data Fim': b.data_fim,
-      'Criado em': b.created_at,
-    }))
-
-    sheets['Calendário Escolar'] = calendarioEscolar.map((c: any) => ({
-      Data: c.data,
-      Tipo: c.tipo,
-      Descrição: c.descricao,
-      'Criado em': c.created_at,
-    }))
-
-    sheets['Turmas'] = turmas.map((t: any) => ({
-      ID: t.id,
-      Nome: t.nome,
-      Série: t.serie,
-      Letra: t.turma_letra,
-      Ativo: t.ativo ? 'Sim' : 'Não',
-      'Criado em': t.created_at,
-    }))
-
-    sheets['Disciplinas'] = disciplinas.map((d: any) => ({
-      ID: d.id,
-      Nome: d.nome,
-      'Carga Horária': d.carga_horaria,
-      Ativo: d.ativo ? 'Sim' : 'Não',
-      'Criado em': d.created_at,
-    }))
-
-    sheets['Alunos'] = alunos.map((a: any) => {
-      const turma = turmas.find((t: any) => t.id === a.turma_id)
-      return {
-        ID: a.id,
-        Matrícula: a.matricula,
-        Nome: a.nome_completo,
-        'Data Nascimento': a.data_nascimento,
-        Turma: turma?.nome || '',
-        Série: turma?.serie || '',
-        CPF: a.cpf,
-        Ativo: a.ativo ? 'Sim' : 'Não',
-        'Criado em': a.created_at,
-      }
+    console.log('Dados carregados:', {
+      escola: escola.length,
+      anos: anos.length,
+      bimestres: bimestres.length,
+      turmas: turmas.length,
+      disciplinas: disciplinas.length,
+      alunos: alunos.length,
+      responsaveis: responsaveis.length,
+      usuarios: usuarios.length,
+      aulas: aulas.length,
+      notas: notas.length,
+      chamadas: chamadas.length,
+      registros: registros.length,
+      justificativas: justificativas.length,
+      avaliacoes: avaliacoes.length,
+      alertas: alertas.length,
+      notasAvaliacao: notasAvaliacao.length,
+      fotos: fotos.length,
+      responsaveisAlunos: responsaveisAlunos.length,
+      calendario: calendario.length,
+      provas: provas.length,
+      justificativasFalta: justificativasFalta.length,
+      entradas: entradas.length,
+      push: push.length,
     })
 
-    sheets['Fotos Alunos'] = alunosFotos.map((f: any) => ({
-      'Aluno ID': f.aluno_id,
-      URL: f.url,
-      'Criado em': f.created_at,
-    }))
-
-    sheets['Responsáveis'] = responsaveis.map((r: any) => ({
-      ID: r.id,
-      Nome: r.nome,
-      Email: r.email,
-      Celular: r.celular,
-      Telefone: r.telefone,
-      CPF: r.cpf,
-      Parentesco: r.parentesco,
-      'Criado em': r.created_at,
-    }))
-
-    sheets['Responsáveis-Alunos'] = responsaveisAlunos.map((ra: any) => ({
-      'Responsável ID': ra.responsavel_id,
-      'Aluno ID': ra.aluno_id,
-      'Criado em': ra.created_at,
-    }))
-
-    sheets['Usuários'] = usuarios.map((u: any) => ({
-      ID: u.id,
-      Nome: u.nome,
-      Email: u.email,
-      Perfil: u.perfil,
-      Ativo: u.ativo ? 'Sim' : 'Não',
-      'Força Troca Senha': u.force_password_reset ? 'Sim' : 'Não',
-      'Criado em': u.created_at,
-    }))
-
-    sheets['Aulas'] = aulasFiltered.map((a: any) => {
-      const turma = turmas.find((t: any) => t.id === a.turma_id)
-      const disciplina = disciplinas.find((d: any) => d.id === a.disciplina_id)
-      return {
-        ID: a.id,
-        Data: a.data,
-        Turma: turma?.nome || '',
-        Disciplina: disciplina?.nome || '',
-        'Conteúdo': a.conteudo_programatico || '',
-        'Atividades': a.atividades_desenvolvidas || '',
-        'Criado em': a.created_at,
-      }
-    })
-
-
-    sheets['Notas'] = notas.map((n: any) => {
-      const aluno = alunos.find((a: any) => a.id === n.aluno_id)
-      const disciplina = disciplinas.find((d: any) => d.id === n.disciplina_id)
-      return {
-        'Aluno ID': n.aluno_id,
-        'Aluno Nome': aluno?.nome_completo || '',
-        'Disciplina': disciplina?.nome || '',
-        'B1': n.b1 !== null ? n.b1 : '',
-        'B2': n.b2 !== null ? n.b2 : '',
-        'B3': n.b3 !== null ? n.b3 : '',
-        'B4': n.b4 !== null ? n.b4 : '',
-        'Recuperação': n.recuperacao !== null ? n.recuperacao : '',
-        'Média Final': n.media_final !== null ? n.media_final : '',
-        'Situação Final': n.situacao_final || '',
-        'Criado em': n.created_at,
-      }
-    })
-
-    sheets['Notas Avaliação'] = notasAvaliacao.map((na: any) => ({
-      'Aluno ID': na.aluno_id,
-      'Avaliação ID': na.avaliacao_id,
-      Nota: na.nota,
-      'Criado em': na.created_at,
-    }))
-
-    sheets['Avaliações'] = avaliacoes.map((av: any) => ({
-      ID: av.id,
-      Nome: av.nome,
-      Disciplina: av.disciplina_id,
-      Peso: av.peso,
-      'Criado em': av.created_at,
-    }))
-
-    sheets['Provas'] = provas.map((p: any) => ({
-      ID: p.id,
-      Nome: p.nome,
-      Data: p.data,
-      Disciplina: p.disciplina_id,
-      'Criado em': p.created_at,
-    }))
-
-    sheets['Chamadas'] = (tipo === 'dia' ? chamadas.filter((c: any) => {
-      const aula = aulasFiltered.find((a: any) => a.id === c.aula_id)
-      return !!aula
-    }) : chamadas).map((c: any) => ({
-      ID: c.id,
-      'Aula ID': c.aula_id,
-      'Criado em': c.created_at,
-    }))
-
-    sheets['Frequência'] = registros.map((r: any) => {
-      const aluno = alunos.find((a: any) => a.id === r.aluno_id)
-      return {
-        'Aluno ID': r.aluno_id,
-        'Aluno Nome': aluno?.nome_completo || '',
-        Data: r.created_at?.split('T')[0] || '',
-        Status: r.status || 'falta',
-        Observação: r.observacao || '',
-        'Justificado': r.justificado ? 'Sim' : 'Não',
-        'Criado em': r.created_at,
-      }
-    })
-
-    sheets['Justificativas'] = justificativas.map((j: any) => ({
-      ID: j.id,
-      'Aluno ID': j.aluno_id,
-      Motivo: j.motivo,
-      Status: j.status,
-      'Resposta Professor': j.professor_resposta || '',
-      'Criado em': j.created_at,
-    }))
-
-    sheets['Justificativas Falta'] = justificativasFalta.map((jf: any) => ({
-      ID: jf.id,
-      'Registro ID': jf.registro_id,
-      Motivo: jf.motivo,
-      Status: jf.status,
-      'Criado em': jf.created_at,
-    }))
-
-    sheets['Alertas'] = alertas.map((al: any) => ({
-      ID: al.id,
-      Tipo: al.tipo,
-      Mensagem: al.mensagem,
-      Lido: al.lido ? 'Sim' : 'Não',
-      'Criado em': al.created_at,
-    }))
-
-    sheets['Entradas'] = entradas.map((e: any) => ({
-      ID: e.id,
-      Tabela: e.tabela,
-      Ação: e.acao,
-      'Usuário ID': e.usuario_id,
-      Dados: e.dados ? JSON.stringify(e.dados) : '',
-      'Criado em': e.created_at,
-    }))
-
-    sheets['Push Subscriptions'] = pushSubscriptions.map((ps: any) => ({
-      ID: ps.id,
-      'Usuário ID': ps.usuario_id,
-      Endpoint: ps.endpoint,
-      'Criado em': ps.created_at,
-    }))
-
-    // Criar workbook
+    // Criar workbook e adicionar abas
     const wb = XLSX.utils.book_new()
 
-    // Adicionar abas em ordem
-    const sheetOrder = [
-      'Escola', 'Anos Letivos', 'Bimestres', 'Calendário Escolar',
-      'Turmas', 'Disciplinas', 'Alunos', 'Fotos Alunos', 'Responsáveis', 'Responsáveis-Alunos',
-      'Usuários', 'Aulas', 'Avaliações', 'Provas',
-      'Notas', 'Notas Avaliação', 'Chamadas', 'Frequência',
-      'Justificativas', 'Justificativas Falta', 'Alertas',
-      'Entradas', 'Push Subscriptions'
-    ]
+    // ABA 1: Escola
+    if (escola.length > 0) {
+      const ws1 = XLSX.utils.json_to_sheet(escola)
+      XLSX.utils.book_append_sheet(wb, ws1, 'Escola')
+      console.log('✓ Aba Escola adicionada')
+    }
 
-    console.log(`📊 Criando ${sheetOrder.length} abas...`)
+    // ABA 2: Anos Letivos
+    if (anos.length > 0) {
+      const ws2 = XLSX.utils.json_to_sheet(anos)
+      XLSX.utils.book_append_sheet(wb, ws2, 'Anos Letivos')
+      console.log('✓ Aba Anos Letivos adicionada')
+    }
 
-    sheetOrder.forEach((sheetName, idx) => {
-      const data = sheets[sheetName] || []
-      console.log(`  [${idx + 1}/${sheetOrder.length}] ${sheetName}: ${data.length} registros`)
+    // ABA 3: Bimestres
+    if (bimestres.length > 0) {
+      const ws3 = XLSX.utils.json_to_sheet(bimestres)
+      XLSX.utils.book_append_sheet(wb, ws3, 'Bimestres')
+      console.log('✓ Aba Bimestres adicionada')
+    }
 
-      const ws = XLSX.utils.json_to_sheet(data)
+    // ABA 4: Turmas
+    if (turmas.length > 0) {
+      const ws4 = XLSX.utils.json_to_sheet(turmas)
+      XLSX.utils.book_append_sheet(wb, ws4, 'Turmas')
+      console.log('✓ Aba Turmas adicionada')
+    }
 
-      // Auto-ajustar largura das colunas
-      if (data.length > 0) {
-        const colWidths = Object.keys(data[0]).map(key => ({
-          wch: Math.min(Math.max(key.length, 12), 50)
-        }))
-        ws['!cols'] = colWidths
-      }
+    // ABA 5: Disciplinas
+    if (disciplinas.length > 0) {
+      const ws5 = XLSX.utils.json_to_sheet(disciplinas)
+      XLSX.utils.book_append_sheet(wb, ws5, 'Disciplinas')
+      console.log('✓ Aba Disciplinas adicionada')
+    }
 
-      XLSX.utils.book_append_sheet(wb, ws, sheetName)
-      console.log(`    ✓ Aba adicionada ao workbook`)
-    })
+    // ABA 6: Alunos
+    if (alunos.length > 0) {
+      const ws6 = XLSX.utils.json_to_sheet(alunos)
+      XLSX.utils.book_append_sheet(wb, ws6, 'Alunos')
+      console.log('✓ Aba Alunos adicionada')
+    }
 
-    // Gerar nome do arquivo
+    // ABA 7: Fotos
+    if (fotos.length > 0) {
+      const ws7 = XLSX.utils.json_to_sheet(fotos)
+      XLSX.utils.book_append_sheet(wb, ws7, 'Fotos Alunos')
+      console.log('✓ Aba Fotos adicionada')
+    }
+
+    // ABA 8: Responsáveis
+    if (responsaveis.length > 0) {
+      const ws8 = XLSX.utils.json_to_sheet(responsaveis)
+      XLSX.utils.book_append_sheet(wb, ws8, 'Responsáveis')
+      console.log('✓ Aba Responsáveis adicionada')
+    }
+
+    // ABA 9: Responsáveis-Alunos
+    if (responsaveisAlunos.length > 0) {
+      const ws9 = XLSX.utils.json_to_sheet(responsaveisAlunos)
+      XLSX.utils.book_append_sheet(wb, ws9, 'Responsáveis-Alunos')
+      console.log('✓ Aba Responsáveis-Alunos adicionada')
+    }
+
+    // ABA 10: Usuários
+    if (usuarios.length > 0) {
+      const ws10 = XLSX.utils.json_to_sheet(usuarios)
+      XLSX.utils.book_append_sheet(wb, ws10, 'Usuários')
+      console.log('✓ Aba Usuários adicionada')
+    }
+
+    // ABA 11: Aulas
+    if (aulas.length > 0) {
+      const ws11 = XLSX.utils.json_to_sheet(aulas)
+      XLSX.utils.book_append_sheet(wb, ws11, 'Aulas')
+      console.log('✓ Aba Aulas adicionada')
+    }
+
+    // ABA 12: Calendário
+    if (calendario.length > 0) {
+      const ws12 = XLSX.utils.json_to_sheet(calendario)
+      XLSX.utils.book_append_sheet(wb, ws12, 'Calendário')
+      console.log('✓ Aba Calendário adicionada')
+    }
+
+    // ABA 13: Notas
+    if (notas.length > 0) {
+      const ws13 = XLSX.utils.json_to_sheet(notas)
+      XLSX.utils.book_append_sheet(wb, ws13, 'Notas')
+      console.log('✓ Aba Notas adicionada')
+    }
+
+    // ABA 14: Notas Avaliação
+    if (notasAvaliacao.length > 0) {
+      const ws14 = XLSX.utils.json_to_sheet(notasAvaliacao)
+      XLSX.utils.book_append_sheet(wb, ws14, 'Notas Avaliação')
+      console.log('✓ Aba Notas Avaliação adicionada')
+    }
+
+    // ABA 15: Avaliações
+    if (avaliacoes.length > 0) {
+      const ws15 = XLSX.utils.json_to_sheet(avaliacoes)
+      XLSX.utils.book_append_sheet(wb, ws15, 'Avaliações')
+      console.log('✓ Aba Avaliações adicionada')
+    }
+
+    // ABA 16: Provas
+    if (provas.length > 0) {
+      const ws16 = XLSX.utils.json_to_sheet(provas)
+      XLSX.utils.book_append_sheet(wb, ws16, 'Provas')
+      console.log('✓ Aba Provas adicionada')
+    }
+
+    // ABA 17: Chamadas
+    if (chamadas.length > 0) {
+      const ws17 = XLSX.utils.json_to_sheet(chamadas)
+      XLSX.utils.book_append_sheet(wb, ws17, 'Chamadas')
+      console.log('✓ Aba Chamadas adicionada')
+    }
+
+    // ABA 18: Registros de Chamada
+    if (registros.length > 0) {
+      const ws18 = XLSX.utils.json_to_sheet(registros)
+      XLSX.utils.book_append_sheet(wb, ws18, 'Frequência')
+      console.log('✓ Aba Frequência adicionada')
+    }
+
+    // ABA 19: Justificativas
+    if (justificativas.length > 0) {
+      const ws19 = XLSX.utils.json_to_sheet(justificativas)
+      XLSX.utils.book_append_sheet(wb, ws19, 'Justificativas')
+      console.log('✓ Aba Justificativas adicionada')
+    }
+
+    // ABA 20: Justificativas Falta
+    if (justificativasFalta.length > 0) {
+      const ws20 = XLSX.utils.json_to_sheet(justificativasFalta)
+      XLSX.utils.book_append_sheet(wb, ws20, 'Justificativas Falta')
+      console.log('✓ Aba Justificativas Falta adicionada')
+    }
+
+    // ABA 21: Alertas
+    if (alertas.length > 0) {
+      const ws21 = XLSX.utils.json_to_sheet(alertas)
+      XLSX.utils.book_append_sheet(wb, ws21, 'Alertas')
+      console.log('✓ Aba Alertas adicionada')
+    }
+
+    // ABA 22: Entradas
+    if (entradas.length > 0) {
+      const ws22 = XLSX.utils.json_to_sheet(entradas)
+      XLSX.utils.book_append_sheet(wb, ws22, 'Entradas')
+      console.log('✓ Aba Entradas adicionada')
+    }
+
+    // ABA 23: Push Subscriptions
+    if (push.length > 0) {
+      const ws23 = XLSX.utils.json_to_sheet(push)
+      XLSX.utils.book_append_sheet(wb, ws23, 'Push Subscriptions')
+      console.log('✓ Aba Push Subscriptions adicionada')
+    }
+
+    // Gerar arquivo
     const dataHoje = new Date().toISOString().split('T')[0]
     const hora = new Date().toLocaleTimeString('pt-BR').replace(/:/g, '-')
     const nomeArquivo = `dados_${tipo === 'dia' ? 'dia' : 'completo'}_${dataHoje}_${hora}.xlsx`
 
-    // Fazer download
     XLSX.writeFile(wb, nomeArquivo)
 
     console.log(`✅ Arquivo ${nomeArquivo} gerado com sucesso!`)
     return { sucesso: true, mensagem: `✅ Dados exportados como ${nomeArquivo}` }
   } catch (erro) {
-    console.error('❌ Erro ao exportar dados:', erro)
+    console.error('❌ Erro:', erro)
     return { sucesso: false, mensagem: `❌ Erro: ${(erro as Error).message}` }
   }
 }
