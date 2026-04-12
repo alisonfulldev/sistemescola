@@ -2,16 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { FileText, Download, Database } from 'lucide-react'
+import { FileText, Download, Database, Bug } from 'lucide-react'
 import { exportarDados } from '@/lib/export-data'
+import { debugTabelas } from '@/lib/debug-tables'
 
 export default function DiarioPage() {
   const [loading, setLoading] = useState(false)
   const [exportandoDia, setExportandoDia] = useState(false)
   const [exportandoCompleto, setExportandoCompleto] = useState(false)
+  const [debugando, setDebugando] = useState(false)
   const [mensagem, setMensagem] = useState<{ tipo: 'sucesso' | 'erro', texto: string } | null>(null)
 
   const supabase = createClient()
+
+  async function handleDebug() {
+    setDebugando(true)
+    setMensagem(null)
+    console.log('Iniciando debug...')
+    await debugTabelas(supabase)
+    setDebugando(false)
+    setMensagem({
+      tipo: 'sucesso',
+      texto: 'Debug executado! Verifique o console (F12) para ver quais tabelas existem.'
+    })
+  }
 
   async function handleExportar(tipo: 'dia' | 'completo') {
     if (tipo === 'dia') setExportandoDia(true)
@@ -61,6 +75,22 @@ export default function DiarioPage() {
           </p>
         </div>
       )}
+
+      {/* Debug Button */}
+      <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-yellow-900">⚠️ Nenhum dado encontrado</p>
+          <p className="text-xs text-yellow-700 mt-1">Clique em Debug para descobrir o nome das tabelas no banco de dados</p>
+        </div>
+        <button
+          onClick={handleDebug}
+          disabled={debugando}
+          className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 flex-shrink-0"
+        >
+          <Bug className="w-4 h-4" />
+          {debugando ? 'Debugando...' : 'Debug'}
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card: Dados do Dia */}
