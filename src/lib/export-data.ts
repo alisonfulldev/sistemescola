@@ -242,7 +242,7 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
 
     sheetOrder.forEach(sheetName => {
       const data = sheets[sheetName] || []
-      const ws = XLSX.utils.json_to_sheet(data, { header: 1 })
+      const ws = XLSX.utils.json_to_sheet(data)
 
       // Auto-ajustar largura das colunas
       if (data.length > 0) {
