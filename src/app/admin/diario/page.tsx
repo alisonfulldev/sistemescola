@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { FileText, Download, Database, Bug } from 'lucide-react'
 import { exportarDados } from '@/lib/export-data'
 import { debugTabelas } from '@/lib/debug-tables'
+import { debugComSQL } from '@/lib/sql-debug'
 
 export default function DiarioPage() {
   const [loading, setLoading] = useState(false)
@@ -24,6 +25,18 @@ export default function DiarioPage() {
     setMensagem({
       tipo: 'sucesso',
       texto: 'Debug executado! Verifique o console (F12) para ver quais tabelas existem.'
+    })
+  }
+
+  async function handleDebugSQL() {
+    setDebugando(true)
+    setMensagem(null)
+    console.log('Iniciando debug SQL...')
+    await debugComSQL(supabase)
+    setDebugando(false)
+    setMensagem({
+      tipo: 'sucesso',
+      texto: 'Debug SQL executado! Verifique o console (F12) para ver a contagem de registros.'
     })
   }
 
@@ -76,20 +89,30 @@ export default function DiarioPage() {
         </div>
       )}
 
-      {/* Debug Button */}
+      {/* Debug Buttons */}
       <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-yellow-900">⚠️ Nenhum dado encontrado</p>
-          <p className="text-xs text-yellow-700 mt-1">Clique em Debug para descobrir o nome das tabelas no banco de dados</p>
+          <p className="text-xs text-yellow-700 mt-1">Use os botões abaixo para debugar e verificar quantos registros existem no banco</p>
         </div>
-        <button
-          onClick={handleDebug}
-          disabled={debugando}
-          className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 flex-shrink-0"
-        >
-          <Bug className="w-4 h-4" />
-          {debugando ? 'Debugando...' : 'Debug'}
-        </button>
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={handleDebug}
+            disabled={debugando}
+            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Bug className="w-4 h-4" />
+            {debugando ? 'Debugando...' : 'Debug Tabelas'}
+          </button>
+          <button
+            onClick={handleDebugSQL}
+            disabled={debugando}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Bug className="w-4 h-4" />
+            {debugando ? 'Debugando...' : 'Debug SQL'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
