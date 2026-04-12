@@ -6,6 +6,7 @@ import { FileText, Download, Database, Bug } from 'lucide-react'
 import { exportarDados } from '@/lib/export-data'
 import { debugTabelas } from '@/lib/debug-tables'
 import { debugComSQL } from '@/lib/sql-debug'
+import { gerarRelatorioCompleto } from '@/lib/relatorio-completo'
 
 export default function DiarioPage() {
   const [loading, setLoading] = useState(false)

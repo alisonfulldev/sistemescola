@@ -3,20 +3,37 @@ import * as XLSX from 'xlsx'
 
 export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'completo') {
   try {
+    console.log(`🔄 Exportando dados (tipo: ${tipo})...`)
+
     // Buscar todas as tabelas do banco com tratamento de erro individual
     const resultados = await Promise.allSettled([
       supabase.from('escola').select('*'),
       supabase.from('anos_letivos').select('*'),
       supabase.from('bimestres').select('*'),
+      supabase.from('calendario_escolar').select('*'),
       supabase.from('turmas').select('*'),
       supabase.from('disciplinas').select('*'),
       supabase.from('alunos').select('*'),
+      supabase.from('alunos-fotos').select('*'),
       supabase.from('responsaveis').select('*'),
+      supabase.from('responsaveis_alunos').select('*'),
       supabase.from('usuarios').select('*'),
       supabase.from('aulas').select('*'),
+      supabase.from('conteudo_aulas').select('*').catch(() => ({ data: [], error: null })),
       supabase.from('notas').select('*'),
+      supabase.from('notas_avaliacao').select('*'),
+      supabase.from('avaliacoes').select('*'),
+      supabase.from('provas').select('*'),
       supabase.from('chamadas').select('*'),
       supabase.from('registros_chamada').select('*'),
+      supabase.from('justificativas').select('*'),
+      supabase.from('justificativas_falta').select('*'),
+      supabase.from('alertas').select('*'),
+      supabase.from('entradas').select('*'),
+      supabase.from('push_subscriptions').select('*'),
+      supabase.from('audit_logs').select('*'),
+      supabase.from('error_logs').select('*'),
+      supabase.from('info_logs').select('*'),
     ])
 
     // Extrair dados com tratamento de erros
@@ -24,47 +41,44 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       const resultado = resultados[index]
       if (resultado.status === 'fulfilled') {
         const dados = resultado.value.data || []
-        console.log(`[${nomeTabela}] Status: ${resultado.value.status}, Erro: ${resultado.value.error}, Dados: ${dados.length}`)
-        if (resultado.value.error) {
-          console.error(`Erro em ${nomeTabela}:`, resultado.value.error)
-        }
+        console.log(`✓ ${nomeTabela}: ${dados.length} registros`)
         return dados
       }
-      console.error(`Erro ao buscar ${nomeTabela} (índice ${index}):`, resultado.reason)
+      console.warn(`⚠️ ${nomeTabela}: erro ao buscar`)
       return []
     }
 
-    const escola = extrairDados(0, 'escola')
-    const anosLetivos = extrairDados(1, 'anos_letivos')
-    const bimestres = extrairDados(2, 'bimestres')
-    const turmas = extrairDados(3, 'turmas')
-    const disciplinas = extrairDados(4, 'disciplinas')
-    const alunos = extrairDados(5, 'alunos')
-    const responsaveis = extrairDados(6, 'responsaveis')
-    const usuarios = extrairDados(7, 'usuarios')
-    const aulas = extrairDados(8, 'aulas')
-    const notas = extrairDados(9, 'notas')
-    const chamadas = extrairDados(10, 'chamadas')
-    const registros = extrairDados(11, 'registros_chamada')
-
-    console.log('Dados carregados:', {
-      escola: escola.length,
-      anosLetivos: anosLetivos.length,
-      bimestres: bimestres.length,
-      turmas: turmas.length,
-      disciplinas: disciplinas.length,
-      alunos: alunos.length,
-      responsaveis: responsaveis.length,
-      usuarios: usuarios.length,
-      aulas: aulas.length,
-      notas: notas.length,
-      chamadas: chamadas.length,
-      registros: registros.length,
-    })
+    const escola = extrairDados(0, 'Escola')
+    const anosLetivos = extrairDados(1, 'Anos Letivos')
+    const bimestres = extrairDados(2, 'Bimestres')
+    const calendarioEscolar = extrairDados(3, 'Calendário Escolar')
+    const turmas = extrairDados(4, 'Turmas')
+    const disciplinas = extrairDados(5, 'Disciplinas')
+    const alunos = extrairDados(6, 'Alunos')
+    const alunosFotos = extrairDados(7, 'Alunos Fotos')
+    const responsaveis = extrairDados(8, 'Responsáveis')
+    const responsaveisAlunos = extrairDados(9, 'Responsáveis-Alunos')
+    const usuarios = extrairDados(10, 'Usuários')
+    const aulas = extrairDados(11, 'Aulas')
+    const conteudoAulas = extrairDados(12, 'Conteúdo Aulas')
+    const notas = extrairDados(13, 'Notas')
+    const notasAvaliacao = extrairDados(14, 'Notas Avaliação')
+    const avaliacoes = extrairDados(15, 'Avaliações')
+    const provas = extrairDados(16, 'Provas')
+    const chamadas = extrairDados(17, 'Chamadas')
+    const registros = extrairDados(18, 'Registros de Chamada')
+    const justificativas = extrairDados(19, 'Justificativas')
+    const justificativasFalta = extrairDados(20, 'Justificativas Falta')
+    const alertas = extrairDados(21, 'Alertas')
+    const entradas = extrairDados(22, 'Entradas')
+    const pushSubscriptions = extrairDados(23, 'Push Subscriptions')
+    const auditLogs = extrairDados(24, 'Audit Logs')
+    const errorLogs = extrairDados(25, 'Error Logs')
+    const infoLogs = extrairDados(26, 'Info Logs')
 
     // Filtrar por data se for "dia"
     const hoje = new Date().toISOString().split('T')[0]
-    let aulasFiltered = aulas || []
+    let aulasFiltered = aulas
     let aulaIdsFiltered: string[] = []
 
     if (tipo === 'dia') {
@@ -75,10 +89,10 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
     // Preparar dados por aba
     const sheets: { [key: string]: any[] } = {}
 
-    // ABA 1: Escola
-    sheets['Escola'] = (escola || []).map((e: any) => ({
+    // Configuração
+    sheets['Escola'] = escola.map((e: any) => ({
       Nome: e.nome,
-      'E-mail': e.email,
+      Email: e.email,
       Telefone: e.telefone,
       CEP: e.cep,
       Endereço: e.endereco,
@@ -88,37 +102,42 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       Cidade: e.cidade,
       Estado: e.estado,
       CNPJ: e.cnpj,
-      'Data de Criação': e.created_at,
+      'Criado em': e.created_at,
     }))
 
-    // ABA 2: Anos Letivos
-    sheets['Anos Letivos'] = (anosLetivos || []).map((a: any) => ({
+    sheets['Anos Letivos'] = anosLetivos.map((a: any) => ({
       Ano: a.ano,
       'Data Início': a.data_inicio,
       'Data Fim': a.data_fim,
       Ativo: a.ativo ? 'Sim' : 'Não',
+      'Criado em': a.created_at,
     }))
 
-    // ABA 3: Bimestres
-    sheets['Bimestres'] = (bimestres || []).map((b: any) => ({
-      'Ano Letivo': b.ano_letivo_id,
+    sheets['Bimestres'] = bimestres.map((b: any) => ({
+      'Ano Letivo ID': b.ano_letivo_id,
       Número: b.numero,
       'Data Início': b.data_inicio,
       'Data Fim': b.data_fim,
+      'Criado em': b.created_at,
     }))
 
-    // ABA 4: Turmas
-    sheets['Turmas'] = (turmas || []).map((t: any) => ({
+    sheets['Calendário Escolar'] = calendarioEscolar.map((c: any) => ({
+      Data: c.data,
+      Tipo: c.tipo,
+      Descrição: c.descricao,
+      'Criado em': c.created_at,
+    }))
+
+    sheets['Turmas'] = turmas.map((t: any) => ({
       ID: t.id,
       Nome: t.nome,
       Série: t.serie,
-      Turma: t.turma_letra,
+      Letra: t.turma_letra,
       Ativo: t.ativo ? 'Sim' : 'Não',
       'Criado em': t.created_at,
     }))
 
-    // ABA 5: Disciplinas
-    sheets['Disciplinas'] = (disciplinas || []).map((d: any) => ({
+    sheets['Disciplinas'] = disciplinas.map((d: any) => ({
       ID: d.id,
       Nome: d.nome,
       'Carga Horária': d.carga_horaria,
@@ -126,14 +145,13 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       'Criado em': d.created_at,
     }))
 
-    // ABA 6: Alunos
-    sheets['Alunos'] = (alunos || []).map((a: any) => {
-      const turma = turmas?.find((t: any) => t.id === a.turma_id)
+    sheets['Alunos'] = alunos.map((a: any) => {
+      const turma = turmas.find((t: any) => t.id === a.turma_id)
       return {
         ID: a.id,
         Matrícula: a.matricula,
         Nome: a.nome_completo,
-        'Data de Nascimento': a.data_nascimento,
+        'Data Nascimento': a.data_nascimento,
         Turma: turma?.nome || '',
         Série: turma?.serie || '',
         CPF: a.cpf,
@@ -142,8 +160,13 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       }
     })
 
-    // ABA 7: Responsáveis
-    sheets['Responsáveis'] = (responsaveis || []).map((r: any) => ({
+    sheets['Fotos Alunos'] = alunosFotos.map((f: any) => ({
+      'Aluno ID': f.aluno_id,
+      URL: f.url,
+      'Criado em': f.created_at,
+    }))
+
+    sheets['Responsáveis'] = responsaveis.map((r: any) => ({
       ID: r.id,
       Nome: r.nome,
       Email: r.email,
@@ -154,8 +177,13 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       'Criado em': r.created_at,
     }))
 
-    // ABA 8: Usuários
-    sheets['Usuários'] = (usuarios || []).map((u: any) => ({
+    sheets['Responsáveis-Alunos'] = responsaveisAlunos.map((ra: any) => ({
+      'Responsável ID': ra.responsavel_id,
+      'Aluno ID': ra.aluno_id,
+      'Criado em': ra.created_at,
+    }))
+
+    sheets['Usuários'] = usuarios.map((u: any) => ({
       ID: u.id,
       Nome: u.nome,
       Email: u.email,
@@ -165,10 +193,9 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       'Criado em': u.created_at,
     }))
 
-    // ABA 9: Aulas
-    let aulasSheet = aulasFiltered.map((a: any) => {
-      const turma = turmas?.find((t: any) => t.id === a.turma_id)
-      const disciplina = disciplinas?.find((d: any) => d.id === a.disciplina_id)
+    sheets['Aulas'] = aulasFiltered.map((a: any) => {
+      const turma = turmas.find((t: any) => t.id === a.turma_id)
+      const disciplina = disciplinas.find((d: any) => d.id === a.disciplina_id)
       return {
         ID: a.id,
         Data: a.data,
@@ -179,12 +206,17 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
         'Criado em': a.created_at,
       }
     })
-    sheets['Aulas'] = aulasSheet
 
-    // ABA 10: Notas
-    let notasSheet = (notas || []).map((n: any) => {
-      const aluno = alunos?.find((a: any) => a.id === n.aluno_id)
-      const disciplina = disciplinas?.find((d: any) => d.id === n.disciplina_id)
+    sheets['Conteúdo Aulas'] = conteudoAulas.map((c: any) => ({
+      'Aula ID': c.aula_id,
+      Tipo: c.tipo,
+      Conteúdo: c.conteudo,
+      'Criado em': c.created_at,
+    }))
+
+    sheets['Notas'] = notas.map((n: any) => {
+      const aluno = alunos.find((a: any) => a.id === n.aluno_id)
+      const disciplina = disciplinas.find((d: any) => d.id === n.disciplina_id)
       return {
         'Aluno ID': n.aluno_id,
         'Aluno Nome': aluno?.nome_completo || '',
@@ -196,42 +228,48 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
         'Recuperação': n.recuperacao !== null ? n.recuperacao : '',
         'Média Final': n.media_final !== null ? n.media_final : '',
         'Situação Final': n.situacao_final || '',
+        'Criado em': n.created_at,
       }
     })
-    sheets['Notas'] = notasSheet
 
-    // ABA 11: Chamadas (apenas do dia se aplicável)
-    let chamadasFiltered = chamadas || []
-    if (tipo === 'dia') {
-      chamadasFiltered = chamadasFiltered.filter((c: any) => aulaIdsFiltered.includes(c.aula_id))
-    }
+    sheets['Notas Avaliação'] = notasAvaliacao.map((na: any) => ({
+      'Aluno ID': na.aluno_id,
+      'Avaliação ID': na.avaliacao_id,
+      Nota: na.nota,
+      'Criado em': na.created_at,
+    }))
 
-    sheets['Chamadas'] = chamadasFiltered.map((c: any) => {
+    sheets['Avaliações'] = avaliacoes.map((av: any) => ({
+      ID: av.id,
+      Nome: av.nome,
+      Disciplina: av.disciplina_id,
+      Peso: av.peso,
+      'Criado em': av.created_at,
+    }))
+
+    sheets['Provas'] = provas.map((p: any) => ({
+      ID: p.id,
+      Nome: p.nome,
+      Data: p.data,
+      Disciplina: p.disciplina_id,
+      'Criado em': p.created_at,
+    }))
+
+    sheets['Chamadas'] = (tipo === 'dia' ? chamadas.filter((c: any) => {
       const aula = aulasFiltered.find((a: any) => a.id === c.aula_id)
-      return {
-        ID: c.id,
-        'Aula ID': c.aula_id,
-        'Aula Data': aula?.data || '',
-        'Criado em': c.created_at,
-      }
-    })
+      return !!aula
+    }) : chamadas).map((c: any) => ({
+      ID: c.id,
+      'Aula ID': c.aula_id,
+      'Criado em': c.created_at,
+    }))
 
-    // ABA 12: Frequência (registros de chamada)
-    let registrosFiltered = registros || []
-    if (tipo === 'dia') {
-      const chamadasIds = chamadasFiltered.map((c: any) => c.id)
-      registrosFiltered = registrosFiltered.filter((r: any) => chamadasIds.includes(r.chamada_id))
-    }
-
-    sheets['Frequência'] = registrosFiltered.map((r: any) => {
-      const aluno = alunos?.find((a: any) => a.id === r.aluno_id)
-      const chamada = chamadasFiltered.find((c: any) => c.id === r.chamada_id)
-      const aula = aulasFiltered.find((a: any) => a.id === chamada?.aula_id)
-
+    sheets['Frequência'] = registros.map((r: any) => {
+      const aluno = alunos.find((a: any) => a.id === r.aluno_id)
       return {
         'Aluno ID': r.aluno_id,
         'Aluno Nome': aluno?.nome_completo || '',
-        Data: aula?.data || '',
+        Data: r.created_at?.split('T')[0] || '',
         Status: r.status || 'falta',
         Observação: r.observacao || '',
         'Justificado': r.justificado ? 'Sim' : 'Não',
@@ -239,11 +277,82 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       }
     })
 
+    sheets['Justificativas'] = justificativas.map((j: any) => ({
+      ID: j.id,
+      'Aluno ID': j.aluno_id,
+      Motivo: j.motivo,
+      Status: j.status,
+      'Resposta Professor': j.professor_resposta || '',
+      'Criado em': j.created_at,
+    }))
+
+    sheets['Justificativas Falta'] = justificativasFalta.map((jf: any) => ({
+      ID: jf.id,
+      'Registro ID': jf.registro_id,
+      Motivo: jf.motivo,
+      Status: jf.status,
+      'Criado em': jf.created_at,
+    }))
+
+    sheets['Alertas'] = alertas.map((al: any) => ({
+      ID: al.id,
+      Tipo: al.tipo,
+      Mensagem: al.mensagem,
+      Lido: al.lido ? 'Sim' : 'Não',
+      'Criado em': al.created_at,
+    }))
+
+    sheets['Entradas'] = entradas.map((e: any) => ({
+      ID: e.id,
+      Tabela: e.tabela,
+      Ação: e.acao,
+      'Usuário ID': e.usuario_id,
+      Dados: e.dados ? JSON.stringify(e.dados) : '',
+      'Criado em': e.created_at,
+    }))
+
+    sheets['Push Subscriptions'] = pushSubscriptions.map((ps: any) => ({
+      ID: ps.id,
+      'Usuário ID': ps.usuario_id,
+      Endpoint: ps.endpoint,
+      'Criado em': ps.created_at,
+    }))
+
+    sheets['Audit Logs'] = auditLogs.slice(0, 1000).map((al: any) => ({
+      ID: al.id,
+      Ação: al.acao,
+      Tabela: al.tabela,
+      'ID Registro': al.id_registro,
+      'Usuário ID': al.usuario_id,
+      'Criado em': al.created_at,
+    }))
+
+    sheets['Error Logs'] = errorLogs.slice(0, 1000).map((el: any) => ({
+      ID: el.id,
+      Erro: el.erro,
+      Stack: el.stack?.substring(0, 100) || '',
+      'Criado em': el.created_at,
+    }))
+
+    sheets['Info Logs'] = infoLogs.slice(0, 1000).map((il: any) => ({
+      ID: il.id,
+      Mensagem: il.mensagem,
+      Contexto: il.contexto || '',
+      'Criado em': il.created_at,
+    }))
+
     // Criar workbook
     const wb = XLSX.utils.book_new()
 
     // Adicionar abas em ordem
-    const sheetOrder = ['Escola', 'Anos Letivos', 'Bimestres', 'Turmas', 'Disciplinas', 'Alunos', 'Responsáveis', 'Usuários', 'Aulas', 'Notas', 'Chamadas', 'Frequência']
+    const sheetOrder = [
+      'Escola', 'Anos Letivos', 'Bimestres', 'Calendário Escolar',
+      'Turmas', 'Disciplinas', 'Alunos', 'Fotos Alunos', 'Responsáveis', 'Responsáveis-Alunos',
+      'Usuários', 'Aulas', 'Conteúdo Aulas', 'Avaliações', 'Provas',
+      'Notas', 'Notas Avaliação', 'Chamadas', 'Frequência',
+      'Justificativas', 'Justificativas Falta', 'Alertas',
+      'Entradas', 'Push Subscriptions', 'Audit Logs', 'Error Logs', 'Info Logs'
+    ]
 
     sheetOrder.forEach(sheetName => {
       const data = sheets[sheetName] || []
@@ -258,8 +367,6 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
       }
 
       XLSX.utils.book_append_sheet(wb, ws, sheetName)
-
-      console.log(`Aba '${sheetName}' criada com ${data.length} registros`)
     })
 
     // Gerar nome do arquivo
@@ -270,9 +377,10 @@ export async function exportarDados(supabase: SupabaseClient, tipo: 'dia' | 'com
     // Fazer download
     XLSX.writeFile(wb, nomeArquivo)
 
-    return { sucesso: true, mensagem: `Dados exportados como ${nomeArquivo}` }
+    console.log(`✅ Arquivo ${nomeArquivo} gerado com sucesso!`)
+    return { sucesso: true, mensagem: `✅ Dados exportados como ${nomeArquivo}` }
   } catch (erro) {
-    console.error('Erro ao exportar dados:', erro)
-    return { sucesso: false, mensagem: (erro as Error).message }
+    console.error('❌ Erro ao exportar dados:', erro)
+    return { sucesso: false, mensagem: `❌ Erro: ${(erro as Error).message}` }
   }
 }
