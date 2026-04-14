@@ -5,11 +5,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Home, ClipboardList, BarChart3, BookOpen, Users, AlertCircle, FileText, Settings, Menu, X, LogOut, Bell } from 'lucide-react'
+import { Home, BarChart3, BookOpen, Users, AlertCircle, FileText, Settings, Menu, X, LogOut, Bell } from 'lucide-react'
 
 const nav = [
   { href: '/adm', label: 'Dashboard', icon: Home, exact: true },
-  { href: '/adm/chamadas', label: 'Chamadas', icon: ClipboardList },
   { href: '/adm/frequencia', label: 'Frequência', icon: BarChart3 },
   { href: '/adm/notas', label: 'Notas', icon: BookOpen },
   { href: '/adm/alunos', label: 'Alunos', icon: Users },

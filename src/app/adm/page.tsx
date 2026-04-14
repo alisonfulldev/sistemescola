@@ -61,19 +61,21 @@ export default function AdmDashboard() {
   const [bimestres, setBimestres] = useState<any[]>([])
   const [diasEspeciais, setDiasEspeciais] = useState<Record<string, string>>({})
   const [relatorio, setRelatorio] = useState<any[]>([])
+  const [dataSelecionada, setDataSelecionada] = useState<string>(new Date().toISOString().split('T')[0])
   const supabase = createClient()
 
-  async function carregar() {
+  async function carregar(data?: string) {
+    const dataParam = data || dataSelecionada
     const [res, relRes, { data: anoAtivo }] = await Promise.all([
-      fetch('/api/adm/dashboard'),
+      fetch(`/api/adm/dashboard?data=${dataParam}`),
       fetch('/api/adm/relatorio'),
       supabase.from('anos_letivos').select('id, bimestres(numero, data_inicio, data_fim)').eq('ativo', true).limit(1).single(),
     ])
     if (!res.ok) { setLoading(false); return }
-    const data = await res.json()
-    setKpis(data.kpis)
-    setChamadas(data.chamadas)
-    setAlertas(data.alertas)
+    const resData = await res.json()
+    setKpis(resData.kpis)
+    setChamadas(resData.chamadas)
+    setAlertas(resData.alertas)
     if (relRes.ok) { const rel = await relRes.json(); setRelatorio(rel.turmas || []) }
 
     if (anoAtivo?.id) {
@@ -89,11 +91,14 @@ export default function AdmDashboard() {
 
   useEffect(() => {
     carregar()
+  }, [dataSelecionada])
+
+  useEffect(() => {
     const ch = supabase.channel('adm-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas' }, carregar)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'registros_chamada' }, carregar)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, carregar)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'entradas' }, carregar)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chamadas' }, () => carregar())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'registros_chamada' }, () => carregar())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, () => carregar())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'entradas' }, () => carregar())
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [])
@@ -113,6 +118,16 @@ export default function AdmDashboard() {
             <p className="text-slate-300 text-sm">{formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}</p>
           </div>
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label htmlFor="data" className="text-sm text-slate-300">Data:</label>
+              <input
+                id="data"
+                type="date"
+                value={dataSelecionada}
+                onChange={(e) => setDataSelecionada(e.target.value)}
+                className="text-sm bg-slate-800 text-white px-3 py-2 rounded-lg border border-slate-700 hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
             <Link
               href="/admin"
               className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
@@ -120,10 +135,12 @@ export default function AdmDashboard() {
               <Settings className="w-4 h-4" />
               <span>Cadastros</span>
             </Link>
-            <div className="flex items-center gap-2 text-sm text-green-100 bg-green-900 bg-opacity-50 px-3 py-1.5 rounded-lg">
-              <span className="w-2 h-2 bg-green-400 rounded-full live-dot" />
-              <span className="font-medium">Ao vivo</span>
-            </div>
+            {dataSelecionada === new Date().toISOString().split('T')[0] && (
+              <div className="flex items-center gap-2 text-sm text-green-100 bg-green-900 bg-opacity-50 px-3 py-1.5 rounded-lg">
+                <span className="w-2 h-2 bg-green-400 rounded-full live-dot" />
+                <span className="font-medium">Ao vivo</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -167,7 +184,7 @@ export default function AdmDashboard() {
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold text-slate-900 text-base flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-600" />
-              Chamadas de Hoje
+              Chamadas {dataSelecionada === new Date().toISOString().split('T')[0] ? 'de Hoje' : `de ${formatDate(new Date(dataSelecionada + 'T12:00:00'), "dd 'de' MMMM")}`}
             </h2>
             <span className="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg font-medium">{chamadas.length} total</span>
           </div>

@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -33,7 +33,7 @@ export async function GET() {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const hoje = new Date().toISOString().split('T')[0]
+    const hoje = req.nextUrl.searchParams.get('data') || new Date().toISOString().split('T')[0]
 
     // helper: filtra por escola via turmas quando necessário
     function filtrarEscola(q: any, campo = 'turmas.escola_id') {
