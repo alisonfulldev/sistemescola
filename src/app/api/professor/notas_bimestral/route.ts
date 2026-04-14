@@ -119,7 +119,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nenhuma nota para salvar' }, { status: 400 })
     }
 
-    // Fazer upsert de notas (atualiza se existir, insere se não)
+    // Fazer delete das notas antigas para esses alunos
+    const alunoIds = notas.map((n: any) => n.aluno_id)
+    const { error: deleteError } = await admin
+      .from('notas')
+      .delete()
+      .eq('turma_id', turma_id)
+      .eq('disciplina_id', disciplina_id)
+      .eq('ano_letivo_id', ano_letivo_id)
+      .in('aluno_id', alunoIds)
+
+    if (deleteError) {
+      console.error('DELETE ERROR:', deleteError)
+      await logger.logError('/api/professor/notas_bimestral', deleteError as Error, user.id, { turma_id, disciplina_id })
+      return NextResponse.json({
+        error: 'Erro ao limpar notas antigas',
+        detail: deleteError.message
+      }, { status: 500 })
+    }
+
+    // Inserir notas novas
     const rows = notas.map((n: any) => ({
       aluno_id: n.aluno_id,
       turma_id,
@@ -132,16 +151,16 @@ export async function POST(req: NextRequest) {
       atualizado_em: new Date().toISOString()
     }))
 
-    const { error: upsertError } = await admin
+    const { error: insertError } = await admin
       .from('notas')
-      .upsert(rows, { onConflict: 'aluno_id,turma_id,disciplina_id,ano_letivo_id' })
+      .insert(rows)
 
-    if (upsertError) {
-      console.error('UPSERT ERROR:', upsertError)
-      await logger.logError('/api/professor/notas_bimestral', upsertError as Error, user.id, { turma_id, disciplina_id, rows })
+    if (insertError) {
+      console.error('INSERT ERROR:', insertError)
+      await logger.logError('/api/professor/notas_bimestral', insertError as Error, user.id, { turma_id, disciplina_id, rows })
       return NextResponse.json({
         error: 'Erro ao salvar notas bimestrais',
-        detail: upsertError.message
+        detail: insertError.message
       }, { status: 500 })
     }
 
