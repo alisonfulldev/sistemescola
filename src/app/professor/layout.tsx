@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { Home, BookOpen, CheckCircle2, BarChart3, LogOut, Menu, X } from 'lucide-react'
+import { Home, BookOpen, BarChart3, LogOut, Menu, X } from 'lucide-react'
 
 export default function ProfessorLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -19,7 +19,6 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
 
   const menuItems = [
     { href: '/professor', label: 'Dashboard', icon: Home },
-    { href: '/professor/chamada', label: 'Chamada', icon: CheckCircle2 },
     { href: '/professor/notas', label: 'Notas', icon: BookOpen },
     { href: '/professor/avaliacoes', label: 'Avaliações', icon: BarChart3 },
   ]
