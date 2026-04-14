@@ -125,10 +125,10 @@ export async function POST(req: NextRequest) {
       turma_id,
       disciplina_id,
       ano_letivo_id,
-      b1: n.b1 === '' || n.b1 === null ? null : parseFloat(String(n.b1)),
-      b2: n.b2 === '' || n.b2 === null ? null : parseFloat(String(n.b2)),
-      b3: n.b3 === '' || n.b3 === null ? null : parseFloat(String(n.b3)),
-      b4: n.b4 === '' || n.b4 === null ? null : parseFloat(String(n.b4)),
+      b1: n.b1 === '' || n.b1 === null || n.b1 === undefined ? null : parseFloat(String(n.b1)),
+      b2: n.b2 === '' || n.b2 === null || n.b2 === undefined ? null : parseFloat(String(n.b2)),
+      b3: n.b3 === '' || n.b3 === null || n.b3 === undefined ? null : parseFloat(String(n.b3)),
+      b4: n.b4 === '' || n.b4 === null || n.b4 === undefined ? null : parseFloat(String(n.b4)),
       atualizado_em: new Date().toISOString()
     }))
 
