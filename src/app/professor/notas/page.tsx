@@ -206,7 +206,7 @@ export default function ProfessorNotasPage() {
                             max="10"
                             step="0.1"
                             placeholder="—"
-                            value={editando[aluno.id]?.[bimestre] ?? notas[aluno.id]?.[bimestre] ?? ''}
+                            value={editando[aluno.id]?.[bimestre] ?? ''}
                             onChange={e => handleNotaChange(aluno.id, bimestre, e.target.value)}
                             className="w-20 bg-white border border-slate-300 rounded-lg px-2 py-2 text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                           />
