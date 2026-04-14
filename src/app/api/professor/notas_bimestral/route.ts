@@ -64,10 +64,13 @@ export async function POST(req: NextRequest) {
   const validation = SaveNotasSchema.safeParse(payload)
   if (!validation.success) {
     console.error('VALIDATION ERROR:', validation.error.issues)
+    console.error('PAYLOAD RECEBIDO:', JSON.stringify(payload, null, 2))
+    await logger.logError('/api/professor/notas_bimestral', new Error(`Validação falhou: ${JSON.stringify(validation.error.issues)}`), user.id, { payload })
     return NextResponse.json({
       error: 'Dados inválidos',
       details: validation.error.flatten().fieldErrors,
-      issues: validation.error.issues
+      issues: validation.error.issues,
+      payload_recebido: payload
     }, { status: 400 })
   }
 
