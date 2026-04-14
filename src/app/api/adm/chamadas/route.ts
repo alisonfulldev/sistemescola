@@ -25,53 +25,53 @@ export async function GET(req: NextRequest) {
     // Isolar por escola para diretor/secretaria
     const escolaId: string | null = (perfil === 'admin') ? null : (userData?.escola_id || null)
 
-  const data = req.nextUrl.searchParams.get('data') || new Date().toISOString().split('T')[0]
-  const page = Math.max(1, parseInt(req.nextUrl.searchParams.get('page') || '1'))
-  const limit = 15
+    const data = req.nextUrl.searchParams.get('data') || new Date().toISOString().split('T')[0]
+    const page = Math.max(1, parseInt(req.nextUrl.searchParams.get('page') || '1'))
+    const limit = 15
 
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
 
-  let q = admin
-    .from('aulas')
-    .select('id, data, horario_inicio, horario_fim, turmas!inner(nome, turno, escola_id), disciplinas(nome), usuarios(nome)')
-    .eq('data', data)
-    .order('horario_inicio')
-  if (escolaId) q = (q as any).eq('turmas.escola_id', escolaId)
+    let q = admin
+      .from('aulas')
+      .select('id, data, horario_inicio, horario_fim, turmas!inner(nome, turno, escola_id), disciplinas(nome), usuarios(nome)')
+      .eq('data', data)
+      .order('horario_inicio')
+    if (escolaId) q = (q as any).eq('turmas.escola_id', escolaId)
 
-  const { data: aulas } = await q
+    const { data: aulas } = await q
 
-  if (!aulas?.length) return NextResponse.json({ chamadas: [], total: 0, pagina: page, limite: limit, total_paginas: 0 })
+    if (!aulas?.length) return NextResponse.json({ chamadas: [], total: 0, pagina: page, limite: limit, total_paginas: 0 })
 
-  const aulaIds = aulas.map((a: any) => a.id)
-  const aulaMap = new Map(aulas.map((a: any) => [a.id, a]))
+    const aulaIds = aulas.map((a: any) => a.id)
+    const aulaMap = new Map(aulas.map((a: any) => [a.id, a]))
 
-  // Buscar total de chamadas (sem paginação para contar)
-  const { count: totalChamadas } = await admin
-    .from('chamadas')
-    .select('id', { count: 'exact' })
-    .in('aula_id', aulaIds)
+    // Buscar total de chamadas (sem paginação para contar)
+    const { count: totalChamadas } = await admin
+      .from('chamadas')
+      .select('id', { count: 'exact' })
+      .in('aula_id', aulaIds)
 
-  const { data: chamadas } = await admin
-    .from('chamadas')
-    .select('id, status, iniciada_em, concluida_em, aula_id, registros_chamada(id, status)')
-    .in('aula_id', aulaIds)
-    .order('iniciada_em', { ascending: false })
-    .range((page - 1) * limit, page * limit - 1)
+    const { data: chamadas } = await admin
+      .from('chamadas')
+      .select('id, status, iniciada_em, concluida_em, aula_id, registros_chamada(id, status)')
+      .in('aula_id', aulaIds)
+      .order('iniciada_em', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1)
 
-  const resultado = (chamadas || []).map((c: any) => ({
-    ...c,
-    aulas: aulaMap.get(c.aula_id),
-  }))
+    const resultado = (chamadas || []).map((c: any) => ({
+      ...c,
+      aulas: aulaMap.get(c.aula_id),
+    }))
 
-  const totalPaginas = Math.ceil((totalChamadas || 0) / limit)
+    const totalPaginas = Math.ceil((totalChamadas || 0) / limit)
 
-  await logger.logAudit(user.id, 'chamadas_consultar', '/api/adm/chamadas', { chamadas: resultado.length, pagina: page }, true)
+    await logger.logAudit(user.id, 'chamadas_consultar', '/api/adm/chamadas', { chamadas: resultado.length, pagina: page }, true)
 
-  return NextResponse.json({ chamadas: resultado, total: totalChamadas || 0, pagina, limite: limit, total_paginas: totalPaginas })
+    return NextResponse.json({ chamadas: resultado, total: totalChamadas || 0, pagina, limite: limit, total_paginas: totalPaginas })
   } catch (error) {
     await logger.logError('/api/adm/chamadas', error as Error, user.id)
     return NextResponse.json({ chamadas: [] }, { status: 500 })
