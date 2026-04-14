@@ -107,10 +107,10 @@ export default function ProfessorNotasPage() {
       ano_letivo_id: anoLetivoId,
       notas: Object.entries(editando).map(([alunoId, valores]) => ({
         aluno_id: alunoId,
-        b1: valores.b1 || notas[alunoId]?.b1 || null,
-        b2: valores.b2 || notas[alunoId]?.b2 || null,
-        b3: valores.b3 || notas[alunoId]?.b3 || null,
-        b4: valores.b4 || notas[alunoId]?.b4 || null,
+        b1: 'b1' in valores ? (valores.b1 === '' || valores.b1 === null ? null : valores.b1) : notas[alunoId]?.b1 || null,
+        b2: 'b2' in valores ? (valores.b2 === '' || valores.b2 === null ? null : valores.b2) : notas[alunoId]?.b2 || null,
+        b3: 'b3' in valores ? (valores.b3 === '' || valores.b3 === null ? null : valores.b3) : notas[alunoId]?.b3 || null,
+        b4: 'b4' in valores ? (valores.b4 === '' || valores.b4 === null ? null : valores.b4) : notas[alunoId]?.b4 || null,
       }))
     }
     try {
@@ -198,20 +198,29 @@ export default function ProfessorNotasPage() {
                         <div className="font-medium text-xs md:text-sm text-slate-900 truncate">{aluno.nome_completo}</div>
                         <div className="text-xs text-slate-500 hidden md:block">{aluno.matricula}</div>
                       </td>
-                      {(['b1', 'b2', 'b3', 'b4'] as const).map(bimestre => (
-                        <td key={bimestre} className="p-2 md:p-4 text-center">
-                          <input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.1"
-                            placeholder="—"
-                            value={editando[aluno.id]?.[bimestre] ?? ''}
-                            onChange={e => handleNotaChange(aluno.id, bimestre, e.target.value)}
-                            className="w-20 bg-white border border-slate-300 rounded-lg px-2 py-2 text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </td>
-                      ))}
+                      {(['b1', 'b2', 'b3', 'b4'] as const).map(bimestre => {
+                        const notaAnterior = notas[aluno.id]?.[bimestre]
+                        const estaEditando = aluno.id in editando && bimestre in (editando[aluno.id] || {})
+                        return (
+                          <td key={bimestre} className="p-2 md:p-4 text-center">
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="0"
+                                max="10"
+                                step="0.1"
+                                placeholder={notaAnterior ? `${notaAnterior}` : '—'}
+                                value={editando[aluno.id]?.[bimestre] ?? ''}
+                                onChange={e => handleNotaChange(aluno.id, bimestre, e.target.value)}
+                                className="w-20 bg-white border border-slate-300 rounded-lg px-2 py-2 text-center text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                              {notaAnterior && !estaEditando && (
+                                <div className="text-xs text-slate-400 mt-0.5">prev: {notaAnterior}</div>
+                              )}
+                            </div>
+                          </td>
+                        )
+                      })}
                     </tr>
                   ))}
                 </tbody>
