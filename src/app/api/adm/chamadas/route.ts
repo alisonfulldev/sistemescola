@@ -73,7 +73,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ chamadas: resultado, total: totalChamadas || 0, pagina, limite: limit, total_paginas: totalPaginas })
   } catch (error) {
-    await logger.logError('/api/adm/chamadas', error as Error, user.id)
-    return NextResponse.json({ chamadas: [] }, { status: 500 })
+    const err = error as Error
+    console.error('ERRO API CHAMADAS:', err.message, err.stack)
+    await logger.logError('/api/adm/chamadas', err, user.id, { data, page, filtroData: data })
+    return NextResponse.json({
+      chamadas: [],
+      error: err.message,
+      stack: err.stack
+    }, { status: 500 })
   }
 }
