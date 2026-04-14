@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     const { error: upsertError } = await admin
       .from('notas')
-      .upsert(rows, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id' })
+      .upsert(rows, { onConflict: 'aluno_id,turma_id,disciplina_id,ano_letivo_id' })
 
     if (upsertError) {
       console.error('UPSERT ERROR:', upsertError)
