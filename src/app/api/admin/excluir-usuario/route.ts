@@ -33,6 +33,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não é possível excluir a própria conta' }, { status: 400 })
   }
 
+  // Impede exclusão de perfis protegidos
+  const { data: usuarioDeletar } = await admin
+    .from('usuarios')
+    .select('perfil')
+    .eq('id', user_id)
+    .single()
+
+  if (['admin', 'diretor', 'secretaria'].includes(usuarioDeletar?.perfil)) {
+    await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id }, false)
+    return NextResponse.json({ error: 'Este perfil não pode ser deletado' }, { status: 403 })
+  }
+
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,

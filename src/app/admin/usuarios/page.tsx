@@ -371,17 +371,17 @@ export default function UsuariosPage() {
                         </button>
                         <button
                           onClick={() => toggleAtivo(u)}
-                          disabled={u.perfil === 'admin'}
-                          title={u.perfil === 'admin' ? 'Usuários admin não podem ser desativados' : undefined}
-                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.perfil === 'admin' ? 'opacity-30 cursor-not-allowed text-slate-400 border-slate-200' : u.ativo ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-green-700 border-green-200 hover:bg-green-50'}`}
+                          disabled={['admin', 'diretor', 'secretaria'].includes(u.perfil)}
+                          title={['admin', 'diretor', 'secretaria'].includes(u.perfil) ? 'Este perfil não pode ser desativado' : undefined}
+                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${['admin', 'diretor', 'secretaria'].includes(u.perfil) ? 'opacity-30 cursor-not-allowed text-slate-400 border-slate-200' : u.ativo ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-green-700 border-green-200 hover:bg-green-50'}`}
                         >
                           {u.ativo ? 'Desativar' : 'Ativar'}
                         </button>
                         <button
                           onClick={() => setDeletandoId(u.id)}
-                          disabled={u.perfil === 'admin'}
-                          title={u.perfil === 'admin' ? 'Usuários admin não podem ser deletados' : undefined}
-                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.perfil === 'admin' ? 'opacity-30 cursor-not-allowed text-slate-400 border-slate-200' : 'text-red-600 border-red-200 hover:bg-red-50'}`}
+                          disabled={['admin', 'diretor', 'secretaria'].includes(u.perfil)}
+                          title={['admin', 'diretor', 'secretaria'].includes(u.perfil) ? 'Este perfil não pode ser deletado' : undefined}
+                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${['admin', 'diretor', 'secretaria'].includes(u.perfil) ? 'opacity-30 cursor-not-allowed text-slate-400 border-slate-200' : 'text-red-600 border-red-200 hover:bg-red-50'}`}
                         >
                           🗑 Deletar
                         </button>
