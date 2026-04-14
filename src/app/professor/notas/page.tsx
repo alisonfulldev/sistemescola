@@ -17,6 +17,7 @@ export default function ProfessorNotasPage() {
   const [editando, setEditando] = useState<Record<string, {b1?: string, b2?: string, b3?: string, b4?: string}>>({})
   const [salvando, setSalvando] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
     async function init() {
@@ -99,6 +100,7 @@ export default function ProfessorNotasPage() {
 
   const salvarNotas = async () => {
     setSalvando(true)
+    setErro(null)
     const payload = {
       turma_id: turmaId,
       disciplina_id: disciplinaId,
@@ -111,14 +113,21 @@ export default function ProfessorNotasPage() {
         b4: valores.b4 || notas[alunoId]?.b4 || null,
       }))
     }
-    const res = await fetch('/api/professor/notas_bimestral', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    if (res.ok) {
-      setEditando({})
-      carregarNotas()
+    try {
+      const res = await fetch('/api/professor/notas_bimestral', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (res.ok) {
+        setEditando({})
+        carregarNotas()
+      } else {
+        const data = await res.json()
+        setErro(data.error || 'Erro ao salvar notas')
+      }
+    } catch (err) {
+      setErro((err as Error).message || 'Erro ao salvar notas')
     }
     setSalvando(false)
   }
@@ -133,6 +142,13 @@ export default function ProfessorNotasPage() {
           <p className="text-slate-500 text-xs md:text-sm">Notas finais</p>
         </div>
       </div>
+
+      {erro && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700 font-semibold">❌ Erro ao salvar</p>
+          <p className="text-sm text-red-600 mt-1">{erro}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
         <div>
