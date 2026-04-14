@@ -33,6 +33,11 @@ export default function UsuariosPage() {
   const [erroLink, setErroLink] = useState('')
   const [copiado, setCopiado] = useState(false)
 
+  // Delete
+  const [deletandoId, setDeletandoId] = useState<string | null>(null)
+  const [deletando, setDeletando] = useState(false)
+  const [erroDelete, setErroDelete] = useState('')
+
   const supabase = createClient()
 
   async function carregar() {
@@ -126,6 +131,25 @@ export default function UsuariosPage() {
       body: JSON.stringify({ user_id: u.id, ativo: !u.ativo }),
     })
     carregar()
+  }
+
+  async function deletarUsuario() {
+    if (!deletandoId) return
+    setDeletando(true)
+    setErroDelete('')
+    const res = await fetch('/api/admin/excluir-usuario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: deletandoId }),
+    })
+    if (!res.ok) {
+      const d = await res.json()
+      setErroDelete(d.error || 'Erro ao deletar usuário')
+    } else {
+      setDeletandoId(null)
+      carregar()
+    }
+    setDeletando(false)
   }
 
   const usuariosFiltrados = usuarios.filter(u => {
@@ -265,6 +289,39 @@ export default function UsuariosPage() {
         </div>
       )}
 
+      {deletandoId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-red-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <span className="text-xl">⚠️</span>
+              </div>
+              <h3 className="text-slate-900 font-semibold">Deletar usuário?</h3>
+            </div>
+            {erroDelete && <p className="text-sm text-red-600 mb-4 bg-red-50 p-2 rounded">{erroDelete}</p>}
+            <p className="text-slate-600 text-sm mb-6">
+              Tem certeza que deseja deletar <strong>{usuarios.find(u => u.id === deletandoId)?.nome}</strong>? Esta ação é irreversível.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={deletarUsuario}
+                disabled={deletando}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                {deletando ? 'Deletando...' : 'Sim, deletar'}
+              </button>
+              <button
+                onClick={() => setDeletandoId(null)}
+                disabled={deletando}
+                className="flex-1 py-2.5 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[540px]">
@@ -319,6 +376,14 @@ export default function UsuariosPage() {
                           className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.perfil === 'admin' ? 'opacity-30 cursor-not-allowed text-slate-400 border-slate-200' : u.ativo ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-green-700 border-green-200 hover:bg-green-50'}`}
                         >
                           {u.ativo ? 'Desativar' : 'Ativar'}
+                        </button>
+                        <button
+                          onClick={() => setDeletandoId(u.id)}
+                          disabled={u.perfil === 'admin'}
+                          title={u.perfil === 'admin' ? 'Usuários admin não podem ser deletados' : undefined}
+                          className={`text-xs px-2 py-1 rounded-lg border transition-all ${u.perfil === 'admin' ? 'opacity-30 cursor-not-allowed text-slate-400 border-slate-200' : 'text-red-600 border-red-200 hover:bg-red-50'}`}
+                        >
+                          🗑 Deletar
                         </button>
                       </div>
                     </td>
