@@ -50,13 +50,6 @@ export default function AlunosAdmPage() {
           <h1 className="text-xl font-bold text-slate-900">Alunos</h1>
           <p className="text-slate-600 text-sm">{filtrados.length} aluno(s) encontrado(s)</p>
         </div>
-        <a
-          href="/api/adm/exportar?tipo=geral"
-          download
-          className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium rounded-lg hover:bg-green-100 transition-colors"
-        >
-          ⬇ Exportar Excel
-        </a>
       </div>
 
       <div className="flex gap-3 mb-4 flex-wrap">

@@ -35,14 +35,60 @@ export async function GET(req: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
+    // Se houver filtro por escola, obter turmas dessa escola primeiro
+    let turmaIdsFilter: string[] = []
+    if (escolaId) {
+      const { data: turmasData } = await admin
+        .from('turmas')
+        .select('id')
+        .eq('escola_id', escolaId)
+      turmaIdsFilter = (turmasData || []).map(t => t.id)
+    }
+
+    // Buscar aulas da data, opcionalmente filtradas por turmas da escola
     let q = admin
       .from('aulas')
-      .select('id, data, horario_inicio, horario_fim, turmas!inner(nome, turno, escola_id), disciplinas(nome), usuarios(nome)')
+      .select('id, data, horario_inicio, horario_fim, turma_id, disciplina_id, professor_id')
       .eq('data', data)
-      .order('horario_inicio')
-    if (escolaId) q = (q as any).eq('turmas.escola_id', escolaId)
 
-    const { data: aulas } = await q
+    if (turmaIdsFilter.length > 0) {
+      q = (q as any).in('turma_id', turmaIdsFilter)
+    }
+
+    q = q.order('horario_inicio')
+
+    const { data: aulaData, error: aulaError } = await q
+
+    if (aulaError) {
+      console.error('AULAS QUERY ERROR:', aulaError)
+      throw new Error(`Erro ao buscar aulas: ${aulaError.message}`)
+    }
+
+    if (!aulaData?.length) {
+      return NextResponse.json({ chamadas: [], total: 0, pagina: page, limite: limit, total_paginas: 0 })
+    }
+
+    // Buscar dados das turmas, disciplinas e professores
+    const turmaIds = [...new Set(aulaData.map((a: any) => a.turma_id))]
+    const disciplinaIds = [...new Set(aulaData.map((a: any) => a.disciplina_id))]
+    const professorIds = [...new Set(aulaData.map((a: any) => a.professor_id))]
+
+    const [{ data: turmas }, { data: disciplinas }, { data: usuarios }] = await Promise.all([
+      admin.from('turmas').select('id, nome, turno, escola_id').in('id', turmaIds),
+      admin.from('disciplinas').select('id, nome').in('id', disciplinaIds),
+      admin.from('usuarios').select('id, nome').in('id', professorIds),
+    ])
+
+    const turmaMap = new Map((turmas || []).map((t: any) => [t.id, t]))
+    const disciplinaMap = new Map((disciplinas || []).map((d: any) => [d.id, d]))
+    const usuarioMap = new Map((usuarios || []).map((u: any) => [u.id, u]))
+
+    const aulas = aulaData.map((a: any) => ({
+      ...a,
+      turmas: turmaMap.get(a.turma_id),
+      disciplinas: disciplinaMap.get(a.disciplina_id),
+      usuarios: usuarioMap.get(a.professor_id),
+    }))
 
     if (!aulas?.length) return NextResponse.json({ chamadas: [], total: 0, pagina: page, limite: limit, total_paginas: 0 })
 

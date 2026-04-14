@@ -44,13 +44,6 @@ export default function PerfilAlunoPage() {
         <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors">
           ← Voltar
         </button>
-        <a
-          href={`/api/adm/exportar?tipo=aluno&aluno_id=${alunoId}`}
-          download
-          className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-medium rounded-lg hover:bg-green-100 transition-colors"
-        >
-          ⬇ Exportar Excel
-        </a>
       </div>
 
       {/* Cabeçalho do aluno */}
