@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EstudApp — Apresentação</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --border:   #30363d;
+      --muted:    #21262d;
+      --blue:     #3b82f6;
+      --blue-l:   #60a5fa;
+      --blue-d:   #2563eb;
+      --green:    #22c55e;
+      --green-l:  #4ade80;
+      --red:      #ef4444;
+      --amber:    #f59e0b;
+      --purple:   #a855f7;
+      --white:    #f1f5f9;
+      --gray:     #94a3b8;
+      --gray-d:   #64748b;
+    }
+
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Sora', sans-serif; background: var(--bg); color: var(--white); }
+
+    /* ── DECK ── */
+    #deck { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 80px;
+      opacity: 0; pointer-events: none;
+      transform: translateX(60px);
+      transition: opacity .45s ease, transform .45s ease;
+    }
+    .slide.active {
+      opacity: 1; pointer-events: all; transform: translateX(0);
+    }
+    .slide.exit-left {
+      opacity: 0; pointer-events: none; transform: translateX(-60px);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+
+    /* ── PROGRESS BAR ── */
+    #progress {
+      position: fixed; bottom: 0; left: 0; height: 3px;
+      background: var(--blue); transition: width .4s ease; z-index: 100;
+    }
+
+    /* ── COUNTER ── */
+    #counter {
+      position: fixed; bottom: 16px; right: 24px;
+      font-size: 12px; color: var(--gray-d); font-family: 'DM Mono', monospace; z-index: 100;
+    }
+
+    /* ── NAV BUTTONS ── */
+    #nav-prev, #nav-next {
+      position: fixed; top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      color: var(--gray); font-size: 18px; cursor: pointer; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, color .2s;
+    }
+    #nav-prev { left: 16px; }
+    #nav-next { right: 16px; }
+    #nav-prev:hover, #nav-next:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    /* ── SLIDE DOTS ── */
+    #dots {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 100;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 3px;
+      background: var(--border); cursor: pointer; transition: all .3s;
+    }
+    .dot.active { width: 22px; background: var(--blue); }
+
+    /* ── LOGO ── */
+    .logo { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -1px; }
+    .logo span { color: var(--blue-l); }
+
+    /* ── EYEBROW ── */
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.25);
+      color: var(--blue-l); font-size: 11px; font-weight: 600;
+      padding: 5px 14px; border-radius: 20px; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 24px;
+    }
+    .eyebrow .live { width: 6px; height: 6px; background: var(--green-l); border-radius: 50%; animation: pulse 2s infinite; }
+
+    /* ── TYPOGRAPHY ── */
+    .h1 { font-size: clamp(36px, 5vw, 68px); font-weight: 800; letter-spacing: -2px; line-height: 1.1; text-align: center; }
+    .h1 span { color: var(--blue-l); }
+    .h2 { font-size: clamp(28px, 3.5vw, 48px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.15; }
+    .h2 span { color: var(--blue-l); }
+    .sub { font-size: clamp(14px, 1.4vw, 18px); color: var(--gray); line-height: 1.7; max-width: 600px; text-align: center; margin-top: 20px; }
+
+    /* ── GRID HELPERS ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; width: 100%; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 24px;
+    }
+    .card-sm { padding: 16px 18px; border-radius: 12px; }
+
+    /* ── STAT ── */
+    .stat-grid { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; margin-top: 48px; }
+    .stat { text-align: center; }
+    .stat-value { font-size: clamp(32px, 4vw, 52px); font-weight: 800; font-family: 'DM Mono', monospace; color: #fff; letter-spacing: -2px; }
+    .stat-label { font-size: 12px; color: var(--gray); margin-top: 4px; }
+
+    /* ── MODULE CARD ── */
+    .mod {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 20px 18px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .mod-icon { font-size: 26px; }
+    .mod h4 { font-size: 13px; font-weight: 700; color: #fff; }
+    .mod p { font-size: 11px; color: var(--gray); line-height: 1.5; }
+    .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .tag { font-size: 10px; background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--gray); padding: 2px 8px; border-radius: 6px; }
+
+    /* ── PERFIL CARD ── */
+    .perfil {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 22px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px;
+    }
+    .perfil-emoji { font-size: 32px; }
+    .perfil h4 { font-size: 14px; font-weight: 700; }
+    .perfil ul { list-style: none; font-size: 11px; color: var(--gray); text-align: left; line-height: 2; }
+    .perfil ul li::before { content: '✓ '; color: var(--blue-l); font-weight: 700; }
+    .perfil.blue { border-color: rgba(59,130,246,.3); background: rgba(59,130,246,.05); }
+    .perfil.purple { border-color: rgba(168,85,247,.3); background: rgba(168,85,247,.05); }
+    .perfil.green { border-color: rgba(34,197,94,.3); background: rgba(34,197,94,.05); }
+    .perfil.amber { border-color: rgba(245,158,11,.3); background: rgba(245,158,11,.05); }
+
+    /* ── SECURITY ITEM ── */
+    .sec-item { display: flex; gap: 16px; align-items: flex-start; }
+    .sec-icon { font-size: 22px; flex-shrink: 0; }
+    .sec-item h4 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .sec-item p { font-size: 11px; color: var(--gray); line-height: 1.5; }
+
+    /* ── TECH ITEM ── */
+    .tech-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; }
+    .tech-item .emoji { font-size: 28px; margin-bottom: 8px; }
+    .tech-item h4 { font-size: 13px; font-weight: 700; }
+    .tech-item p { font-size: 11px; color: var(--gray); margin-top: 4px; }
+
+    /* ── KPI ── */
+    .kpi { background: var(--muted); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+    .kpi-label { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: .5px; }
+    .kpi-value { font-size: 24px; font-weight: 800; font-family: 'DM Mono', monospace; margin-top: 6px; }
+
+    /* ── BROWSER MOCKUP ── */
+    .browser { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; width: 100%; }
+    .browser-bar { background: var(--muted); border-bottom: 1px solid var(--border); padding: 8px 14px; display: flex; align-items: center; gap: 12px; }
+    .b-dots { display: flex; gap: 5px; }
+    .b-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .b-dots span:nth-child(1) { background: #f85149; }
+    .b-dots span:nth-child(2) { background: #e3b341; }
+    .b-dots span:nth-child(3) { background: #39d353; }
+    .b-url { flex: 1; background: var(--bg); border-radius: 6px; padding: 4px 12px; font-size: 10px; color: var(--gray-d); font-family: 'DM Mono', monospace; }
+    .app-layout { display: flex; height: 280px; }
+    .app-sidebar { width: 130px; flex-shrink: 0; background: var(--bg); border-right: 1px solid var(--border); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+    .sb-logo { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 10px; padding: 0 4px; }
+    .sb-logo span { color: var(--blue-l); }
+    .sb-label { font-size: 8px; font-weight: 700; color: var(--gray-d); letter-spacing: 1px; text-transform: uppercase; padding: 6px 6px 3px; }
+    .sb-item { font-size: 10px; color: var(--gray); padding: 5px 7px; border-radius: 6px; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .sb-item.active { background: rgba(59,130,246,.12); color: var(--blue-l); font-weight: 600; }
+    .app-main { flex: 1; padding: 14px; overflow: hidden; }
+    .app-main h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+
+    /* ── BADGES ── */
+    .badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+    .badge-green { background: rgba(57,211,83,.12); color: #39d353; }
+    .badge-blue { background: rgba(88,166,255,.12); color: #58a6ff; }
+    .badge-amber { background: rgba(227,179,65,.12); color: #e3b341; }
+    .badge-red { background: rgba(248,81,73,.12); color: #f85149; }
+
+    /* ── HIGHLIGHT BOX ── */
+    .highlight {
+      background: rgba(59,130,246,.08); border: 1px solid rgba(59,130,246,.2);
+      border-radius: 12px; padding: 20px 24px;
+    }
+
+    /* ── SLIDE SPECIFIC ── */
+    /* Slide 1 – capa */
+    #s1 { background: radial-gradient(ellipse 90% 70% at 50% 40%, rgba(37,99,235,.2) 0%, transparent 70%), var(--bg); }
+
+    /* Slide 2 – problema */
+    #s2 .problem-list { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; width: 100%; max-width: 700px; }
+    #s2 .p-item { display: flex; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; }
+    #s2 .p-num { font-size: 20px; font-weight: 800; font-family: 'DM Mono', monospace; color: var(--red); min-width: 32px; }
+    #s2 .p-text { font-size: 14px; color: var(--gray); line-height: 1.5; }
+    #s2 .p-text strong { color: #fff; }
+
+    /* Slide 3 – solução */
+    #s3 { align-items: flex-start; }
+    #s3 .sol-left { flex: 1; }
+    #s3 .sol-layout { display: flex; gap: 48px; width: 100%; align-items: center; }
+
+    /* Animations */
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+    .slide.active .anim { animation: fadeUp .5s ease forwards; }
+    .slide.active .anim-1 { animation-delay: .05s; }
+    .slide.active .anim-2 { animation-delay: .12s; }
+    .slide.active .anim-3 { animation-delay: .2s; }
+    .slide.active .anim-4 { animation-delay: .28s; }
+
+    /* ── LABEL BAR (top of slide) ── */
+    .slide-label {
+      position: absolute; top: 24px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; font-weight: 700; color: var(--gray-d); letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* responsive min sizes */
+    @media (max-width: 900px) {
+      .slide { padding: 40px 24px; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      #nav-prev, #nav-next { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 1 — CAPA
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide active" id="s1">
+    <div class="eyebrow anim anim-1"><span class="live"></span>Sistema Escolar Completo</div>
+    <h1 class="h1 anim anim-2">O sistema que a<br><span>escola precisa</span></h1>
+    <p class="sub anim anim-3">Chamadas eletrônicas, frequência, notas, alertas e comunicação com responsáveis — tudo em tempo real.</p>
+    <div class="stat-grid anim anim-4">
+      <div class="stat"><div class="stat-value" style="color:var(--blue-l)">5+</div><div class="stat-label">Perfis de acesso</div></div>
+      <div class="stat"><div class="stat-value" style="color:var(--green-l)">100%</div><div class="stat-label">Dados protegidos</div></div>
+      <div class="stat"><div class="stat-value" style="color:var(--amber)">Ao vivo</div><div class="stat-label">Tempo real</div></div>
+      <div class="stat"><div class="stat-value" style="color:var(--purple)">PWA</div><div class="stat-label">Funciona no celular</div></div>
+    </div>
+    <div style="position:absolute;bottom:50px;font-size:12px;color:var(--gray-d)">
+      <span style="font-family:'DM Mono',monospace">Narandiba · 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 2 — O PROBLEMA
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s2">
+    <span class="slide-label">O Problema</span>
+    <h2 class="h2 anim anim-1">O que a escola<br><span>enfrenta hoje</span></h2>
+    <div class="problem-list">
+      <div class="p-item anim anim-2">
+        <div class="p-num">01</div>
+        <div class="p-text"><strong>Chamada manual e lenta</strong> — papel, caneta, transcrição. Fácil de errar e perder.</div>
+      </div>
+      <div class="p-item anim anim-3">
+        <div class="p-num">02</div>
+        <div class="p-text"><strong>Frequência sem visibilidade</strong> — diretor e secretaria não sabem em tempo real quem faltou.</div>
+      </div>
+      <div class="p-item anim anim-4">
+        <div class="p-num">03</div>
+        <div class="p-text"><strong>Responsável desinformado</strong> — pai só descobre a falta do filho dias depois, ou nunca.</div>
+      </div>
+      <div class="p-item anim" style="animation-delay:.36s">
+        <div class="p-num">04</div>
+        <div class="p-text"><strong>Dados desprotegidos</strong> — informações de alunos expostas sem controle de acesso por perfil.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 3 — A SOLUÇÃO
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s3">
+    <span class="slide-label">A Solução</span>
+    <div style="width:100%;max-width:900px">
+      <h2 class="h2 anim anim-1" style="margin-bottom:32px">EstudApp resolve<br><span>tudo isso</span></h2>
+      <div class="grid-2">
+        <div class="highlight anim anim-2">
+          <div style="font-size:28px;margin-bottom:12px">📋</div>
+          <h4 style="font-size:15px;font-weight:700;margin-bottom:8px">Chamada eletrônica</h4>
+          <p style="font-size:13px;color:var(--gray);line-height:1.6">Professor abre o celular e registra presença com um toque. Concluído em segundos, com histórico permanente.</p>
+        </div>
+        <div class="highlight anim anim-3">
+          <div style="font-size:28px;margin-bottom:12px">🔔</div>
+          <h4 style="font-size:15px;font-weight:700;margin-bottom:8px">Notificação automática</h4>
+          <p style="font-size:13px;color:var(--gray);line-height:1.6">Responsável recebe push no celular assim que a falta é registrada — mesmo com o app fechado.</p>
+        </div>
+        <div class="highlight anim anim-4">
+          <div style="font-size:28px;margin-bottom:12px">📊</div>
+          <h4 style="font-size:15px;font-weight:700;margin-bottom:8px">Dashboard ao vivo</h4>
+          <p style="font-size:13px;color:var(--gray);line-height:1.6">Diretor e secretaria acompanham presença, chamadas e alertas em tempo real, sem recarregar a página.</p>
+        </div>
+        <div class="highlight anim" style="animation-delay:.28s">
+          <div style="font-size:28px;margin-bottom:12px">🔐</div>
+          <h4 style="font-size:15px;font-weight:700;margin-bottom:8px">Segurança por perfil</h4>
+          <p style="font-size:13px;color:var(--gray);line-height:1.6">RLS no banco de dados — cada usuário acessa só o que é seu, mesmo em requisições diretas ao banco.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 4 — MÓDULOS
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s4">
+    <span class="slide-label">Funcionalidades</span>
+    <div style="width:100%;max-width:1000px">
+      <h2 class="h2 anim anim-1" style="margin-bottom:24px">9 <span>módulos</span> completos</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" class="anim anim-2">
+        <div class="mod"><div class="mod-icon">📋</div><h4>Chamada Eletrônica</h4><p>Professores registram presença pelo celular em segundos, com histórico completo.</p><div class="tags"><span class="tag">Tempo real</span><span class="tag">Professor</span></div></div>
+        <div class="mod"><div class="mod-icon">📊</div><h4>Frequência & Alertas</h4><p>Cálculo automático de faltas. Alertas gerados ao ultrapassar o limite.</p><div class="tags"><span class="tag">Automático</span><span class="tag">Alertas</span></div></div>
+        <div class="mod"><div class="mod-icon">📝</div><h4>Notas Bimestrais</h4><p>Lançamento por bimestre. Professor acessa só suas turmas e disciplinas.</p><div class="tags"><span class="tag">B1 B2 B3 B4</span><span class="tag">Isolado</span></div></div>
+        <div class="mod"><div class="mod-icon">🔔</div><h4>Push Notifications</h4><p>Responsáveis recebem notificações ao celular quando o filho falta.</p><div class="tags"><span class="tag">PWA</span><span class="tag">Responsável</span></div></div>
+        <div class="mod"><div class="mod-icon">📄</div><h4>Justificativas</h4><p>Responsáveis enviam justificativas. Diretor e secretaria aprovam ou recusam.</p><div class="tags"><span class="tag">Aprovação</span><span class="tag">Prazo</span></div></div>
+        <div class="mod"><div class="mod-icon">🏫</div><h4>Gestão Completa</h4><p>Turmas, disciplinas, professores, alunos, responsáveis, aulas e calendário.</p><div class="tags"><span class="tag">Admin</span><span class="tag">Diretor</span></div></div>
+        <div class="mod"><div class="mod-icon">📅</div><h4>Calendário Escolar</h4><p>Dias letivos, feriados, eventos e bimestres com cálculo automático.</p><div class="tags"><span class="tag">Bimestres</span><span class="tag">Feriados</span></div></div>
+        <div class="mod"><div class="mod-icon">🚪</div><h4>Portaria</h4><p>Registro de entradas de alunos pelo portão com leitura de QR Code.</p><div class="tags"><span class="tag">QR Code</span><span class="tag">Portaria</span></div></div>
+        <div class="mod"><div class="mod-icon">🔒</div><h4>Segurança por Perfil</h4><p>RLS no banco garante isolamento mesmo em requisições diretas.</p><div class="tags"><span class="tag">RLS</span><span class="tag">JWT</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 5 — PERFIS
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s5">
+    <span class="slide-label">Controle de Acesso</span>
+    <div style="width:100%;max-width:1000px">
+      <h2 class="h2 anim anim-1" style="margin-bottom:24px"><span>5 perfis</span> de acesso</h2>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px" class="anim anim-2">
+        <div class="perfil blue">
+          <div class="perfil-emoji">🏫</div>
+          <h4>Diretor</h4>
+          <ul>
+            <li>Dashboard ao vivo</li>
+            <li>Todas as chamadas</li>
+            <li>Relatórios</li>
+            <li>Justificativas</li>
+            <li>Gerenciar escola</li>
+            <li style="color:var(--red)">🔒 Protegido</li>
+          </ul>
+        </div>
+        <div class="perfil blue">
+          <div class="perfil-emoji">🗂️</div>
+          <h4>Secretaria</h4>
+          <ul>
+            <li>Dashboard ao vivo</li>
+            <li>Cadastrar usuários</li>
+            <li>Gerenciar alunos</li>
+            <li>Gerenciar turmas</li>
+            <li>Justificativas</li>
+            <li style="color:var(--red)">🔒 Protegido</li>
+          </ul>
+        </div>
+        <div class="perfil purple">
+          <div class="perfil-emoji">👨‍🏫</div>
+          <h4>Professor</h4>
+          <ul>
+            <li>Dashboard de aulas</li>
+            <li>Iniciar chamada</li>
+            <li>Marcar presença</li>
+            <li>Lançar notas</li>
+            <li>Ver histórico</li>
+            <li>Só suas turmas</li>
+          </ul>
+        </div>
+        <div class="perfil green">
+          <div class="perfil-emoji">👨‍👩‍👦</div>
+          <h4>Responsável</h4>
+          <ul>
+            <li>Ver frequência</li>
+            <li>Notificações</li>
+            <li>Justificativas</li>
+            <li>Ver notas</li>
+            <li>Histórico de faltas</li>
+            <li>Só seus filhos</li>
+          </ul>
+        </div>
+        <div class="perfil amber">
+          <div class="perfil-emoji">🚪</div>
+          <h4>Portaria</h4>
+          <ul>
+            <li>Registrar entradas</li>
+            <li>Identificar alunos</li>
+            <li>Leitura QR Code</li>
+            <li>Acesso restrito</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 6 — TELA: DASHBOARD ADM
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s6">
+    <span class="slide-label">Interface · Tela 1 de 5</span>
+    <div style="width:100%;max-width:960px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px" class="anim anim-1">
+        <div>
+          <h2 class="h2" style="font-size:28px">Dashboard — <span>Diretor / Secretaria</span></h2>
+          <p style="font-size:13px;color:var(--gray);margin-top:4px">Visão ao vivo de presenças, chamadas e alertas do dia</p>
+        </div>
+        <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gray-d)">/adm</span>
+      </div>
+      <div class="browser anim anim-2">
+        <div class="browser-bar">
+          <div class="b-dots"><span></span><span></span><span></span></div>
+          <div class="b-url">sistema-escola.vercel.app/adm</div>
+        </div>
+        <div class="app-layout">
+          <div class="app-sidebar">
+            <div class="sb-logo">Estud<span>App</span></div>
+            <div class="sb-label">Principal</div>
+            <div class="sb-item active">🏠 Dashboard</div>
+            <div class="sb-item">📊 Frequência</div>
+            <div class="sb-item">📝 Notas</div>
+            <div class="sb-item">👥 Alunos</div>
+            <div class="sb-item">⚠️ Alertas</div>
+            <div class="sb-item">📄 Justificativas</div>
+            <div style="margin-top:auto;border-top:1px solid var(--border);padding-top:8px">
+              <div class="sb-item">🚪 Sair</div>
+            </div>
+          </div>
+          <div class="app-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h3 style="font-size:13px">Dashboard</h3>
+              <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:#39d353"><span style="width:6px;height:6px;background:#39d353;border-radius:50%;display:inline-block;"></span>Ao vivo</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+              <div class="kpi"><div class="kpi-label">Matriculados</div><div class="kpi-value" style="font-size:18px">248</div></div>
+              <div class="kpi"><div class="kpi-label">Presentes</div><div class="kpi-value" style="font-size:18px;color:#39d353">201</div></div>
+              <div class="kpi"><div class="kpi-label">Faltas</div><div class="kpi-value" style="font-size:18px;color:#f85149">47</div></div>
+              <div class="kpi"><div class="kpi-label">Pendentes</div><div class="kpi-value" style="font-size:18px;color:#e3b341">3</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:8px">
+              <div style="background:var(--muted);border:1px solid var(--border);border-radius:10px;padding:12px">
+                <div style="font-size:10px;font-weight:700;color:#fff;margin-bottom:8px">📋 Chamadas de Hoje</div>
+                <div style="font-size:10px;color:var(--gray);display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>8º Ano A · Matemática</span><span class="badge badge-green">✓ Concluída</span></div>
+                <div style="font-size:10px;color:var(--gray);display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>9º Ano B · Português</span><span class="badge badge-blue">⏳ Em andamento</span></div>
+                <div style="font-size:10px;color:var(--gray);display:flex;justify-content:space-between;padding:5px 0"><span>7º Ano C · Ciências</span><span class="badge badge-amber">◷ Aguardando</span></div>
+              </div>
+              <div style="background:var(--muted);border:1px solid var(--border);border-radius:10px;padding:12px">
+                <div style="font-size:10px;font-weight:700;color:#fff;margin-bottom:8px">🔔 Alertas</div>
+                <div style="background:rgba(248,81,73,.06);border:1px solid rgba(248,81,73,.2);border-radius:6px;padding:6px 8px;margin-bottom:6px;font-size:9px;color:#f87171">Lucas tem 4 faltas consecutivas em Matemática</div>
+                <div style="background:rgba(227,179,65,.06);border:1px solid rgba(227,179,65,.2);border-radius:6px;padding:6px 8px;font-size:9px;color:#e3b341">Chamada do 6º Ano A ainda não foi iniciada</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 7 — TELA: PROFESSOR
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s7">
+    <span class="slide-label">Interface · Tela 2 de 5</span>
+    <div style="width:100%;max-width:960px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px" class="anim anim-1">
+        <div>
+          <h2 class="h2" style="font-size:28px">Dashboard — <span>Professor</span></h2>
+          <p style="font-size:13px;color:var(--gray);margin-top:4px">Aulas do dia, status de chamadas e ações rápidas</p>
+        </div>
+        <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gray-d)">/professor</span>
+      </div>
+      <div class="browser anim anim-2">
+        <div class="browser-bar">
+          <div class="b-dots"><span></span><span></span><span></span></div>
+          <div class="b-url">sistema-escola.vercel.app/professor</div>
+        </div>
+        <div class="app-layout">
+          <div class="app-sidebar" style="background:var(--surface)">
+            <div class="sb-logo">Estud<span>App</span></div>
+            <div class="sb-item active" style="color:var(--blue-l);background:rgba(59,130,246,.08)">🏠 Dashboard</div>
+            <div class="sb-item" style="color:var(--gray)">📝 Notas</div>
+            <div class="sb-item" style="color:var(--gray)">📊 Avaliações</div>
+            <div style="margin-top:auto;border-top:1px solid rgba(255,255,255,.06);padding-top:8px">
+              <div class="sb-item" style="color:var(--gray)">🚪 Sair</div>
+            </div>
+          </div>
+          <div class="app-main" style="background:#f8fafc">
+            <div style="margin-bottom:12px">
+              <div style="font-size:14px;font-weight:700;color:#0f172a">Olá, Carlos! 👋</div>
+              <div style="font-size:11px;color:#64748b;margin-top:2px">Sexta-feira, 19 de abril de 2026</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;text-align:center"><div style="font-size:9px;color:#64748b">Aulas hoje</div><div style="font-size:20px;font-weight:800;color:#3b82f6;font-family:'DM Mono',monospace">4</div></div>
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;text-align:center"><div style="font-size:9px;color:#64748b">Concluídas</div><div style="font-size:20px;font-weight:800;color:#16a34a;font-family:'DM Mono',monospace">2</div></div>
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;text-align:center"><div style="font-size:9px;color:#64748b">Pendentes</div><div style="font-size:20px;font-weight:800;color:#f59e0b;font-family:'DM Mono',monospace">2</div></div>
+            </div>
+            <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Aulas do dia</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:11px;font-weight:700;color:#0f172a">8º Ano A — Matemática</div><div style="font-size:10px;color:#64748b">07:30 – 08:20</div></div>
+                <span style="font-size:10px;background:#dcfce7;color:#16a34a;padding:3px 8px;border-radius:6px;font-weight:600">✓ Concluída</span>
+              </div>
+              <div style="background:#fff;border:2px solid #2563eb;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+                <div><div style="font-size:11px;font-weight:700;color:#0f172a">9º Ano B — Matemática</div><div style="font-size:10px;color:#64748b">08:20 – 09:10</div></div>
+                <span style="font-size:10px;background:#2563eb;color:#fff;padding:4px 10px;border-radius:6px;font-weight:700">▶ Iniciar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 8 — TELA: RESPONSÁVEL
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s8">
+    <span class="slide-label">Interface · Tela 3 de 5</span>
+    <div style="width:100%;max-width:960px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px" class="anim anim-1">
+        <div>
+          <h2 class="h2" style="font-size:28px">Área do <span>Responsável</span></h2>
+          <p style="font-size:13px;color:var(--gray);margin-top:4px">Frequência do filho, justificativas e notificações</p>
+        </div>
+        <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gray-d)">/responsavel</span>
+      </div>
+      <div class="browser anim anim-2">
+        <div class="browser-bar">
+          <div class="b-dots"><span></span><span></span><span></span></div>
+          <div class="b-url">sistema-escola.vercel.app/responsavel</div>
+        </div>
+        <div style="background:#f8fafc;padding:20px;height:280px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div style="font-size:14px;font-weight:700;color:#0f172a">Olá, Maria! 👋</div>
+            <div style="font-size:11px;color:#64748b">19 de abril de 2026</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px">📊 Frequência — Lucas</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:8px;color:#64748b">Presenças</div><div style="font-size:18px;font-weight:800;color:#16a34a;font-family:'DM Mono',monospace">42</div></div>
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:8px;color:#64748b">Faltas</div><div style="font-size:18px;font-weight:800;color:#ef4444;font-family:'DM Mono',monospace">6</div></div>
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:8px;color:#64748b">Frequência</div><div style="font-size:18px;font-weight:800;color:#3b82f6;font-family:'DM Mono',monospace">87%</div></div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:6px">Últimas ocorrências</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9"><span style="color:#475569">Qui, 18/04 — Matemática</span><span style="font-size:9px;background:#fef2f2;color:#ef4444;padding:2px 7px;border-radius:5px;font-weight:600">Falta</span></div>
+                <div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f1f5f9"><span style="color:#475569">Sex, 19/04 — Português</span><span style="font-size:9px;background:#f0fdf4;color:#16a34a;padding:2px 7px;border-radius:5px;font-weight:600">Presente</span></div>
+                <div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:5px 0"><span style="color:#475569">Seg, 14/04 — Ciências</span><span style="font-size:9px;background:#fffbeb;color:#f59e0b;padding:2px 7px;border-radius:5px;font-weight:600">Justificada</span></div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px">📄 Justificativas</div>
+              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:8px">
+                <div style="font-size:10px;color:#64748b;margin-bottom:4px">Falta em 18/04 — Matemática</div>
+                <div style="font-size:9px;color:#94a3b8;margin-bottom:8px">Consulta médica — Dr. João</div>
+                <span style="font-size:9px;background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:5px;font-weight:600">Aguardando</span>
+              </div>
+              <button style="width:100%;background:#2563eb;color:#fff;font-size:11px;font-weight:700;padding:8px;border-radius:8px;border:none;cursor:pointer">+ Enviar Justificativa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 9 — TELA: GESTÃO DE USUÁRIOS
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s9">
+    <span class="slide-label">Interface · Tela 4 de 5</span>
+    <div style="width:100%;max-width:960px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px" class="anim anim-1">
+        <div>
+          <h2 class="h2" style="font-size:28px">Gestão de <span>Usuários</span></h2>
+          <p style="font-size:13px;color:var(--gray);margin-top:4px">Criação, edição e remoção de usuários com proteção por perfil</p>
+        </div>
+        <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gray-d)">/admin/usuarios</span>
+      </div>
+      <div class="browser anim anim-2">
+        <div class="browser-bar">
+          <div class="b-dots"><span></span><span></span><span></span></div>
+          <div class="b-url">sistema-escola.vercel.app/admin/usuarios</div>
+        </div>
+        <div class="app-layout">
+          <div class="app-sidebar">
+            <div class="sb-logo">Estud<span>App</span></div>
+            <div class="sb-label">Configuração</div>
+            <div class="sb-item">⚙️ Escola</div>
+            <div class="sb-item">📅 Ano Letivo</div>
+            <div class="sb-item">🗓️ Calendário</div>
+            <div class="sb-item active">👥 Usuários</div>
+            <div class="sb-label" style="margin-top:8px">Acadêmico</div>
+            <div class="sb-item">🎓 Professores</div>
+            <div class="sb-item">📚 Turmas</div>
+            <div class="sb-item">📖 Disciplinas</div>
+            <div class="sb-item">👤 Alunos</div>
+            <div class="sb-item">👨‍👩‍👦 Responsáveis</div>
+            <div class="sb-item">🕐 Aulas</div>
+          </div>
+          <div class="app-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <h3 style="font-size:13px">Usuários <span style="font-size:11px;color:var(--gray-d);font-weight:400">18 cadastrados</span></h3>
+              <button style="background:#2563eb;color:#fff;font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;border:none;cursor:pointer">+ Novo Usuário</button>
+            </div>
+            <table style="width:100%;font-size:10px;border-collapse:collapse">
+              <thead><tr style="color:var(--gray-d)"><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">Nome</th><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">Perfil</th><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">Status</th><th style="padding:5px 6px;border-bottom:1px solid var(--border)">Ações</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:6px;color:#fff">Ana Paula Souza</td><td style="padding:6px"><span style="background:rgba(59,130,246,.12);color:#60a5fa;font-size:9px;padding:2px 7px;border-radius:5px;font-weight:600">Diretor</span></td><td style="padding:6px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:9px;padding:2px 7px;border-radius:5px">Ativo</span></td><td style="padding:6px;text-align:center"><span style="font-size:9px;color:var(--gray-d)">🔒 Protegido</span></td></tr>
+                <tr><td style="padding:6px;color:#fff">Carlos Mendes</td><td style="padding:6px"><span style="background:rgba(168,85,247,.12);color:#c084fc;font-size:9px;padding:2px 7px;border-radius:5px;font-weight:600">Professor</span></td><td style="padding:6px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:9px;padding:2px 7px;border-radius:5px">Ativo</span></td><td style="padding:6px;text-align:center;display:flex;gap:4px;justify-content:center"><button style="font-size:9px;background:var(--muted);color:var(--gray);padding:3px 7px;border-radius:5px;border:1px solid var(--border);cursor:pointer">Editar</button><button style="font-size:9px;background:rgba(248,81,73,.1);color:#f85149;padding:3px 7px;border-radius:5px;border:1px solid rgba(248,81,73,.2);cursor:pointer">🗑</button></td></tr>
+                <tr><td style="padding:6px;color:#fff">Maria Lima</td><td style="padding:6px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:9px;padding:2px 7px;border-radius:5px;font-weight:600">Responsável</span></td><td style="padding:6px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:9px;padding:2px 7px;border-radius:5px">Ativo</span></td><td style="padding:6px;text-align:center;display:flex;gap:4px;justify-content:center"><button style="font-size:9px;background:var(--muted);color:var(--gray);padding:3px 7px;border-radius:5px;border:1px solid var(--border);cursor:pointer">Editar</button><button style="font-size:9px;background:rgba(248,81,73,.1);color:#f85149;padding:3px 7px;border-radius:5px;border:1px solid rgba(248,81,73,.2);cursor:pointer">🗑</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 10 — TELA: CADASTROS
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s10">
+    <span class="slide-label">Interface · Tela 5 de 5</span>
+    <div style="width:100%;max-width:960px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px" class="anim anim-1">
+        <div>
+          <h2 class="h2" style="font-size:28px">Área de <span>Cadastros</span></h2>
+          <p style="font-size:13px;color:var(--gray);margin-top:4px">Gestão de alunos, turmas, disciplinas e mais — acesso do Diretor</p>
+        </div>
+        <span style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gray-d)">/admin/alunos</span>
+      </div>
+      <div class="browser anim anim-2">
+        <div class="browser-bar">
+          <div class="b-dots"><span></span><span></span><span></span></div>
+          <div class="b-url">sistema-escola.vercel.app/admin/alunos</div>
+        </div>
+        <div class="app-layout">
+          <div class="app-sidebar">
+            <div class="sb-logo">Estud<span>App</span></div>
+            <div class="sb-label">Configuração</div>
+            <div class="sb-item">⚙️ Escola</div>
+            <div class="sb-item">📅 Ano Letivo</div>
+            <div class="sb-item">🗓️ Calendário</div>
+            <div class="sb-item">👥 Usuários</div>
+            <div class="sb-label" style="margin-top:8px">Acadêmico</div>
+            <div class="sb-item">🎓 Professores</div>
+            <div class="sb-item">📚 Turmas</div>
+            <div class="sb-item">📖 Disciplinas</div>
+            <div class="sb-item active">👤 Alunos</div>
+            <div class="sb-item">👨‍👩‍👦 Responsáveis</div>
+            <div class="sb-item">🕐 Aulas</div>
+          </div>
+          <div class="app-main">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <h3 style="font-size:13px">Alunos <span style="font-size:11px;color:var(--gray-d);font-weight:400">248 matriculados</span></h3>
+              <div style="display:flex;gap:6px">
+                <input style="font-size:10px;background:var(--muted);border:1px solid var(--border);color:var(--gray);padding:4px 10px;border-radius:7px;outline:none" placeholder="Buscar aluno..." />
+                <button style="background:#2563eb;color:#fff;font-size:10px;font-weight:700;padding:5px 12px;border-radius:7px;border:none;cursor:pointer">+ Novo</button>
+              </div>
+            </div>
+            <table style="width:100%;font-size:10px;border-collapse:collapse">
+              <thead><tr style="color:var(--gray-d)"><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">Nome</th><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">Turma</th><th style="text-align:left;padding:5px 6px;border-bottom:1px solid var(--border)">Matrícula</th><th style="padding:5px 6px;border-bottom:1px solid var(--border)">Status</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:6px;color:#fff">Lucas Oliveira Santos</td><td style="padding:6px;color:var(--gray)">8º Ano A</td><td style="padding:6px;color:var(--gray-d);font-family:'DM Mono',monospace">2026001</td><td style="padding:6px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:9px;padding:2px 7px;border-radius:5px">Ativo</span></td></tr>
+                <tr><td style="padding:6px;color:#fff">Ana Clara Ferreira</td><td style="padding:6px;color:var(--gray)">9º Ano B</td><td style="padding:6px;color:var(--gray-d);font-family:'DM Mono',monospace">2026002</td><td style="padding:6px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:9px;padding:2px 7px;border-radius:5px">Ativo</span></td></tr>
+                <tr><td style="padding:6px;color:#fff">Pedro Henrique Dias</td><td style="padding:6px;color:var(--gray)">7º Ano C</td><td style="padding:6px;color:var(--gray-d);font-family:'DM Mono',monospace">2026003</td><td style="padding:6px;text-align:center"><span style="background:rgba(248,81,73,.1);color:#f87171;font-size:9px;padding:2px 7px;border-radius:5px">Inativo</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 11 — SEGURANÇA
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s11">
+    <span class="slide-label">Segurança & Qualidade</span>
+    <div style="width:100%;max-width:900px">
+      <h2 class="h2 anim anim-1" style="margin-bottom:28px">Construído para <span>durar</span></h2>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px" class="anim anim-2">
+        <div class="card card-sm sec-item"><div class="sec-icon">🔐</div><div><h4>Row Level Security</h4><p>RLS no Supabase — cada usuário acessa só seus próprios dados, mesmo em requisições diretas ao banco.</p></div></div>
+        <div class="card card-sm sec-item"><div class="sec-icon">📋</div><div><h4>Logs de Auditoria</h4><p>Todas as ações importantes registradas com usuário, horário e resultado para rastreabilidade total.</p></div></div>
+        <div class="card card-sm sec-item"><div class="sec-icon">⏱️</div><div><h4>Sessão com Timeout</h4><p>Sessões expiram automaticamente após 10 minutos de inatividade, com aviso de 1 minuto antes.</p></div></div>
+        <div class="card card-sm sec-item"><div class="sec-icon">✅</div><div><h4>Validação Zod</h4><p>Todos os dados enviados para a API são validados com schemas Zod antes de qualquer operação.</p></div></div>
+        <div class="card card-sm sec-item"><div class="sec-icon">🔄</div><div><h4>Tempo Real</h4><p>Supabase Realtime — dashboard atualiza automaticamente sem precisar recarregar a página.</p></div></div>
+        <div class="card card-sm sec-item"><div class="sec-icon">🗄️</div><div><h4>Backup PostgreSQL</h4><p>Scripts de backup com pg_dump. Mantém os últimos 10 backups com agendamento automático.</p></div></div>
+        <div class="card card-sm sec-item"><div class="sec-icon">📱</div><div><h4>PWA — Mobile First</h4><p>Funciona como app instalável no celular. Push notifications chegam mesmo com o app fechado.</p></div></div>
+        <div class="card card-sm sec-item"><div class="sec-icon">🏫</div><div><h4>Multi-escola</h4><p>Dados isolados por escola. Cada diretor e secretaria acessa apenas sua unidade.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 12 — STACK TÉCNICA
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s12">
+    <span class="slide-label">Stack Técnica</span>
+    <div style="width:100%;max-width:900px">
+      <h2 class="h2 anim anim-1" style="margin-bottom:28px">Tecnologia de <span>ponta</span></h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" class="anim anim-2">
+        <div class="tech-item"><div class="emoji">⚡</div><h4>Next.js 14</h4><p>App Router, SSR, RSC</p></div>
+        <div class="tech-item"><div class="emoji">🔷</div><h4>TypeScript</h4><p>Strict mode, tipagem total</p></div>
+        <div class="tech-item"><div class="emoji">🗄️</div><h4>Supabase</h4><p>PostgreSQL + RLS + Auth</p></div>
+        <div class="tech-item"><div class="emoji">🎨</div><h4>Tailwind CSS</h4><p>Design system consistente</p></div>
+        <div class="tech-item"><div class="emoji">🔔</div><h4>Web Push</h4><p>Push notifications PWA</p></div>
+        <div class="tech-item"><div class="emoji">✅</div><h4>Zod</h4><p>Validação de schemas</p></div>
+        <div class="tech-item"><div class="emoji">🚀</div><h4>Vercel</h4><p>Deploy automático CI/CD</p></div>
+        <div class="tech-item"><div class="emoji">🔁</div><h4>Realtime</h4><p>Supabase Channels + WS</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SLIDE 13 — ENCERRAMENTO
+  ═══════════════════════════════════════════════════ -->
+  <div class="slide" id="s13" style="background:radial-gradient(ellipse 90% 70% at 50% 40%, rgba(37,99,235,.2) 0%, transparent 70%), var(--bg)">
+    <div class="eyebrow anim anim-1"><span class="live"></span>Sistema em Produção</div>
+    <h1 class="h1 anim anim-2" style="font-size:clamp(32px,5vw,60px)">Pronto para<br><span>entrar em uso</span></h1>
+    <p class="sub anim anim-3">Desenvolvido para a gestão acadêmica de Narandiba. Todos os módulos testados e funcionando em produção.</p>
+    <div style="display:flex;gap:16px;margin-top:40px;flex-wrap:wrap;justify-content:center" class="anim anim-4">
+      <a href="https://sistema-escola.vercel.app" target="_blank" style="background:var(--blue-d);color:#fff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:12px;text-decoration:none;border:none;cursor:pointer">Acessar o sistema →</a>
+      <a href="/apresentacao.html" style="background:rgba(255,255,255,.06);color:var(--gray);font-size:14px;font-weight:500;padding:14px 32px;border-radius:12px;text-decoration:none;border:1px solid var(--border)">Ver apresentação completa</a>
+    </div>
+    <div style="position:absolute;bottom:40px;font-size:12px;color:var(--gray-d);font-family:'DM Mono',monospace">
+      EstudApp v1.0 · 2026 · Narandiba
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Controls -->
+<div id="progress" style="width:7.7%"></div>
+<button id="nav-prev" onclick="prevSlide()">‹</button>
+<button id="nav-next" onclick="nextSlide()">›</button>
+<div id="dots"></div>
+<div id="counter">1 / 13</div>
+
+<script>
+  const TOTAL = 13;
+  let current = 1;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  for (let i = 1; i <= TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n, dir) {
+    if (n < 1 || n > TOTAL || n === current) return;
+    const from = document.getElementById('s' + current);
+    const to   = document.getElementById('s' + n);
+    const goingForward = dir !== undefined ? dir > 0 : n > current;
+
+    from.classList.remove('active');
+    from.classList.add('exit-left');
+    setTimeout(() => {
+      from.classList.remove('exit-left');
+      from.style.transform = goingForward ? 'translateX(60px)' : 'translateX(-60px)';
+      // reset after animation
+      setTimeout(() => { from.style.transform = ''; }, 10);
+    }, 380);
+
+    to.style.transform = goingForward ? 'translateX(60px)' : 'translateX(-60px)';
+    to.style.opacity = '0';
+    // Force reflow
+    to.offsetHeight;
+    to.style.transform = '';
+    to.style.opacity = '';
+    to.classList.add('active');
+
+    current = n;
+    updateUI();
+  }
+
+  function nextSlide() { goTo(current + 1, 1); }
+  function prevSlide() { goTo(current - 1, -1); }
+
+  function updateUI() {
+    // counter
+    document.getElementById('counter').textContent = current + ' / ' + TOTAL;
+    // progress
+    document.getElementById('progress').style.width = ((current / TOTAL) * 100) + '%';
+    // dots
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === current));
+    // nav buttons
+    document.getElementById('nav-prev').style.opacity = current === 1 ? '0.2' : '1';
+    document.getElementById('nav-next').style.opacity = current === TOTAL ? '0.2' : '1';
+  }
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); prevSlide(); }
+    if (e.key === 'Home') goTo(1);
+    if (e.key === 'End')  goTo(TOTAL);
+  });
+
+  // Touch swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const diff = tx - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) diff > 0 ? nextSlide() : prevSlide();
+  }, { passive: true });
+
+  updateUI();
+</script>
+</body>
+</html>
