@@ -357,6 +357,17 @@
     footer p { font-size: 13px; color: var(--slate-500); }
     footer strong { color: var(--slate-300); }
 
+    /* ── CARROSSEL ── */
+    .slide-item { min-width: 100%; flex-shrink: 0; }
+    .slide-tab {
+      font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600;
+      padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05); color: var(--slate-400);
+      cursor: pointer; transition: all .2s;
+    }
+    .slide-tab:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .slide-tab.active { background: var(--blue-600); color: #fff; border-color: var(--blue-600); }
+
     /* ── ANIMATIONS ── */
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
     @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -545,9 +556,25 @@
   <div class="mockup-section-inner">
     <div class="section-eyebrow">Interface</div>
     <div class="section-title">Telas do sistema</div>
-    <p class="section-sub" style="margin-bottom:48px">Cada área tem seu próprio dashboard adaptado ao perfil do usuário.</p>
+    <p class="section-sub" style="margin-bottom:40px">Cada área tem seu próprio dashboard adaptado ao perfil do usuário.</p>
+
+    <!-- CARROSSEL -->
+    <div style="position:relative">
+      <!-- Labels/Tabs -->
+      <div id="slide-tabs" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+        <button onclick="goSlide(0)" class="slide-tab active" data-i="0">🏠 Dashboard</button>
+        <button onclick="goSlide(1)" class="slide-tab" data-i="1">👨‍🏫 Professor</button>
+        <button onclick="goSlide(2)" class="slide-tab" data-i="2">👨‍👩‍👦 Responsável</button>
+        <button onclick="goSlide(3)" class="slide-tab" data-i="3">👥 Usuários</button>
+        <button onclick="goSlide(4)" class="slide-tab" data-i="4">⚙️ Cadastros</button>
+      </div>
+
+      <!-- Slides wrapper -->
+      <div style="overflow:hidden;border-radius:12px">
+        <div id="slides-track" style="display:flex;transition:transform .4s cubic-bezier(.4,0,.2,1)">
 
     <!-- TELA 1: Dashboard Diretor/Secretaria -->
+    <div class="slide-item">
     <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px">
       Dashboard — Diretor / Secretaria
     </p>
@@ -638,8 +665,10 @@
         </div>
       </div>
     </div>
+    </div><!-- /slide-item 1 -->
 
     <!-- TELA 2: Professor -->
+    <div class="slide-item">
     <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px">
       Dashboard — Professor
     </p>
@@ -702,7 +731,10 @@
       </div>
     </div>
 
+    </div><!-- /slide-item 2 -->
+
     <!-- TELA 3: Responsável -->
+    <div class="slide-item">
     <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px">
       Área do Responsável
     </p>
@@ -761,7 +793,10 @@
       </div>
     </div>
 
+    </div><!-- /slide-item 3 -->
+
     <!-- TELA 4: Gestão de Usuários -->
+    <div class="slide-item">
     <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px">
       Gestão de Usuários — Admin
     </p>
@@ -836,6 +871,109 @@
         </div>
       </div>
     </div>
+    </div><!-- /slide-item 4 -->
+
+    <!-- TELA 5: Cadastros Diretor -->
+    <div class="slide-item">
+    <p style="font-size:13px;color:#94a3b8;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px">
+      Área de Cadastros — Diretor
+    </p>
+    <div class="browser-window">
+      <div class="browser-topbar">
+        <div class="browser-dots"><span></span><span></span><span></span></div>
+        <div class="browser-url">sistema-escola.vercel.app/admin/alunos</div>
+      </div>
+      <div class="app-layout">
+        <div class="app-sidebar">
+          <div class="app-sidebar-logo">Estud<span>App</span></div>
+          <div class="sidebar-label">Configuração</div>
+          <div class="sidebar-item"><span class="sidebar-icon">⚙️</span> Escola</div>
+          <div class="sidebar-item"><span class="sidebar-icon">📅</span> Ano Letivo</div>
+          <div class="sidebar-item"><span class="sidebar-icon">🗓️</span> Calendário</div>
+          <div class="sidebar-item"><span class="sidebar-icon">👥</span> Usuários</div>
+          <div class="sidebar-label" style="margin-top:12px">Acadêmico</div>
+          <div class="sidebar-item"><span class="sidebar-icon">🎓</span> Professores</div>
+          <div class="sidebar-item"><span class="sidebar-icon">📚</span> Turmas</div>
+          <div class="sidebar-item"><span class="sidebar-icon">📖</span> Disciplinas</div>
+          <div class="sidebar-item active"><span class="sidebar-icon">👤</span> Alunos</div>
+          <div class="sidebar-item"><span class="sidebar-icon">👨‍👩‍👦</span> Responsáveis</div>
+          <div class="sidebar-item"><span class="sidebar-icon">📅</span> Aulas</div>
+        </div>
+        <div class="app-main">
+          <div class="gestao-screen">
+            <div class="gestao-header">
+              <div>
+                <div class="gestao-title">Alunos <span style="font-size:12px;color:#94a3b8;font-weight:400;margin-left:8px">248 alunos</span></div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:2px">Escola Municipal de Narandiba</div>
+              </div>
+              <button style="background:#2563eb;color:#fff;font-size:12px;font-weight:600;padding:7px 16px;border-radius:8px;border:none;cursor:pointer">+ Novo Aluno</button>
+            </div>
+            <div style="padding:10px 16px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;gap:8px">
+              <input style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:12px;color:#475569;outline:none" placeholder="🔍 Buscar por nome ou matrícula..." />
+              <select style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;color:#475569;background:#fff">
+                <option>Todas as turmas</option>
+                <option>8º Ano A</option>
+                <option>9º Ano B</option>
+              </select>
+            </div>
+            <div class="gestao-table">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Nº</th>
+                    <th>Nome</th>
+                    <th>Matrícula</th>
+                    <th>Turma</th>
+                    <th>Situação</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace">01</td>
+                    <td><strong>Ana Beatriz Costa</strong></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px">2026001</td>
+                    <td><span style="font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:20px;font-weight:600">8º Ano A</span></td>
+                    <td><span class="ativo-badge on">Ativo</span></td>
+                    <td><div class="action-btns"><button class="action-btn edit">Ver</button><button class="action-btn edit">Editar</button></div></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace">02</td>
+                    <td><strong>Bruno Henrique Alves</strong></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px">2026002</td>
+                    <td><span style="font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:20px;font-weight:600">8º Ano A</span></td>
+                    <td><span class="ativo-badge on">Ativo</span></td>
+                    <td><div class="action-btns"><button class="action-btn edit">Ver</button><button class="action-btn edit">Editar</button></div></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace">03</td>
+                    <td><strong>Carla Souza Mendes</strong></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px">2026003</td>
+                    <td><span style="font-size:11px;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:20px;font-weight:600">9º Ano B</span></td>
+                    <td><span class="ativo-badge on">Ativo</span></td>
+                    <td><div class="action-btns"><button class="action-btn edit">Ver</button><button class="action-btn edit">Editar</button></div></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family:'DM Mono',monospace">04</td>
+                    <td><strong>Daniel Ferreira Lima</strong></td>
+                    <td style="font-family:'DM Mono',monospace;font-size:11px">2026004</td>
+                    <td><span style="font-size:11px;background:#f0fdf4;color:#16a34a;padding:2px 8px;border-radius:20px;font-weight:600">9º Ano B</span></td>
+                    <td><span class="ativo-badge off">Transferido</span></td>
+                    <td><div class="action-btns"><button class="action-btn edit">Ver</button><button class="action-btn edit">Editar</button></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div><!-- /slide-item 5 -->
+
+        </div><!-- /slides-track -->
+      </div><!-- /overflow hidden -->
+    </div><!-- /relative -->
+
   </div>
 </div>
 
@@ -1016,5 +1154,26 @@
   <p style="margin-top:8px">Desenvolvido para a gestão acadêmica de Narandiba · Todos os direitos reservados</p>
 </footer>
 
+<script>
+  let current = 0;
+  const total = 5;
+
+  function goSlide(i) {
+    current = i;
+    document.getElementById('slides-track').style.transform = `translateX(-${i * 100}%)`;
+    document.querySelectorAll('.slide-tab').forEach((t, idx) => {
+      t.classList.toggle('active', idx === i);
+    });
+  }
+
+  // Swipe support
+  let startX = 0;
+  const track = document.getElementById('slides-track');
+  track.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+  track.addEventListener('touchend', e => {
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) goSlide(Math.max(0, Math.min(total - 1, current + (diff > 0 ? 1 : -1))));
+  });
+</script>
 </body>
 </html>
