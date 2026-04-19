@@ -99,9 +99,9 @@
     .tech h4 { font-size:12px; font-weight:700; }
     .tech p  { font-size:10px; color:var(--gray); margin-top:3px; }
 
-    /* BROWSER MOCKUP */
+    /* BROWSER MOCKUP — compact (used inside normal slides) */
     .browser { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; width:100%; }
-    .bbar  { background:var(--muted); border-bottom:1px solid var(--border); padding:7px 12px; display:flex; align-items:center; gap:10px; }
+    .bbar  { background:var(--muted); border-bottom:1px solid var(--border); padding:7px 12px; display:flex; align-items:center; gap:10px; flex-shrink:0; }
     .bdots { display:flex; gap:4px; }
     .bdots span { width:9px; height:9px; border-radius:50%; }
     .bdots span:nth-child(1) { background:#f85149; }
@@ -117,6 +117,30 @@
     .sitem.on { background:rgba(59,130,246,.12); color:var(--blue-l); font-weight:600; }
     .amain  { flex:1; padding:12px; overflow:hidden; }
     .amain h3 { font-size:12px; font-weight:700; margin-bottom:8px; }
+
+    /* FULLSCREEN SCREEN SLIDES */
+    .slide-screen { padding:6px 10px 38px; justify-content:flex-start; }
+    .browser-full { display:flex; flex-direction:column; width:100%; height:calc(100vh - 48px); border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+    .alayout-full { display:flex; flex:1; min-height:0; }
+    /* fullscreen sidebar */
+    .aside-f { width:190px; flex-shrink:0; background:var(--bg); border-right:1px solid var(--border); padding:18px 12px; display:flex; flex-direction:column; gap:2px; overflow:hidden; }
+    .slogo-f { font-size:16px; font-weight:800; color:#fff; margin-bottom:14px; padding:0 4px; }
+    .slogo-f span { color:var(--blue-l); }
+    .slabel-f { font-size:9px; font-weight:700; color:var(--gray-d); letter-spacing:1px; text-transform:uppercase; padding:8px 6px 3px; }
+    .sitem-f  { font-size:13px; color:var(--gray); padding:7px 10px; border-radius:7px; white-space:nowrap; }
+    .sitem-f.on { background:rgba(59,130,246,.12); color:var(--blue-l); font-weight:600; }
+    /* fullscreen main area */
+    .amain-f  { flex:1; padding:24px 28px; overflow:hidden; background:var(--bg); }
+    .amain-f h3 { font-size:18px; font-weight:700; margin-bottom:16px; }
+    /* fullscreen light main (professor/responsavel) */
+    .amain-fl { flex:1; padding:24px 28px; overflow:hidden; background:#f8fafc; }
+    .amain-fl h3 { font-size:18px; font-weight:700; color:#0f172a; margin-bottom:16px; }
+    /* kpi full */
+    .kpif { background:var(--muted); border:1px solid var(--border); border-radius:10px; padding:14px 10px; text-align:center; }
+    .kpif-l { font-size:10px; color:var(--gray); text-transform:uppercase; letter-spacing:.4px; }
+    .kpif-v { font-size:28px; font-weight:800; font-family:'DM Mono',monospace; margin-top:5px; }
+    /* screen label overlay */
+    .screen-tag { position:absolute; top:14px; left:50%; transform:translateX(-50%); font-size:9px; font-weight:700; color:var(--gray-d); letter-spacing:2px; text-transform:uppercase; pointer-events:none; }
 
     /* BADGES */
     .bg { font-size:9px; padding:2px 7px; border-radius:5px; font-weight:600; }
@@ -229,50 +253,44 @@
 </div>
 
 <!-- ─── SLIDE 6 — TELA: DASHBOARD ADM ─────────── -->
-<div class="slide" id="s6">
-  <span class="slide-label">Interface · 1 / 5</span>
-  <div style="width:100%;max-width:920px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px" class="a1">
-      <div><h2 class="h2" style="font-size:24px">Dashboard — <span>Diretor / Secretaria</span></h2><p style="font-size:12px;color:var(--gray);margin-top:3px">Visão ao vivo de presenças, chamadas e alertas</p></div>
-      <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gray-d)">/adm</span>
-    </div>
-    <div class="browser a2">
-      <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/adm</div></div>
-      <div class="alayout">
-        <div class="aside">
-          <div class="slogo">Estud<span>App</span></div>
-          <div class="slabel">Principal</div>
-          <div class="sitem on">🏠 Dashboard</div>
-          <div class="sitem">📊 Frequência</div>
-          <div class="sitem">📝 Notas</div>
-          <div class="sitem">👥 Alunos</div>
-          <div class="sitem">⚠️ Alertas</div>
-          <div class="sitem">📄 Justificativas</div>
-          <div style="margin-top:auto;border-top:1px solid var(--border);padding-top:6px"><div class="sitem">🚪 Sair</div></div>
+<div class="slide slide-screen" id="s6">
+  <span class="screen-tag">Dashboard — Diretor / Secretaria &nbsp;·&nbsp; /adm</span>
+  <div class="browser-full">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/adm</div></div>
+    <div class="alayout-full">
+      <div class="aside-f">
+        <div class="slogo-f">Estud<span>App</span></div>
+        <div class="slabel-f">Principal</div>
+        <div class="sitem-f on">🏠 Dashboard</div>
+        <div class="sitem-f">📊 Frequência</div>
+        <div class="sitem-f">📝 Notas</div>
+        <div class="sitem-f">👥 Alunos</div>
+        <div class="sitem-f">⚠️ Alertas</div>
+        <div class="sitem-f">📄 Justificativas</div>
+        <div style="margin-top:auto;border-top:1px solid var(--border);padding-top:10px"><div class="sitem-f">🚪 Sair</div></div>
+      </div>
+      <div class="amain-f">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <h3>Dashboard</h3>
+          <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#39d353"><span style="width:8px;height:8px;background:#39d353;border-radius:50%;display:inline-block"></span>Ao vivo</div>
         </div>
-        <div class="amain">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <h3>Dashboard</h3>
-            <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#39d353"><span style="width:5px;height:5px;background:#39d353;border-radius:50%;display:inline-block"></span>Ao vivo</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+          <div class="kpif"><div class="kpif-l">Matriculados</div><div class="kpif-v">248</div></div>
+          <div class="kpif"><div class="kpif-l">Presentes</div><div class="kpif-v" style="color:#39d353">201</div></div>
+          <div class="kpif"><div class="kpif-l">Faltas</div><div class="kpif-v" style="color:#f85149">47</div></div>
+          <div class="kpif"><div class="kpif-l">Pendentes</div><div class="kpif-v" style="color:#e3b341">3</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:14px">
+          <div style="background:var(--muted);border:1px solid var(--border);border-radius:12px;padding:18px">
+            <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px">📋 Chamadas de Hoje</div>
+            <div style="font-size:13px;color:var(--gray);display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><span>8º Ano A · Matemática · Prof. Carlos</span><span class="bg bg-green" style="font-size:11px;padding:3px 10px">✓ Concluída</span></div>
+            <div style="font-size:13px;color:var(--gray);display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><span>9º Ano B · Português · Prof. Ana</span><span class="bg bg-blue" style="font-size:11px;padding:3px 10px">⏳ Em andamento</span></div>
+            <div style="font-size:13px;color:var(--gray);display:flex;justify-content:space-between;align-items:center;padding:10px 0"><span>7º Ano C · Ciências · Prof. João</span><span class="bg bg-amber" style="font-size:11px;padding:3px 10px">◷ Aguardando</span></div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
-            <div class="kpi"><div class="kpi-l">Matriculados</div><div class="kpi-v">248</div></div>
-            <div class="kpi"><div class="kpi-l">Presentes</div><div class="kpi-v" style="color:#39d353">201</div></div>
-            <div class="kpi"><div class="kpi-l">Faltas</div><div class="kpi-v" style="color:#f85149">47</div></div>
-            <div class="kpi"><div class="kpi-l">Pendentes</div><div class="kpi-v" style="color:#e3b341">3</div></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:8px">
-            <div style="background:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px">
-              <div style="font-size:9px;font-weight:700;color:#fff;margin-bottom:6px">📋 Chamadas de Hoje</div>
-              <div style="font-size:9px;color:var(--gray);display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)"><span>8º Ano A · Matemática</span><span class="bg bg-green">✓ Concluída</span></div>
-              <div style="font-size:9px;color:var(--gray);display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)"><span>9º Ano B · Português</span><span class="bg bg-blue">⏳ Em andamento</span></div>
-              <div style="font-size:9px;color:var(--gray);display:flex;justify-content:space-between;align-items:center;padding:4px 0"><span>7º Ano C · Ciências</span><span class="bg bg-amber">◷ Aguardando</span></div>
-            </div>
-            <div style="background:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px">
-              <div style="font-size:9px;font-weight:700;color:#fff;margin-bottom:6px">🔔 Alertas</div>
-              <div style="background:rgba(248,81,73,.06);border:1px solid rgba(248,81,73,.18);border-radius:5px;padding:5px 7px;margin-bottom:5px;font-size:8px;color:#f87171">Lucas tem 4 faltas consecutivas em Matemática</div>
-              <div style="background:rgba(227,179,65,.06);border:1px solid rgba(227,179,65,.18);border-radius:5px;padding:5px 7px;font-size:8px;color:#e3b341">Chamada do 6º Ano A não foi iniciada</div>
-            </div>
+          <div style="background:var(--muted);border:1px solid var(--border);border-radius:12px;padding:18px">
+            <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:12px">🔔 Alertas</div>
+            <div style="background:rgba(248,81,73,.06);border:1px solid rgba(248,81,73,.2);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#f87171">Lucas tem 4 faltas consecutivas em Matemática</div>
+            <div style="background:rgba(227,179,65,.06);border:1px solid rgba(227,179,65,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:#e3b341">Chamada do 6º Ano A ainda não foi iniciada</div>
           </div>
         </div>
       </div>
@@ -281,35 +299,30 @@
 </div>
 
 <!-- ─── SLIDE 7 — TELA: PROFESSOR ────────────── -->
-<div class="slide" id="s7">
-  <span class="slide-label">Interface · 2 / 5</span>
-  <div style="width:100%;max-width:920px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px" class="a1">
-      <div><h2 class="h2" style="font-size:24px">Dashboard — <span>Professor</span></h2><p style="font-size:12px;color:var(--gray);margin-top:3px">Aulas do dia, status de chamadas e ações rápidas</p></div>
-      <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gray-d)">/professor</span>
-    </div>
-    <div class="browser a2">
-      <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/professor</div></div>
-      <div class="alayout">
-        <div class="aside" style="background:var(--surface)">
-          <div class="slogo">Estud<span>App</span></div>
-          <div class="sitem on">🏠 Dashboard</div>
-          <div class="sitem">📝 Notas</div>
-          <div class="sitem">📊 Avaliações</div>
-          <div style="margin-top:auto;border-top:1px solid rgba(255,255,255,.06);padding-top:6px"><div class="sitem">🚪 Sair</div></div>
+<div class="slide slide-screen" id="s7">
+  <span class="screen-tag">Dashboard — Professor &nbsp;·&nbsp; /professor</span>
+  <div class="browser-full">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/professor</div></div>
+    <div class="alayout-full">
+      <div class="aside-f" style="background:var(--surface)">
+        <div class="slogo-f">Estud<span>App</span></div>
+        <div class="sitem-f on">🏠 Dashboard</div>
+        <div class="sitem-f">📝 Notas</div>
+        <div class="sitem-f">📊 Avaliações</div>
+        <div style="margin-top:auto;border-top:1px solid rgba(255,255,255,.06);padding-top:10px"><div class="sitem-f">🚪 Sair</div></div>
+      </div>
+      <div class="amain-fl">
+        <div style="margin-bottom:20px"><div style="font-size:22px;font-weight:700;color:#0f172a">Olá, Carlos! 👋</div><div style="font-size:14px;color:#64748b;margin-top:4px">Sexta-feira, 19 de abril de 2026</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:12px;color:#64748b">Aulas hoje</div><div style="font-size:32px;font-weight:800;color:#3b82f6;font-family:'DM Mono',monospace">4</div></div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:12px;color:#64748b">Concluídas</div><div style="font-size:32px;font-weight:800;color:#16a34a;font-family:'DM Mono',monospace">2</div></div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:12px;color:#64748b">Pendentes</div><div style="font-size:32px;font-weight:800;color:#f59e0b;font-family:'DM Mono',monospace">2</div></div>
         </div>
-        <div class="amain" style="background:#f8fafc">
-          <div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f172a">Olá, Carlos! 👋</div><div style="font-size:10px;color:#64748b;margin-top:2px">Sexta-feira, 19 de abril de 2026</div></div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:8px;color:#64748b">Aulas hoje</div><div style="font-size:18px;font-weight:800;color:#3b82f6;font-family:'DM Mono',monospace">4</div></div>
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:8px;color:#64748b">Concluídas</div><div style="font-size:18px;font-weight:800;color:#16a34a;font-family:'DM Mono',monospace">2</div></div>
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:8px;color:#64748b">Pendentes</div><div style="font-size:18px;font-weight:800;color:#f59e0b;font-family:'DM Mono',monospace">2</div></div>
-          </div>
-          <div style="font-size:8px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Aulas do dia</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:10px;font-weight:700;color:#0f172a">8º Ano A — Matemática</div><div style="font-size:9px;color:#64748b">07:30 – 08:20</div></div><span style="font-size:9px;background:#dcfce7;color:#16a34a;padding:2px 7px;border-radius:5px;font-weight:600">✓ Concluída</span></div>
-            <div style="background:#fff;border:2px solid #2563eb;border-radius:7px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:10px;font-weight:700;color:#0f172a">9º Ano B — Matemática</div><div style="font-size:9px;color:#64748b">08:20 – 09:10</div></div><span style="font-size:9px;background:#2563eb;color:#fff;padding:3px 9px;border-radius:5px;font-weight:700">▶ Iniciar</span></div>
-          </div>
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px">Aulas do dia</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700;color:#0f172a">8º Ano A — Matemática</div><div style="font-size:12px;color:#64748b;margin-top:2px">07:30 – 08:20 · Manhã</div></div><span style="font-size:12px;background:#dcfce7;color:#16a34a;padding:5px 14px;border-radius:8px;font-weight:600">✓ Concluída</span></div>
+          <div style="background:#fff;border:2px solid #2563eb;border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700;color:#0f172a">9º Ano B — Matemática</div><div style="font-size:12px;color:#64748b;margin-top:2px">08:20 – 09:10 · Manhã</div></div><span style="font-size:12px;background:#2563eb;color:#fff;padding:6px 18px;border-radius:8px;font-weight:700">▶ Iniciar Chamada</span></div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:15px;font-weight:700;color:#0f172a">6º Ano A — Matemática</div><div style="font-size:12px;color:#64748b;margin-top:2px">09:10 – 10:00 · Manhã</div></div><span style="font-size:12px;background:#f1f5f9;color:#94a3b8;padding:5px 14px;border-radius:8px;font-weight:600">◷ Aguardando</span></div>
         </div>
       </div>
     </div>
@@ -317,38 +330,33 @@
 </div>
 
 <!-- ─── SLIDE 8 — TELA: RESPONSÁVEL ──────────── -->
-<div class="slide" id="s8">
-  <span class="slide-label">Interface · 3 / 5</span>
-  <div style="width:100%;max-width:920px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px" class="a1">
-      <div><h2 class="h2" style="font-size:24px">Área do <span>Responsável</span></h2><p style="font-size:12px;color:var(--gray);margin-top:3px">Frequência do filho, justificativas e notificações</p></div>
-      <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gray-d)">/responsavel</span>
-    </div>
-    <div class="browser a2">
-      <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/responsavel</div></div>
-      <div style="background:#f8fafc;padding:16px;height:240px;overflow:hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#0f172a">Olá, Maria! 👋</div><div style="font-size:10px;color:#64748b">19 de abril de 2026</div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#0f172a;margin-bottom:7px">📊 Frequência — Lucas</div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:7px;text-align:center"><div style="font-size:7px;color:#64748b">Presenças</div><div style="font-size:16px;font-weight:800;color:#16a34a;font-family:'DM Mono',monospace">42</div></div>
-              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:7px;text-align:center"><div style="font-size:7px;color:#64748b">Faltas</div><div style="font-size:16px;font-weight:800;color:#ef4444;font-family:'DM Mono',monospace">6</div></div>
-              <div style="background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:7px;text-align:center"><div style="font-size:7px;color:#64748b">Frequência</div><div style="font-size:16px;font-weight:800;color:#3b82f6;font-family:'DM Mono',monospace">87%</div></div>
-            </div>
-            <div style="font-size:9px;font-weight:700;color:#0f172a;margin-bottom:5px">Últimas ocorrências</div>
-            <div style="font-size:9px;display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9"><span style="color:#475569">Qui, 18/04 — Matemática</span><span style="font-size:8px;background:#fef2f2;color:#ef4444;padding:2px 6px;border-radius:4px;font-weight:600">Falta</span></div>
-            <div style="font-size:9px;display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f1f5f9"><span style="color:#475569">Sex, 19/04 — Português</span><span style="font-size:8px;background:#f0fdf4;color:#16a34a;padding:2px 6px;border-radius:4px;font-weight:600">Presente</span></div>
+<div class="slide slide-screen" id="s8">
+  <span class="screen-tag">Área do Responsável &nbsp;·&nbsp; /responsavel</span>
+  <div class="browser-full">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/responsavel</div></div>
+    <div style="flex:1;background:#f8fafc;padding:28px 32px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div style="font-size:20px;font-weight:700;color:#0f172a">Olá, Maria! 👋</div><div style="font-size:13px;color:#64748b">19 de abril de 2026</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:14px">📊 Frequência — Lucas</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:#64748b">Presenças</div><div style="font-size:28px;font-weight:800;color:#16a34a;font-family:'DM Mono',monospace">42</div></div>
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:#64748b">Faltas</div><div style="font-size:28px;font-weight:800;color:#ef4444;font-family:'DM Mono',monospace">6</div></div>
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center"><div style="font-size:11px;color:#64748b">Frequência</div><div style="font-size:28px;font-weight:800;color:#3b82f6;font-family:'DM Mono',monospace">87%</div></div>
           </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:#0f172a;margin-bottom:7px">📄 Justificativas</div>
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:10px;margin-bottom:7px">
-              <div style="font-size:9px;color:#64748b;margin-bottom:3px">Falta em 18/04 — Matemática</div>
-              <div style="font-size:8px;color:#94a3b8;margin-bottom:7px">Consulta médica — Dr. João</div>
-              <span style="font-size:8px;background:#fef3c7;color:#d97706;padding:2px 7px;border-radius:4px;font-weight:600">Aguardando</span>
-            </div>
-            <button style="width:100%;background:#2563eb;color:#fff;font-size:10px;font-weight:700;padding:7px;border-radius:7px;border:none;cursor:pointer">+ Enviar Justificativa</button>
+          <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">Últimas ocorrências</div>
+          <div style="font-size:13px;display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #e2e8f0"><span style="color:#475569">Qui, 18/04 — Matemática</span><span style="background:#fef2f2;color:#ef4444;padding:3px 10px;border-radius:6px;font-weight:600;font-size:11px">Falta</span></div>
+          <div style="font-size:13px;display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #e2e8f0"><span style="color:#475569">Sex, 19/04 — Português</span><span style="background:#f0fdf4;color:#16a34a;padding:3px 10px;border-radius:6px;font-weight:600;font-size:11px">Presente</span></div>
+          <div style="font-size:13px;display:flex;justify-content:space-between;align-items:center;padding:10px 0"><span style="color:#475569">Seg, 14/04 — Ciências</span><span style="background:#fffbeb;color:#f59e0b;padding:3px 10px;border-radius:6px;font-weight:600;font-size:11px">Justificada</span></div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:14px">📄 Justificativas</div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:12px">
+            <div style="font-size:13px;color:#64748b;margin-bottom:6px">Falta em 18/04 — Matemática</div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">Motivo: Consulta médica — Dr. João Silva</div>
+            <span style="font-size:11px;background:#fef3c7;color:#d97706;padding:4px 12px;border-radius:6px;font-weight:600">⏳ Aguardando aprovação</span>
           </div>
+          <button style="width:100%;background:#2563eb;color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:10px;border:none;cursor:pointer">+ Enviar Nova Justificativa</button>
         </div>
       </div>
     </div>
@@ -356,95 +364,84 @@
 </div>
 
 <!-- ─── SLIDE 9 — TELA: USUÁRIOS ─────────────── -->
-<div class="slide" id="s9">
-  <span class="slide-label">Interface · 4 / 5</span>
-  <div style="width:100%;max-width:920px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px" class="a1">
-      <div><h2 class="h2" style="font-size:24px">Gestão de <span>Usuários</span></h2><p style="font-size:12px;color:var(--gray);margin-top:3px">Criação, edição e remoção com proteção por perfil</p></div>
-      <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gray-d)">/admin/usuarios</span>
-    </div>
-    <div class="browser a2">
-      <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/admin/usuarios</div></div>
-      <div class="alayout">
-        <div class="aside">
-          <div class="slogo">Estud<span>App</span></div>
-          <div class="slabel">Config.</div>
-          <div class="sitem">⚙️ Escola</div>
-          <div class="sitem">📅 Ano Letivo</div>
-          <div class="sitem">🗓️ Calendário</div>
-          <div class="sitem on">👥 Usuários</div>
-          <div class="slabel">Acadêmico</div>
-          <div class="sitem">🎓 Professores</div>
-          <div class="sitem">📚 Turmas</div>
-          <div class="sitem">📖 Disciplinas</div>
-          <div class="sitem">👤 Alunos</div>
-          <div class="sitem">👨‍👩‍👦 Responsáveis</div>
-          <div class="sitem">🕐 Aulas</div>
+<div class="slide slide-screen" id="s9">
+  <span class="screen-tag">Gestão de Usuários &nbsp;·&nbsp; /admin/usuarios</span>
+  <div class="browser-full">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/admin/usuarios</div></div>
+    <div class="alayout-full">
+      <div class="aside-f">
+        <div class="slogo-f">Estud<span>App</span></div>
+        <div class="slabel-f">Config.</div>
+        <div class="sitem-f">⚙️ Escola</div>
+        <div class="sitem-f">📅 Ano Letivo</div>
+        <div class="sitem-f">🗓️ Calendário</div>
+        <div class="sitem-f on">👥 Usuários</div>
+        <div class="slabel-f">Acadêmico</div>
+        <div class="sitem-f">🎓 Professores</div>
+        <div class="sitem-f">📚 Turmas</div>
+        <div class="sitem-f">📖 Disciplinas</div>
+        <div class="sitem-f">👤 Alunos</div>
+        <div class="sitem-f">👨‍👩‍👦 Responsáveis</div>
+        <div class="sitem-f">🕐 Aulas</div>
+      </div>
+      <div class="amain-f">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <h3>Usuários <span style="font-size:14px;color:var(--gray-d);font-weight:400">18 cadastrados</span></h3>
+          <button style="background:#2563eb;color:#fff;font-size:13px;font-weight:700;padding:8px 20px;border-radius:8px;border:none;cursor:pointer">+ Novo Usuário</button>
         </div>
-        <div class="amain">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <h3>Usuários <span style="font-size:10px;color:var(--gray-d);font-weight:400">18 cadastrados</span></h3>
-            <button style="background:#2563eb;color:#fff;font-size:9px;font-weight:700;padding:4px 10px;border-radius:6px;border:none;cursor:pointer">+ Novo</button>
-          </div>
-          <table style="width:100%;font-size:9px;border-collapse:collapse">
-            <thead><tr style="color:var(--gray-d)"><th style="text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)">Nome</th><th style="text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)">Perfil</th><th style="text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)">Status</th><th style="padding:4px 5px;border-bottom:1px solid var(--border)">Ações</th></tr></thead>
-            <tbody>
-              <tr><td style="padding:5px;color:#fff">Ana Paula Souza</td><td style="padding:5px"><span style="background:rgba(59,130,246,.12);color:#60a5fa;font-size:8px;padding:2px 6px;border-radius:4px;font-weight:600">Diretor</span></td><td style="padding:5px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:8px;padding:2px 6px;border-radius:4px">Ativo</span></td><td style="padding:5px;text-align:center"><span style="font-size:8px;color:var(--gray-d)">🔒 Protegido</span></td></tr>
-              <tr><td style="padding:5px;color:#fff">Carlos Mendes</td><td style="padding:5px"><span style="background:rgba(168,85,247,.12);color:#c084fc;font-size:8px;padding:2px 6px;border-radius:4px;font-weight:600">Professor</span></td><td style="padding:5px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:8px;padding:2px 6px;border-radius:4px">Ativo</span></td><td style="padding:5px;text-align:center;display:flex;gap:3px;justify-content:center"><button style="font-size:8px;background:var(--muted);color:var(--gray);padding:2px 6px;border-radius:4px;border:1px solid var(--border);cursor:pointer">Editar</button><button style="font-size:8px;background:rgba(248,81,73,.1);color:#f85149;padding:2px 6px;border-radius:4px;border:1px solid rgba(248,81,73,.2);cursor:pointer">🗑</button></td></tr>
-              <tr><td style="padding:5px;color:#fff">Maria Lima</td><td style="padding:5px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:8px;padding:2px 6px;border-radius:4px;font-weight:600">Responsável</span></td><td style="padding:5px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:8px;padding:2px 6px;border-radius:4px">Ativo</span></td><td style="padding:5px;text-align:center;display:flex;gap:3px;justify-content:center"><button style="font-size:8px;background:var(--muted);color:var(--gray);padding:2px 6px;border-radius:4px;border:1px solid var(--border);cursor:pointer">Editar</button><button style="font-size:8px;background:rgba(248,81,73,.1);color:#f85149;padding:2px 6px;border-radius:4px;border:1px solid rgba(248,81,73,.2);cursor:pointer">🗑</button></td></tr>
-              <tr><td style="padding:5px;color:#fff">Roberto Santos</td><td style="padding:5px"><span style="background:rgba(168,85,247,.12);color:#c084fc;font-size:8px;padding:2px 6px;border-radius:4px;font-weight:600">Professor</span></td><td style="padding:5px"><span style="background:rgba(248,81,73,.1);color:#f87171;font-size:8px;padding:2px 6px;border-radius:4px">Inativo</span></td><td style="padding:5px;text-align:center;display:flex;gap:3px;justify-content:center"><button style="font-size:8px;background:var(--muted);color:var(--gray);padding:2px 6px;border-radius:4px;border:1px solid var(--border);cursor:pointer">Editar</button><button style="font-size:8px;background:rgba(248,81,73,.1);color:#f85149;padding:2px 6px;border-radius:4px;border:1px solid rgba(248,81,73,.2);cursor:pointer">🗑</button></td></tr>
-            </tbody>
-          </table>
-        </div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          <thead><tr style="color:var(--gray-d)"><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">Nome</th><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">Email</th><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">Perfil</th><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">Status</th><th style="padding:10px 12px;border-bottom:1px solid var(--border)">Ações</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Ana Paula Souza</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace;font-size:11px">diretora@escola.gov.br</td><td style="padding:12px"><span style="background:rgba(59,130,246,.12);color:#60a5fa;font-size:11px;padding:3px 10px;border-radius:5px;font-weight:600">Diretor</span></td><td style="padding:12px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:11px;padding:3px 10px;border-radius:5px">Ativo</span></td><td style="padding:12px;text-align:center"><span style="font-size:12px;color:var(--gray-d)">🔒 Protegido</span></td></tr>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Carlos Mendes</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace;font-size:11px">carlos@escola.edu.br</td><td style="padding:12px"><span style="background:rgba(168,85,247,.12);color:#c084fc;font-size:11px;padding:3px 10px;border-radius:5px;font-weight:600">Professor</span></td><td style="padding:12px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:11px;padding:3px 10px;border-radius:5px">Ativo</span></td><td style="padding:12px;text-align:center;display:flex;gap:6px;justify-content:center"><button style="font-size:11px;background:var(--muted);color:var(--gray);padding:5px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer">Editar</button><button style="font-size:11px;background:rgba(248,81,73,.1);color:#f85149;padding:5px 12px;border-radius:6px;border:1px solid rgba(248,81,73,.2);cursor:pointer">🗑 Deletar</button></td></tr>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Maria Lima</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace;font-size:11px">responsavel@gmail.com</td><td style="padding:12px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:11px;padding:3px 10px;border-radius:5px;font-weight:600">Responsável</span></td><td style="padding:12px"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:11px;padding:3px 10px;border-radius:5px">Ativo</span></td><td style="padding:12px;text-align:center;display:flex;gap:6px;justify-content:center"><button style="font-size:11px;background:var(--muted);color:var(--gray);padding:5px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer">Editar</button><button style="font-size:11px;background:rgba(248,81,73,.1);color:#f85149;padding:5px 12px;border-radius:6px;border:1px solid rgba(248,81,73,.2);cursor:pointer">🗑 Deletar</button></td></tr>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Roberto Santos</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace;font-size:11px">roberto@escola.edu.br</td><td style="padding:12px"><span style="background:rgba(168,85,247,.12);color:#c084fc;font-size:11px;padding:3px 10px;border-radius:5px;font-weight:600">Professor</span></td><td style="padding:12px"><span style="background:rgba(248,81,73,.1);color:#f87171;font-size:11px;padding:3px 10px;border-radius:5px">Inativo</span></td><td style="padding:12px;text-align:center;display:flex;gap:6px;justify-content:center"><button style="font-size:11px;background:var(--muted);color:var(--gray);padding:5px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer">Editar</button><button style="font-size:11px;background:rgba(248,81,73,.1);color:#f85149;padding:5px 12px;border-radius:6px;border:1px solid rgba(248,81,73,.2);cursor:pointer">🗑 Deletar</button></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
 <!-- ─── SLIDE 10 — TELA: CADASTROS ───────────── -->
-<div class="slide" id="s10">
-  <span class="slide-label">Interface · 5 / 5</span>
-  <div style="width:100%;max-width:920px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px" class="a1">
-      <div><h2 class="h2" style="font-size:24px">Área de <span>Cadastros</span></h2><p style="font-size:12px;color:var(--gray);margin-top:3px">Alunos, turmas, disciplinas e mais — acesso do Diretor</p></div>
-      <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--gray-d)">/admin/alunos</span>
-    </div>
-    <div class="browser a2">
-      <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/admin/alunos</div></div>
-      <div class="alayout">
-        <div class="aside">
-          <div class="slogo">Estud<span>App</span></div>
-          <div class="slabel">Config.</div>
-          <div class="sitem">⚙️ Escola</div>
-          <div class="sitem">📅 Ano Letivo</div>
-          <div class="sitem">🗓️ Calendário</div>
-          <div class="sitem">👥 Usuários</div>
-          <div class="slabel">Acadêmico</div>
-          <div class="sitem">🎓 Professores</div>
-          <div class="sitem">📚 Turmas</div>
-          <div class="sitem">📖 Disciplinas</div>
-          <div class="sitem on">👤 Alunos</div>
-          <div class="sitem">👨‍👩‍👦 Responsáveis</div>
-          <div class="sitem">🕐 Aulas</div>
-        </div>
-        <div class="amain">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <h3>Alunos <span style="font-size:10px;color:var(--gray-d);font-weight:400">248 matriculados</span></h3>
-            <div style="display:flex;gap:5px">
-              <input style="font-size:9px;background:var(--muted);border:1px solid var(--border);color:var(--gray);padding:3px 8px;border-radius:6px;outline:none;width:110px" placeholder="Buscar aluno..." />
-              <button style="background:#2563eb;color:#fff;font-size:9px;font-weight:700;padding:4px 10px;border-radius:6px;border:none;cursor:pointer">+ Novo</button>
-            </div>
+<div class="slide slide-screen" id="s10">
+  <span class="screen-tag">Área de Cadastros — Diretor &nbsp;·&nbsp; /admin/alunos</span>
+  <div class="browser-full">
+    <div class="bbar"><div class="bdots"><span></span><span></span><span></span></div><div class="burl">sistema-escola-three.vercel.app/admin/alunos</div></div>
+    <div class="alayout-full">
+      <div class="aside-f">
+        <div class="slogo-f">Estud<span>App</span></div>
+        <div class="slabel-f">Config.</div>
+        <div class="sitem-f">⚙️ Escola</div>
+        <div class="sitem-f">📅 Ano Letivo</div>
+        <div class="sitem-f">🗓️ Calendário</div>
+        <div class="sitem-f">👥 Usuários</div>
+        <div class="slabel-f">Acadêmico</div>
+        <div class="sitem-f">🎓 Professores</div>
+        <div class="sitem-f">📚 Turmas</div>
+        <div class="sitem-f">📖 Disciplinas</div>
+        <div class="sitem-f on">👤 Alunos</div>
+        <div class="sitem-f">👨‍👩‍👦 Responsáveis</div>
+        <div class="sitem-f">🕐 Aulas</div>
+      </div>
+      <div class="amain-f">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <h3>Alunos <span style="font-size:14px;color:var(--gray-d);font-weight:400">248 matriculados</span></h3>
+          <div style="display:flex;gap:10px">
+            <input style="font-size:13px;background:var(--muted);border:1px solid var(--border);color:var(--gray);padding:7px 14px;border-radius:8px;outline:none;width:200px" placeholder="🔍 Buscar aluno..." />
+            <button style="background:#2563eb;color:#fff;font-size:13px;font-weight:700;padding:8px 20px;border-radius:8px;border:none;cursor:pointer">+ Novo Aluno</button>
           </div>
-          <table style="width:100%;font-size:9px;border-collapse:collapse">
-            <thead><tr style="color:var(--gray-d)"><th style="text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)">Nome</th><th style="text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)">Turma</th><th style="text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)">Matrícula</th><th style="padding:4px 5px;border-bottom:1px solid var(--border)">Status</th></tr></thead>
-            <tbody>
-              <tr><td style="padding:5px;color:#fff">Lucas Oliveira Santos</td><td style="padding:5px;color:var(--gray)">8º Ano A</td><td style="padding:5px;color:var(--gray-d);font-family:'DM Mono',monospace">2026001</td><td style="padding:5px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:8px;padding:2px 6px;border-radius:4px">Ativo</span></td></tr>
-              <tr><td style="padding:5px;color:#fff">Ana Clara Ferreira</td><td style="padding:5px;color:var(--gray)">9º Ano B</td><td style="padding:5px;color:var(--gray-d);font-family:'DM Mono',monospace">2026002</td><td style="padding:5px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:8px;padding:2px 6px;border-radius:4px">Ativo</span></td></tr>
-              <tr><td style="padding:5px;color:#fff">Pedro Henrique Dias</td><td style="padding:5px;color:var(--gray)">7º Ano C</td><td style="padding:5px;color:var(--gray-d);font-family:'DM Mono',monospace">2026003</td><td style="padding:5px;text-align:center"><span style="background:rgba(248,81,73,.1);color:#f87171;font-size:8px;padding:2px 6px;border-radius:4px">Inativo</span></td></tr>
-              <tr><td style="padding:5px;color:#fff">Beatriz Souza Costa</td><td style="padding:5px;color:var(--gray)">6º Ano A</td><td style="padding:5px;color:var(--gray-d);font-family:'DM Mono',monospace">2026004</td><td style="padding:5px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:8px;padding:2px 6px;border-radius:4px">Ativo</span></td></tr>
-            </tbody>
-          </table>
         </div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          <thead><tr style="color:var(--gray-d)"><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">Nome</th><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">Turma</th><th style="text-align:left;padding:10px 12px;border-bottom:1px solid var(--border)">Matrícula</th><th style="padding:10px 12px;border-bottom:1px solid var(--border)">Status</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Lucas Oliveira Santos</td><td style="padding:12px;color:var(--gray)">8º Ano A</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace">2026001</td><td style="padding:12px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:11px;padding:3px 10px;border-radius:5px">Ativo</span></td></tr>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Ana Clara Ferreira</td><td style="padding:12px;color:var(--gray)">9º Ano B</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace">2026002</td><td style="padding:12px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:11px;padding:3px 10px;border-radius:5px">Ativo</span></td></tr>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Pedro Henrique Dias</td><td style="padding:12px;color:var(--gray)">7º Ano C</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace">2026003</td><td style="padding:12px;text-align:center"><span style="background:rgba(248,81,73,.1);color:#f87171;font-size:11px;padding:3px 10px;border-radius:5px">Inativo</span></td></tr>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Beatriz Souza Costa</td><td style="padding:12px;color:var(--gray)">6º Ano A</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace">2026004</td><td style="padding:12px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:11px;padding:3px 10px;border-radius:5px">Ativo</span></td></tr>
+            <tr><td style="padding:12px;color:#fff;font-weight:500">Fernando Costa Neto</td><td style="padding:12px;color:var(--gray)">8º Ano B</td><td style="padding:12px;color:var(--gray-d);font-family:'DM Mono',monospace">2026005</td><td style="padding:12px;text-align:center"><span style="background:rgba(34,197,94,.12);color:#4ade80;font-size:11px;padding:3px 10px;border-radius:5px">Ativo</span></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
