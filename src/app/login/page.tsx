@@ -1,13 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
-  const [usuario, setUsuario] = useState('')
+  const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
@@ -19,122 +17,98 @@ export default function LoginPage() {
     setLoading(true)
     setErro('')
 
-    const res = await fetch('/api/auth/buscar-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuario: usuario.trim().toLowerCase() }),
-    })
-
-    if (!res.ok) {
-      setErro('Usuário ou senha incorretos.')
-      setLoading(false)
-      return
-    }
-
-    const { email } = await res.json()
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
 
     if (error) {
-      setErro('Usuário ou senha incorretos.')
+      setErro('Email ou senha incorretos.')
       setLoading(false)
       return
     }
 
-    const perfilRes = await fetch('/api/auth/perfil')
-    const { perfil } = perfilRes.ok ? await perfilRes.json() : {}
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('perfil')
+      .eq('id', data.user.id)
+      .single()
 
     const rotas: Record<string, string> = {
       professor: '/professor',
       secretaria: '/adm',
       admin: '/admin',
-      diretor: '/admin',
       responsavel: '/responsavel',
-      cozinha: '/cozinha',
     }
-    router.push(rotas[perfil || ''] || '/professor')
+    router.push(rotas[usuario?.perfil || ''] || '/professor')
     router.refresh()
   }
 
-return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" style={{ fontFamily: 'Sora, sans-serif' }}>
-      <div className="w-full max-w-sm">
-
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="mb-8 flex justify-center">
-            <Image
-              src="/logo-estudapp-login.png"
-              alt="EstudApp"
-              width={360}
-              height={180}
-              className="h-56 w-auto"
-              priority
-            />
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-4 shadow-lg shadow-indigo-200">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
           </div>
+          <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Sora, sans-serif' }}>
+            Chamada Escolar
+          </h1>
+          <p className="text-gray-500 mt-1 text-sm">Sistema digital de frequência com QR Code</p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-slate-800 rounded-xl p-8 shadow-2xl border border-slate-700">
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 p-8 border border-slate-100">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">Entrar no sistema</h2>
 
           {erro && (
-            <div className="mb-6 p-4 bg-red-950 border border-red-800 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-red-400 text-sm font-medium">{erro}</p>
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
+              <span>⚠</span> {erro}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Usuário</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
               <input
-                type="text"
-                value={usuario}
-                onChange={e => setUsuario(e.target.value)}
-                placeholder="seu.usuario"
-                required
-                autoComplete="username"
-                className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-500 text-sm rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="seu@email.com" required
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-all text-sm"
               />
             </div>
-
             <div>
-              <label className="block text-sm font-semibold text-slate-300 mb-2">Senha</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Senha</label>
               <input
-                type="password"
-                value={senha}
-                onChange={e => setSenha(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-                className="w-full bg-slate-700 border border-slate-600 text-white placeholder-slate-500 text-sm rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                type="password" value={senha} onChange={e => setSenha(e.target.value)}
+                placeholder="••••••••" required
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 placeholder-gray-400 transition-all text-sm"
               />
             </div>
-
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2 mt-8"
+              type="submit" disabled={loading}
+              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
             >
               {loading ? (
-                <>
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                  </svg>
-                  Entrando...
-                </>
+                <><svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Entrando...</>
               ) : 'Entrar'}
             </button>
           </form>
 
+          {/* Demo accounts */}
+          <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Contas de demonstração</p>
+            <div className="space-y-1.5 text-xs text-slate-600 font-mono">
+              <div className="flex items-center gap-2"><span>👨‍💼</span><span>admin@escola.com</span><span className="text-slate-400">/ Admin@123456</span></div>
+              <div className="flex items-center gap-2"><span>👩‍💼</span><span>secretaria@escola.com</span><span className="text-slate-400">/ Secr@123456</span></div>
+              <div className="flex items-center gap-2"><span>👨‍🏫</span><span>prof.carlos@escola.com</span><span className="text-slate-400">/ Prof@123456</span></div>
+              <div className="flex items-center gap-2"><span>👨‍👩‍👦</span><span>resp.roberto@escola.com</span><span className="text-slate-400">/ Resp@123456</span></div>
+            </div>
+          </div>
+
         </div>
 
-        <p className="text-center text-sm text-slate-500 mt-8">
-          © 2026 Sistema Escolar — Todos os direitos reservados
-        </p>
+        <p className="text-center text-xs text-gray-400 mt-6">© 2026 Sistema de Chamada Escolar</p>
       </div>
-
     </div>
   )
 }

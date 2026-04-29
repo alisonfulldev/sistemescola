@@ -1,334 +1,167 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import Image from 'next/image'
+import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatTime } from '@/lib/utils'
+import NovaChamadaButton from './NovaChamadaButton'
 
-type Aba = 'geral' | 'nova'
+export const revalidate = 0
 
-export default function ProfessorDashboard() {
-  const [turmas, setTurmas] = useState<any[]>([])
-  const [turmaSelecionada, setTurmaSelecionada] = useState('')
-  const [alunos, setAlunos] = useState<any[]>([])
-  const [historico, setHistorico] = useState<any[]>([])
-  const [visaoGeral, setVisaoGeral] = useState<any>(null)
-  const [justificativas, setJustificativas] = useState<any[]>([])
-  const [carregandoAlunos, setCarregandoAlunos] = useState(false)
-  const [iniciando, setIniciando] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [aba, setAba] = useState<Aba>('geral')
-  const [erro, setErro] = useState('')
-
-  // Justificativas
-  const [showJustificativas, setShowJustificativas] = useState(false)
-
+export default async function ProfessorDashboard() {
   const supabase = createClient()
-  const router = useRouter()
+  const { data: { user } } = await supabase.auth.getUser()
 
   const hoje = new Date().toISOString().split('T')[0]
 
-  async function carregarJustificativas() {
-    const res = await fetch('/api/professor/justificativas')
-    if (res.ok) { const { justificativas: j } = await res.json(); setJustificativas(j || []) }
+  const [
+    { data: aulas },
+    { data: usuario },
+    { data: disciplinas },
+    { data: turmas },
+  ] = await Promise.all([
+    supabase.from('aulas')
+      .select(`
+        id, data, horario_inicio, horario_fim,
+        turmas (id, nome, turno),
+        disciplinas (id, nome),
+        chamadas (id, status, iniciada_em, concluida_em)
+      `)
+      .eq('professor_id', user!.id)
+      .eq('data', hoje)
+      .order('horario_inicio'),
+    supabase.from('usuarios').select('nome').eq('id', user!.id).single(),
+    supabase.from('disciplinas').select('id, nome').eq('professor_id', user!.id).eq('ativo', true).order('nome'),
+    supabase.from('turmas').select('id, nome, turno').eq('ativo', true).order('nome'),
+  ])
+
+  const agora = new Date()
+  const minutosAtual = agora.getHours() * 60 + agora.getMinutes()
+
+  function getStatusAula(aula: any) {
+    const chamada = aula.chamadas?.[0]
+    if (chamada?.status === 'concluida') return 'concluida'
+    if (chamada?.status === 'em_andamento') return 'em_andamento'
+    const [h, m] = aula.horario_inicio.split(':').map(Number)
+    const inicioMin = h * 60 + m
+    if (minutosAtual >= inicioMin - 30 && minutosAtual <= inicioMin + 45) return 'disponivel'
+    if (minutosAtual < inicioMin - 30) return 'futura'
+    return 'atrasada'
   }
 
-  useEffect(() => {
-    async function carregar() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return router.push('/login')
-
-      const [{ data: turmasData }, histRes, geralRes, justRes] = await Promise.all([
-        supabase.from('turmas').select('id, nome, turno').eq('ativo', true).order('nome'),
-        fetch('/api/professor/historico'),
-        fetch('/api/professor/visao-geral'),
-        fetch('/api/professor/justificativas'),
-      ])
-
-      setTurmas(turmasData || [])
-      if (histRes.ok) { const { chamadas } = await histRes.json(); setHistorico(chamadas || []) }
-      if (geralRes.ok) setVisaoGeral(await geralRes.json())
-      if (justRes.ok) { const { justificativas: j } = await justRes.json(); setJustificativas(j || []) }
-      setLoading(false)
-    }
-    carregar()
-
-    // Atualiza justificativas a cada 20s e via realtime
-    const interval = setInterval(carregarJustificativas, 20000)
-    const ch = supabase.channel('just-prof')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'justificativas_falta' }, carregarJustificativas)
-      .subscribe()
-    return () => { clearInterval(interval); supabase.removeChannel(ch) }
-  }, [])
-
-  async function selecionarTurma(turmaId: string) {
-    setTurmaSelecionada(turmaId)
-    setAlunos([])
-    if (!turmaId) return
-    setCarregandoAlunos(true)
-    const { data } = await supabase.from('alunos').select('id, nome_completo, foto_url, matricula').eq('turma_id', turmaId).eq('ativo', true).order('nome_completo')
-    setAlunos(data || [])
-    setCarregandoAlunos(false)
-  }
-
-  async function iniciarChamada() {
-    if (!turmaSelecionada) return
-    setIniciando(true)
-    setErro('')
-    try {
-      const res = await fetch('/api/professor/iniciar-chamada', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ turma_id: turmaSelecionada }) })
-      const data = await res.json()
-      if (data.chamada_id) { router.push(`/professor/chamada/${data.chamada_id}`) }
-      else { setErro(data.error || 'Erro ao iniciar chamada'); setIniciando(false) }
-    } catch { setErro('Erro de conexão'); setIniciando(false) }
-  }
-
-
-  const turmaSel = turmas.find(t => t.id === turmaSelecionada)
-  const pendentes = justificativas.filter(j => j.status === 'pendente').length
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
-    </div>
-  )
+  const concluidas = aulas?.filter((a: any) => a.chamadas?.[0]?.status === 'concluida').length || 0
+  const pendentes = aulas?.filter((a: any) => !a.chamadas?.[0]).length || 0
 
   return (
-    <div>
-      <div className="flex items-start justify-between gap-3 mb-4 md:mb-5">
-        <div>
-          <h1 className="text-lg md:text-xl font-bold text-slate-900">Chamada Escolar</h1>
-          <p className="text-slate-500 text-xs md:text-sm mt-0.5 capitalize">{formatDate(new Date(), "EEEE, dd 'de' MMMM")}</p>
-        </div>
-        <button onClick={() => setShowJustificativas(true)} className="relative p-2 md:p-2.5 bg-white border border-slate-200 rounded-lg md:rounded-xl hover:border-green-300 transition-colors flex-shrink-0">
-          <span className="text-lg md:text-xl">🔔</span>
-          {pendentes > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center leading-none">
-              {pendentes > 9 ? '9+' : pendentes}
-            </span>
-          )}
-        </button>
+    <div className="animate-fade-in">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-900">
+          Olá, {usuario?.nome?.split(' ')[0] || 'Professor'}! 👋
+        </h1>
+        <p className="text-gray-500 text-sm mt-1 capitalize">
+          {formatDate(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy")}
+        </p>
       </div>
 
-      {/* Abas */}
-      <div className="grid grid-cols-2 gap-1 bg-white border border-slate-200 rounded-lg md:rounded-xl p-1 mb-4 md:mb-5">
-        {([
-          { id: 'geral', label: 'Geral' },
-          { id: 'nova', label: 'Chamada' },
-        ] as { id: Aba; label: string }[]).map(t => (
-          <button key={t.id} onClick={() => setAba(t.id)}
-            className={`relative py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-lg transition-all ${aba === t.id ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-900'}`}
-          >
-            {t.label}
-          </button>
+      {/* Mini KPIs */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {[
+          { label: 'Aulas hoje', value: aulas?.length || 0, color: 'text-indigo-600' },
+          { label: 'Concluídas', value: concluidas, color: 'text-green-600' },
+          { label: 'Pendentes', value: pendentes, color: 'text-orange-500' },
+        ].map(k => (
+          <div key={k.label} className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm text-center">
+            <div className={`text-2xl font-bold font-nums ${k.color}`}>{k.value}</div>
+            <div className="text-xs text-gray-500 mt-0.5">{k.label}</div>
+          </div>
         ))}
       </div>
 
-      {/* ABA: Visão Geral */}
-      {aba === 'geral' && (
-        <div>
-          {visaoGeral && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 mb-4 md:mb-5">
-              <div className="bg-white border border-slate-200 rounded-lg md:rounded-xl p-3 md:p-4 text-center">
-                <div className="text-xl md:text-2xl font-bold text-slate-900">{visaoGeral.totalChamadas}</div>
-                <div className="text-xs text-slate-500 mt-0.5">Chamadas</div>
-              </div>
-              <div className={`rounded-lg md:rounded-xl p-3 md:p-4 text-center border ${visaoGeral.mediaFrequencia >= 75 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                <div className={`text-xl md:text-2xl font-bold ${visaoGeral.mediaFrequencia >= 75 ? 'text-green-600' : 'text-red-600'}`}>{visaoGeral.mediaFrequencia}%</div>
-                <div className="text-xs text-slate-500 mt-0.5">Freq.</div>
-              </div>
-              <div className={`rounded-lg md:rounded-xl p-3 md:p-4 text-center border col-span-2 md:col-span-1 ${visaoGeral.alunosEmRisco?.length > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}`}>
-                <div className={`text-xl md:text-2xl font-bold ${visaoGeral.alunosEmRisco?.length > 0 ? 'text-red-600' : 'text-slate-900'}`}>{visaoGeral.alunosEmRisco?.length ?? 0}</div>
-                <div className="text-xs text-slate-500 mt-0.5">Risco</div>
-              </div>
-            </div>
-          )}
+      <h2 className="font-semibold text-gray-600 mb-3 text-xs uppercase tracking-widest">Aulas do dia</h2>
 
-          {visaoGeral?.turmas?.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-lg md:rounded-xl p-3 md:p-4 mb-4">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">Frequência por turma</h3>
-              <div className="space-y-2 md:space-y-3">
-                {visaoGeral.turmas.map((t: any) => (
-                  <div key={t.id}>
-                    <div className="flex justify-between text-xs mb-1 gap-2">
-                      <span className="text-slate-600 font-medium truncate">{t.nome}</span>
-                      <span className={`font-bold flex-shrink-0 ${t.frequencia >= 75 ? 'text-green-600' : 'text-red-600'}`}>{t.frequencia}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2">
-                      <div className={`h-2 rounded-full ${t.frequencia >= 75 ? 'bg-green-600' : 'bg-red-600'}`} style={{ width: `${t.frequencia}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {visaoGeral?.alunosEmRisco?.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Alunos em risco</h3>
-              <div className="space-y-2">
-                {visaoGeral.alunosEmRisco.map((a: any, i: number) => (
-                  <div key={i} className="bg-white border border-red-200 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-xs md:text-sm text-slate-700 font-medium truncate">{a.nome}</p>
-                      <p className="text-xs text-slate-500">{a.turma}</p>
-                    </div>
-                    <span className="text-xs md:text-sm font-bold text-red-600 flex-shrink-0">{a.frequencia}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Card de Avaliações */}
-          <Link href="/professor/avaliacoes"
-            className="block bg-white border border-slate-200 rounded-lg md:rounded-xl px-3 md:px-4 py-2.5 md:py-3 hover:border-blue-300 transition-colors mb-4"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs md:text-sm font-semibold text-slate-900">📊 Avaliações</p>
-                <p className="text-xs text-slate-500 hidden sm:block">Crie provas e trabalhos</p>
-              </div>
-              <span className="text-slate-400 flex-shrink-0">→</span>
-            </div>
-          </Link>
-
-          {historico.length > 0 && (
-            <div>
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Histórico</h3>
-              <div className="space-y-2">
-                {historico.map(c => {
-                  const freq = c.total > 0 ? Math.round(((c.presentes + c.justificadas) / c.total) * 100) : 0
-                  return (
-                    <Link key={c.id} href={`/professor/resumo/${c.id}`}
-                      className="block bg-white border border-slate-200 rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 hover:border-green-300 transition-colors"
-                    >
-                      <div className="flex items-center justify-between gap-2 md:gap-3">
-                        <div className="min-w-0">
-                          <p className="text-xs md:text-sm text-slate-700 font-medium truncate">{c.turma} {c.data === hoje && <span className="text-xs text-green-600">hoje</span>}</p>
-                          <p className="text-xs text-slate-400">{formatDate(c.data, 'dd/MM')}</p>
-                          <div className="flex gap-2 text-xs mt-0.5">
-                            <span className="text-green-600 font-medium">{c.presentes}✓</span>
-                            <span className="text-red-600 font-medium">{c.faltas}✕</span>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className={`text-lg md:text-xl font-bold ${freq >= 75 ? 'text-green-600' : 'text-red-600'}`}>{freq}%</p>
-                          <p className="text-xs text-slate-400">{c.total}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {visaoGeral?.totalChamadas === 0 && (
-            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center">
-              <p className="text-slate-500 text-sm">Nenhuma chamada realizada ainda.</p>
-              <button onClick={() => setAba('nova')} className="mt-3 text-blue-600 text-sm hover:underline">Iniciar primeira chamada →</button>
-            </div>
-          )}
+      {!aulas?.length ? (
+        <div className="bg-white rounded-2xl border border-slate-100 p-10 text-center shadow-sm">
+          <div className="text-4xl mb-3">📅</div>
+          <p className="text-gray-500 font-medium">Nenhuma aula agendada para hoje</p>
+          <p className="text-gray-400 text-sm mt-1">Use o botão abaixo para iniciar uma chamada</p>
         </div>
-      )}
+      ) : (
+        <div className="space-y-3">
+          {aulas.map((aula: any) => {
+            const status = getStatusAula(aula)
+            const chamada = aula.chamadas?.[0]
+            const statusConfig: Record<string, { label: string; cls: string }> = {
+              concluida: { label: '✓ Concluída', cls: 'bg-green-100 text-green-700' },
+              em_andamento: { label: '⏳ Em curso', cls: 'bg-blue-100 text-blue-700' },
+              disponivel: { label: '● Disponível', cls: 'bg-indigo-100 text-indigo-700' },
+              futura: { label: '◷ Aguardando', cls: 'bg-gray-100 text-gray-500' },
+              atrasada: { label: '⚠ Atrasada', cls: 'bg-red-100 text-red-600' },
+            }
+            const sc = statusConfig[status]
 
-      {/* ABA: Nova Chamada */}
-      {aba === 'nova' && (
-        <div>
-          <div className="bg-white border border-slate-200 rounded-lg md:rounded-2xl p-4 md:p-5 mb-4">
-            <label className="block text-xs text-slate-500 mb-2 uppercase tracking-wide">Selecione a turma</label>
-            {turmas.length === 0 ? (
-              <p className="text-slate-400 text-xs md:text-sm py-2">Nenhuma turma ativa.</p>
-            ) : (
-              <select value={turmaSelecionada} onChange={e => selecionarTurma(e.target.value)}
-                className="w-full bg-white border border-slate-300 text-slate-900 text-xs md:text-sm rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-              >
-                <option value="">-- Selecione --</option>
-                {turmas.map(t => <option key={t.id} value={t.id}>{t.nome} · {t.turno}</option>)}
-              </select>
-            )}
-          </div>
+            return (
+              <div key={aula.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-gray-900">{aula.turmas?.nome}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          aula.turmas?.turno === 'matutino' ? 'bg-yellow-100 text-yellow-700' :
+                          aula.turmas?.turno === 'vespertino' ? 'bg-orange-100 text-orange-700' : 'bg-purple-100 text-purple-700'
+                        }`}>{aula.turmas?.turno}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-0.5">{aula.disciplinas?.nome}</p>
+                      <p className="text-xs text-gray-400 mt-1 font-mono">
+                        🕐 {formatTime(aula.horario_inicio)} – {formatTime(aula.horario_fim)}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold flex-shrink-0 ${sc.cls}`}>{sc.label}</span>
+                  </div>
 
-          {turmaSelecionada && (
-            <div className="bg-white border border-slate-200 rounded-lg md:rounded-2xl overflow-hidden mb-4">
-              <div className="px-3 md:px-5 py-3 md:py-4 border-b border-slate-200 flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-xs md:text-base text-slate-900 font-semibold truncate">{turmaSel?.nome}</p>
-                  <p className="text-slate-500 text-xs">{alunos.length} aluno(s)</p>
+                  {/* Actions */}
+                  <div className="mt-3 pt-3 border-t border-slate-50">
+                    {status === 'em_andamento' && chamada && (
+                      <Link href={`/professor/chamada/${aula.id}`}
+                        className="w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
+                      >
+                        ⏳ Continuar Chamada
+                      </Link>
+                    )}
+                    {(status === 'disponivel' || status === 'atrasada') && !chamada && (
+                      <Link href={`/professor/chamada/${aula.id}`}
+                        className="w-full py-2.5 px-4 bg-indigo-600 text-white text-sm font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+                        </svg>
+                        Iniciar Chamada
+                      </Link>
+                    )}
+                    {status === 'concluida' && chamada && (
+                      <Link href={`/professor/resumo/${chamada.id}`}
+                        className="w-full py-2.5 px-4 bg-slate-100 text-gray-600 text-sm font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
+                      >
+                        👁 Ver Resumo
+                      </Link>
+                    )}
+                    {status === 'futura' && (
+                      <div className="text-center text-xs text-gray-400 py-1">
+                        Disponível às {formatTime(aula.horario_inicio)} (30 min antes)
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <span className="text-xs text-slate-500 flex-shrink-0">{turmaSel?.turno}</span>
               </div>
-              {carregandoAlunos ? (
-                <div className="flex justify-center py-8"><div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" /></div>
-              ) : alunos.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 text-xs md:text-sm">Nenhum aluno</div>
-              ) : (
-                <div className="max-h-64 overflow-y-auto divide-y divide-slate-200">
-                  {alunos.map((aluno, idx) => (
-                    <div key={aluno.id} className="flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2 md:py-3">
-                      <span className="text-xs text-slate-400 w-4 text-right flex-shrink-0">{idx + 1}</span>
-                      <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center text-xs">
-                        {aluno.foto_url ? <Image src={aluno.foto_url} alt="" width={32} height={32} className="object-cover w-full h-full" /> : <span className="font-bold text-slate-500">{aluno.nome_completo.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}</span>}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs md:text-sm text-slate-700 truncate">{aluno.nome_completo}</p>
-                        <p className="text-xs text-slate-400 font-mono hidden sm:block">{aluno.matricula}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {erro && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg md:rounded-xl text-red-600 text-xs md:text-sm">⚠ {erro}</div>}
-
-          {turmaSelecionada && alunos.length > 0 && (
-            <button onClick={iniciarChamada} disabled={iniciando}
-              className="w-full py-3 md:py-4 bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white font-bold rounded-lg md:rounded-2xl transition-colors flex items-center justify-center gap-2 text-sm md:text-base"
-            >
-              {iniciando ? <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />Iniciando...</> : '📋 Iniciar'}
-            </button>
-          )}
+            )
+          })}
         </div>
       )}
 
-      {/* Painel de Justificativas (abre ao clicar no sininho) */}
-      {showJustificativas && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex flex-col justify-end md:items-center md:justify-center p-3 md:p-4">
-          <div className="bg-white border border-slate-200 rounded-t-2xl md:rounded-2xl w-full max-w-sm max-h-[80vh] md:max-h-[90vh] flex flex-col shadow-lg">
-            <div className="flex items-center justify-between px-4 md:px-5 py-3 md:py-4 border-b border-slate-200">
-              <h3 className="font-bold text-slate-900 text-sm md:text-base">🔔 Justificativas</h3>
-              <button onClick={() => setShowJustificativas(false)} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
-            </div>
-            <div className="overflow-y-auto flex-1 p-3 md:p-4 space-y-2 md:space-y-3">
-              {justificativas.length === 0 ? (
-                <p className="text-slate-500 text-xs md:text-sm text-center py-6">Nenhuma justificativa.</p>
-              ) : (
-                justificativas.map(j => (
-                  <div key={j.id} className="bg-slate-50 border border-slate-200 rounded-lg md:rounded-xl p-2.5 md:p-3">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="min-w-0">
-                        <p className="text-xs md:text-sm font-semibold text-slate-900 truncate">{j.aluno_nome}</p>
-                        <p className="text-xs text-slate-500">{j.turma}</p>
-                      </div>
-                      <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0 bg-amber-50 text-amber-600">
-                        {formatDate(j.criada_em, 'dd/MM')}
-                      </span>
-                    </div>
-                    <p className="text-xs md:text-sm text-slate-600 mt-2 italic">"{j.motivo}"</p>
-                    <p className="text-xs text-slate-400 mt-1">por {j.responsavel_nome}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+      {/* Iniciar chamada avulsa para qualquer disciplina do professor */}
+      {(disciplinas?.length ?? 0) > 0 && (turmas?.length ?? 0) > 0 && (
+        <div className="mt-6">
+          <h2 className="font-semibold text-gray-600 mb-3 text-xs uppercase tracking-widest">Chamada avulsa</h2>
+          <NovaChamadaButton disciplinas={disciplinas!} turmas={turmas!} />
         </div>
       )}
-
     </div>
   )
 }

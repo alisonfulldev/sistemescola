@@ -35,10 +35,8 @@ export async function GET(req: NextRequest) {
 
     const hoje = req.nextUrl.searchParams.get('data') || new Date().toISOString().split('T')[0]
 
-    // helper: filtra por escola via turmas quando necessário
-    function filtrarEscola(q: any, campo = 'turmas.escola_id') {
-      return escolaId ? q.eq(campo, escolaId) : q
-    }
+    const filtrarEscola = (q: any, campo = 'turmas.escola_id') =>
+      escolaId ? q.eq(campo, escolaId) : q
 
     const [
       { count: matriculados },
