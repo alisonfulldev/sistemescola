@@ -33,12 +33,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não é possível excluir a própria conta' }, { status: 400 })
   }
 
-  const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
   // Impede exclusão de perfis protegidos
   const { data: usuarioDeletar } = await admin
     .from('usuarios')
@@ -50,6 +44,12 @@ export async function POST(req: NextRequest) {
     await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id }, false)
     return NextResponse.json({ error: 'Este perfil não pode ser deletado' }, { status: 403 })
   }
+
+  const admin = createAdmin(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
 
   try {
     // FASE 1: Soft delete primeiro — marca como inativo

@@ -8,10 +8,6 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const filtroData = req.nextUrl.searchParams.get('data') || new Date().toISOString().split('T')[0]
-  const page = Math.max(1, parseInt(req.nextUrl.searchParams.get('page') || '1'))
-  const limit = 15
-
   try {
     const { data: userData } = await supabase.from('usuarios').select('perfil, escola_id, ativo').eq('id', user.id).single()
     const perfil = userData?.perfil || ''
@@ -29,6 +25,10 @@ export async function GET(req: NextRequest) {
     // Isolar por escola para diretor/secretaria
     const escolaId: string | null = (perfil === 'admin') ? null : (userData?.escola_id || null)
 
+    const data = req.nextUrl.searchParams.get('data') || new Date().toISOString().split('T')[0]
+    const page = Math.max(1, parseInt(req.nextUrl.searchParams.get('page') || '1'))
+    const limit = 15
+
     const admin = createAdmin(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     let q = admin
       .from('aulas')
       .select('id, data, horario_inicio, horario_fim, turmas!inner(nome, turno, escola_id), disciplinas(nome), usuarios(nome)')
-      .eq('data', filtroData)
+      .eq('data', data)
       .order('horario_inicio')
     if (escolaId) q = (q as any).eq('turmas.escola_id', escolaId)
 
@@ -71,11 +71,11 @@ export async function GET(req: NextRequest) {
 
     await logger.logAudit(user.id, 'chamadas_consultar', '/api/adm/chamadas', { chamadas: resultado.length, pagina: page }, true)
 
-    return NextResponse.json({ chamadas: resultado, total: totalChamadas || 0, pagina: page, limite: limit, total_paginas: totalPaginas })
+    return NextResponse.json({ chamadas: resultado, total: totalChamadas || 0, pagina, limite: limit, total_paginas: totalPaginas })
   } catch (error) {
     const err = error as Error
     console.error('ERRO API CHAMADAS:', err.message, err.stack)
-    await logger.logError('/api/adm/chamadas', err, user.id, { page })
+    await logger.logError('/api/adm/chamadas', err, user.id, { data, page, filtroData: data })
     return NextResponse.json({
       chamadas: [],
       error: err.message,

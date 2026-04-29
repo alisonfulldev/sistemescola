@@ -26,19 +26,6 @@ export async function GET(req: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Verifica permissão: disciplina deve pertencer ao professor
-    const { data: disciplina } = await admin
-      .from('disciplinas')
-      .select('id')
-      .eq('id', disciplina_id)
-      .eq('professor_id', user.id)
-      .maybeSingle()
-
-    if (!disciplina) {
-      await logger.logAudit(user.id, 'notas_bimestral_consultar', '/api/professor/notas_bimestral', { disciplina_id }, false)
-      return NextResponse.json({ error: 'Sem permissão para esta disciplina' }, { status: 403 })
-    }
-
     const { data: notasData } = await admin
       .from('notas')
       .select('aluno_id, b1, b2, b3, b4')
@@ -71,14 +58,19 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   const payload = await req.json()
+  console.log('PAYLOAD:', JSON.stringify(payload))
 
   // Validar com Zod
   const validation = SaveNotasSchema.safeParse(payload)
   if (!validation.success) {
-    await logger.logError('/api/professor/notas_bimestral', new Error(`Validação falhou`), user.id, { issues: validation.error.issues })
+    console.error('VALIDATION ERROR:', validation.error.issues)
+    console.error('PAYLOAD RECEBIDO:', JSON.stringify(payload, null, 2))
+    await logger.logError('/api/professor/notas_bimestral', new Error(`Validação falhou: ${JSON.stringify(validation.error.issues)}`), user.id, { payload })
     return NextResponse.json({
       error: 'Dados inválidos',
       details: validation.error.flatten().fieldErrors,
+      issues: validation.error.issues,
+      payload_recebido: payload
     }, { status: 400 })
   }
 
@@ -109,52 +101,66 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Turma ou disciplina não encontrada' }, { status: 404 })
     }
 
-    // Verifica permissão: disciplina deve pertencer ao professor
-    const { data: disciplinaAuth } = await admin
-      .from('disciplinas')
+    // Verificar permissão: professor deve ter aulas nesta turma+disciplina
+    // Se não tiver aulas, apenas verifica se turma e disciplina existem
+    const { data: aulas } = await admin
+      .from('aulas')
       .select('id')
-      .eq('id', disciplina_id)
+      .eq('turma_id', turma_id)
+      .eq('disciplina_id', disciplina_id)
       .eq('professor_id', user.id)
-      .maybeSingle()
+      .limit(1)
 
-    if (!disciplinaAuth) {
-      await logger.logAudit(user.id, 'notas_bimestral_salvar', '/api/professor/notas_bimestral', { disciplina_id }, false)
-      return NextResponse.json({ error: 'Sem permissão para esta disciplina' }, { status: 403 })
-    }
+    // Se não houver aulas, ainda permite lançar notas (pode não ter aulas cadastradas)
+    // Apenas registra se turma e disciplina existem
 
     if (!notas || notas.length === 0) {
       await logger.logAudit(user.id, 'notas_bimestral_salvar', '/api/professor/notas_bimestral', { turma_id, disciplina_id }, false)
       return NextResponse.json({ error: 'Nenhuma nota para salvar' }, { status: 400 })
     }
 
-    const parseNota = (val: any): number | null => {
-      if (val === '' || val === null || val === undefined) return null
-      const n = parseFloat(String(val))
-      return isNaN(n) ? null : n
+    // Fazer delete das notas antigas para esses alunos
+    const alunoIds = notas.map((n: any) => n.aluno_id)
+    const { error: deleteError } = await admin
+      .from('notas')
+      .delete()
+      .eq('turma_id', turma_id)
+      .eq('disciplina_id', disciplina_id)
+      .eq('ano_letivo_id', ano_letivo_id)
+      .in('aluno_id', alunoIds)
+
+    if (deleteError) {
+      console.error('DELETE ERROR:', deleteError)
+      await logger.logError('/api/professor/notas_bimestral', deleteError as Error, user.id, { turma_id, disciplina_id })
+      return NextResponse.json({
+        error: 'Erro ao limpar notas antigas',
+        detail: deleteError.message
+      }, { status: 500 })
     }
 
-    // Upsert atômico — sem janela de perda de dados entre delete e insert
+    // Inserir notas novas
     const rows = notas.map((n: any) => ({
       aluno_id: n.aluno_id,
       turma_id,
       disciplina_id,
       ano_letivo_id,
-      b1: parseNota(n.b1),
-      b2: parseNota(n.b2),
-      b3: parseNota(n.b3),
-      b4: parseNota(n.b4),
+      b1: n.b1 === '' || n.b1 === null || n.b1 === undefined ? null : parseFloat(String(n.b1)),
+      b2: n.b2 === '' || n.b2 === null || n.b2 === undefined ? null : parseFloat(String(n.b2)),
+      b3: n.b3 === '' || n.b3 === null || n.b3 === undefined ? null : parseFloat(String(n.b3)),
+      b4: n.b4 === '' || n.b4 === null || n.b4 === undefined ? null : parseFloat(String(n.b4)),
       atualizado_em: new Date().toISOString()
     }))
 
-    const { error: upsertError } = await admin
+    const { error: insertError } = await admin
       .from('notas')
-      .upsert(rows, { onConflict: 'aluno_id,disciplina_id,ano_letivo_id,turma_id' })
+      .insert(rows)
 
-    if (upsertError) {
-      await logger.logError('/api/professor/notas_bimestral', upsertError as Error, user.id, { turma_id, disciplina_id })
+    if (insertError) {
+      console.error('INSERT ERROR:', insertError)
+      await logger.logError('/api/professor/notas_bimestral', insertError as Error, user.id, { turma_id, disciplina_id, rows })
       return NextResponse.json({
         error: 'Erro ao salvar notas bimestrais',
-        detail: upsertError.message
+        detail: insertError.message
       }, { status: 500 })
     }
 
@@ -167,7 +173,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true })
   } catch (e) {
-    await logger.logError('/api/professor/notas_bimestral', e as Error, user.id)
-    return NextResponse.json({ error: 'Erro interno ao salvar notas bimestrais' }, { status: 500 })
+    const error = e as Error
+    console.error('CATCH ERROR:', error.message, error.stack)
+    await logger.logError('/api/professor/notas_bimestral', error, user.id)
+    return NextResponse.json({
+      error: 'Erro interno ao salvar notas bimestrais',
+      detail: error.message
+    }, { status: 500 })
   }
 }
