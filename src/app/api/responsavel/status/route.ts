@@ -91,9 +91,7 @@ export async function GET() {
         }
       }
       // Copiar para ultimaAulaMap
-      for (const [turmaId, aula] of aulasPorTurma.entries()) {
-        ultimaAulaMap.set(turmaId, aula)
-      }
+      aulasPorTurma.forEach((aula, turmaId) => ultimaAulaMap.set(turmaId, aula))
     }
   }
 

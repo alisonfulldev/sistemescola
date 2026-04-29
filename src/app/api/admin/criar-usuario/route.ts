@@ -1,76 +1,43 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
-import { CreateUsuarioComSenhaSchema } from '@/lib/schemas/admin'
-import { validateData, errorResponse } from '@/lib/api-utils'
-import { logger } from '@/lib/logger'
-import { ROLES } from '@/lib/middleware/auth'
 
 export async function POST(req: NextRequest) {
-
-  let user: any = null
   try {
+    // Verifica se o solicitante é admin
     const supabase = await createServerClient()
-    const { data: { user: currentUser } } = await supabase.auth.getUser()
-    user = currentUser
+    const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const { data: perfilData } = await supabase
+    const { data: perfil } = await supabase
       .from('usuarios')
-      .select('perfil, escola_id, ativo')
+      .select('perfil')
       .eq('id', user.id)
       .single()
 
-    const isAdmin = perfilData?.perfil === 'admin'
-    const isSecretaria = perfilData?.perfil === 'secretaria'
-    const isDiretor = perfilData?.perfil === 'diretor'
-
-    if (!perfilData?.ativo) {
-      await logger.logAudit(user.id, 'usuario_criar', '/api/admin/criar-usuario', {}, false)
-      return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
+    if (perfil?.perfil !== 'admin') {
+      return NextResponse.json({ error: 'Acesso negado. Apenas administradores podem criar usuários.' }, { status: 403 })
     }
 
-    if (!isAdmin && !isSecretaria && !isDiretor) {
-      await logger.logAudit(user.id, 'usuario_criar', '/api/admin/criar-usuario', {}, false)
-      return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    const { nome, email, senha, perfil: novoPerfil } = await req.json()
+
+    if (!nome?.trim() || !email?.trim() || !senha?.trim() || !novoPerfil) {
+      return NextResponse.json({ error: 'Campos obrigatórios: nome, email, senha, perfil' }, { status: 400 })
     }
 
-    const body = await req.json()
-    const validation = validateData(CreateUsuarioComSenhaSchema, {
-      email: body.email?.toLowerCase(),
-      nome: body.nome,
-      senha: body.senha,
-      perfil: body.perfil,
-      turma_id: body.turma_id
-    })
-
-    if (!validation.success) return errorResponse(validation.error.message, validation.error.fields, validation.status)
-
-    const { email, nome, senha, perfil: novoPerfil, turma_id } = validation.data as any
-
-    // Apenas admin pode criar conta admin
-    if (!isAdmin && novoPerfil === 'admin') {
-      return NextResponse.json({ error: 'Apenas administradores podem criar contas de administrador.' }, { status: 403 })
+    if (senha.length < 8) {
+      return NextResponse.json({ error: 'A senha deve ter no mínimo 8 caracteres' }, { status: 400 })
     }
 
-    // Determinar escola_id do novo usuário:
-    // - admin criando diretor: recebe escola_id via body
-    // - admin criando qualquer outro: recebe escola_id via body
-    // - diretor/secretaria criando qualquer usuário: herda o próprio escola_id
-    let novoEscolaId: string | null = null
-    if (isAdmin) {
-      novoEscolaId = typeof body.escola_id === 'string' ? body.escola_id : null
-    } else {
-      // diretor/secretaria: novos usuários herdam a mesma escola
-      novoEscolaId = perfilData?.escola_id || null
+    const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin']
+    if (!perfisValidos.includes(novoPerfil)) {
+      return NextResponse.json({ error: 'Perfil inválido' }, { status: 400 })
     }
 
-    // responsavel não tem escola_id (é vinculado a alunos, não a escola diretamente)
-    if (novoPerfil === 'responsavel') novoEscolaId = null
-
+    // Usa service_role para criar usuário no Auth
     const adminClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -80,52 +47,20 @@ export async function POST(req: NextRequest) {
     const { data, error } = await adminClient.auth.admin.createUser({
       email: email.trim(),
       password: senha,
-      user_metadata: {
-        nome: nome.trim(),
-        perfil: novoPerfil,
-        ...(novoPerfil === 'diretor' ? { force_password_reset: true } : {})
-      },
+      user_metadata: { nome: nome.trim(), perfil: novoPerfil },
       email_confirm: true,
     })
 
     if (error) {
-      await logger.logError('/api/admin/criar-usuario', error as Error, user.id, { email })
       if (error.message.includes('already registered') || error.message.includes('already been registered')) {
         return NextResponse.json({ error: 'Este email já está cadastrado no sistema' }, { status: 409 })
       }
-      return NextResponse.json({ error: 'Erro ao criar usuário na autenticação' }, { status: 400 })
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
-
-    const usuarioLogin = email.trim().split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '')
-
-    const { error: erroInsert } = await adminClient
-      .from('usuarios')
-      .upsert({
-        id: data.user.id,
-        nome: nome.trim(),
-        email: email.trim(),
-        perfil: novoPerfil,
-        escola_id: novoEscolaId,
-        usuario: usuarioLogin,
-        ativo: true,
-      }, { onConflict: 'id' })
-
-    if (erroInsert) {
-      await adminClient.auth.admin.deleteUser(data.user.id)
-      await logger.logError('/api/admin/criar-usuario', erroInsert as Error, user.id, { email, perfil: novoPerfil })
-      return NextResponse.json({ error: 'Erro ao salvar usuário no banco de dados' }, { status: 500 })
-    }
-
-    await logger.logAudit(user.id, 'usuario_criar', '/api/admin/criar-usuario', {
-      email,
-      perfil: novoPerfil,
-      nova_escola_id: novoEscolaId,
-      usuario_id: data.user.id
-    }, true)
 
     return NextResponse.json({ id: data.user.id, email: data.user.email }, { status: 201 })
   } catch (err) {
-    await logger.logError('/api/admin/criar-usuario', err as Error, user.id, { email: (await req.json()).email })
+    console.error('Erro ao criar usuário:', err)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

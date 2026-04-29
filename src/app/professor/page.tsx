@@ -11,7 +11,9 @@ type Aba = 'geral' | 'nova'
 
 export default function ProfessorDashboard() {
   const [turmas, setTurmas] = useState<any[]>([])
+  const [disciplinas, setDisciplinas] = useState<any[]>([])
   const [turmaSelecionada, setTurmaSelecionada] = useState('')
+  const [disciplinaSelecionada, setDisciplinaSelecionada] = useState('')
   const [alunos, setAlunos] = useState<any[]>([])
   const [historico, setHistorico] = useState<any[]>([])
   const [visaoGeral, setVisaoGeral] = useState<any>(null)
@@ -40,14 +42,16 @@ export default function ProfessorDashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return router.push('/login')
 
-      const [{ data: turmasData }, histRes, geralRes, justRes] = await Promise.all([
+      const [{ data: turmasData }, { data: disciplinasData }, histRes, geralRes, justRes] = await Promise.all([
         supabase.from('turmas').select('id, nome, turno').eq('ativo', true).order('nome'),
+        supabase.from('disciplinas').select('id, nome').eq('professor_id', user.id).eq('ativo', true).order('nome'),
         fetch('/api/professor/historico'),
         fetch('/api/professor/visao-geral'),
         fetch('/api/professor/justificativas'),
       ])
 
       setTurmas(turmasData || [])
+      setDisciplinas(disciplinasData || [])
       if (histRes.ok) { const { chamadas } = await histRes.json(); setHistorico(chamadas || []) }
       if (geralRes.ok) setVisaoGeral(await geralRes.json())
       if (justRes.ok) { const { justificativas: j } = await justRes.json(); setJustificativas(j || []) }
@@ -74,11 +78,11 @@ export default function ProfessorDashboard() {
   }
 
   async function iniciarChamada() {
-    if (!turmaSelecionada) return
+    if (!turmaSelecionada || !disciplinaSelecionada) return
     setIniciando(true)
     setErro('')
     try {
-      const res = await fetch('/api/professor/iniciar-chamada', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ turma_id: turmaSelecionada }) })
+      const res = await fetch('/api/professor/iniciar-chamada', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ turma_id: turmaSelecionada, disciplina_id: disciplinaSelecionada }) })
       const data = await res.json()
       if (data.chamada_id) { router.push(`/professor/chamada/${data.chamada_id}`) }
       else { setErro(data.error || 'Erro ao iniciar chamada'); setIniciando(false) }
@@ -250,6 +254,18 @@ export default function ProfessorDashboard() {
                 {turmas.map(t => <option key={t.id} value={t.id}>{t.nome} · {t.turno}</option>)}
               </select>
             )}
+
+            <label className="block text-xs text-slate-500 mt-4 mb-2 uppercase tracking-wide">Selecione a disciplina</label>
+            {disciplinas.length === 0 ? (
+              <p className="text-slate-400 text-xs md:text-sm py-2">Nenhuma disciplina atribuída.</p>
+            ) : (
+              <select value={disciplinaSelecionada} onChange={e => setDisciplinaSelecionada(e.target.value)}
+                className="w-full bg-white border border-slate-300 text-slate-900 text-xs md:text-sm rounded-lg md:rounded-xl px-3 md:px-4 py-2 md:py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              >
+                <option value="">-- Selecione --</option>
+                {disciplinas.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+              </select>
+            )}
           </div>
 
           {turmaSelecionada && (
@@ -286,7 +302,7 @@ export default function ProfessorDashboard() {
 
           {erro && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg md:rounded-xl text-red-600 text-xs md:text-sm">⚠ {erro}</div>}
 
-          {turmaSelecionada && alunos.length > 0 && (
+          {turmaSelecionada && disciplinaSelecionada && alunos.length > 0 && (
             <button onClick={iniciarChamada} disabled={iniciando}
               className="w-full py-3 md:py-4 bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white font-bold rounded-lg md:rounded-2xl transition-colors flex items-center justify-center gap-2 text-sm md:text-base"
             >

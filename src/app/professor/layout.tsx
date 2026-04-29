@@ -1,113 +1,49 @@
-'use client'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
-import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { Home, BookOpen, BarChart3, LogOut, Menu, X } from 'lucide-react'
+export default async function ProfessorLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-export default function ProfessorLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
+  const { data: usuario } = await supabase
+    .from('usuarios')
+    .select('nome, perfil')
+    .eq('id', user.id)
+    .single()
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/login')
+  if (usuario?.perfil !== 'professor') redirect('/login')
+
+  async function logout() {
+    'use server'
+    const sb = await createClient()
+    await sb.auth.signOut()
+    redirect('/login')
   }
 
-  const menuItems = [
-    { href: '/professor', label: 'Dashboard', icon: Home },
-    { href: '/professor/notas', label: 'Notas', icon: BookOpen },
-    { href: '/professor/avaliacoes', label: 'Avaliações', icon: BarChart3 },
-  ]
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row" style={{ fontFamily: 'Sora, sans-serif' }}>
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`fixed md:static w-64 md:w-72 h-screen md:h-auto bg-slate-900 border-r border-slate-700 flex flex-col z-40 transition-transform md:translate-x-0 text-white ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        {/* Logo */}
-        <div className="px-4 md:px-6 py-6 md:py-8 border-b border-slate-700">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Image
-                src="/logo-estudapp.png"
-                alt="EstudApp"
-                width={400}
-                height={220}
-                className="w-full h-auto"
-                priority
-              />
+    <div className="min-h-screen bg-slate-50" style={{ fontFamily: 'Sora, sans-serif' }}>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
             </div>
-            <button onClick={() => setSidebarOpen(false)} className="md:hidden hover:bg-slate-800 p-1.5 rounded-lg transition-colors flex-shrink-0">
-              <X className="w-5 h-5" />
-            </button>
+            <span className="font-semibold text-gray-800 text-sm">Chamada Escolar</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500 hidden sm:block">{usuario?.nome}</span>
+            <form action={logout}>
+              <button type="submit" className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-50">
+                Sair
+              </button>
+            </form>
           </div>
         </div>
-
-        {/* Menu */}
-        <nav className="flex-1 px-3 md:px-4 py-4 md:py-6 space-y-1">
-          {menuItems.map(item => {
-            const Icon = item.icon
-            const isActive = false // Você pode adicionar lógica de rota ativa aqui
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm font-medium transition-all duration-150 ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                <span>{item.label}</span>
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Logout */}
-        <div className="px-3 md:px-4 py-4 md:py-6 border-t border-slate-700">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center md:justify-start gap-3 px-3 md:px-4 py-2.5 md:py-2 rounded-lg text-xs md:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all duration-150"
-          >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            <span>Sair</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col w-full">
-        {/* Header */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-          <div className="px-4 md:px-8 h-14 md:h-16 flex items-center justify-between gap-4">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden p-1.5">
-              <Menu className="w-5 h-5" />
-            </button>
-            <h2 className="font-semibold text-slate-900 text-sm md:text-lg">Gestor Acadêmico</h2>
-            <div className="text-xs md:text-sm text-slate-500 hidden sm:block">Sistema Escolar</div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto p-3 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
+      </header>
+      <main className="max-w-2xl mx-auto px-4 py-6">{children}</main>
     </div>
   )
 }

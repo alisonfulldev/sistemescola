@@ -71,11 +71,11 @@ export async function GET(req: NextRequest) {
 
     await logger.logAudit(user.id, 'chamadas_consultar', '/api/adm/chamadas', { chamadas: resultado.length, pagina: page }, true)
 
-    return NextResponse.json({ chamadas: resultado, total: totalChamadas || 0, pagina, limite: limit, total_paginas: totalPaginas })
+    return NextResponse.json({ chamadas: resultado, total: totalChamadas || 0, pagina: page, limite: limit, total_paginas: totalPaginas })
   } catch (error) {
     const err = error as Error
     console.error('ERRO API CHAMADAS:', err.message, err.stack)
-    await logger.logError('/api/adm/chamadas', err, user.id, { data, page, filtroData: data })
+    await logger.logError('/api/adm/chamadas', err, user.id)
     return NextResponse.json({
       chamadas: [],
       error: err.message,
