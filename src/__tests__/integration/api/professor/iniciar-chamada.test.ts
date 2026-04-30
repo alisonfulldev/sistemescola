@@ -17,8 +17,9 @@ vi.mock('@supabase/supabase-js', () => ({
 const { POST } = await import('@/app/api/professor/iniciar-chamada/route')
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-const PROFESSOR_ID = 'prof-uuid-123'
-const TURMA_ID = 'turma-uuid-456'
+const PROFESSOR_ID = 'a0000000-0000-4000-8000-000000000001'
+const TURMA_ID = 'b0000000-0000-4000-8000-000000000001'
+const DISCIPLINA_ID = 'c0000000-0000-4000-8000-000000000001'
 const HOJE = new Date().toISOString().split('T')[0]
 
 function makeServerClient(user: any) {
@@ -45,7 +46,7 @@ describe('POST /api/professor/iniciar-chamada', () => {
 
   it('retorna 401 quando não autenticado', async () => {
     serverClientMock = makeServerClient(null)
-    const res = await POST(makeRequest({ turma_id: TURMA_ID }))
+    const res = await POST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(res.status).toBe(401)
     const body = await res.json()
     expect(body.error).toBeTruthy()
@@ -53,64 +54,79 @@ describe('POST /api/professor/iniciar-chamada', () => {
 
   it('retorna 400 quando turma_id ausente', async () => {
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
-    const res = await POST(makeRequest({}))
+    const res = await POST(makeRequest({ disciplina_id: DISCIPLINA_ID }))
     expect(res.status).toBe(400)
+  })
+
+  it('retorna 400 quando disciplina_id ausente', async () => {
+    serverClientMock = makeServerClient({ id: PROFESSOR_ID })
+    const res = await POST(makeRequest({ turma_id: TURMA_ID }))
+    expect(res.status).toBe(400)
+  })
+
+  it('retorna 403 quando disciplina não pertence ao professor', async () => {
+    serverClientMock = makeServerClient({ id: PROFESSOR_ID })
+    adminClientMock = makeAdminClient([
+      { data: null }, // disciplina não encontrada para este professor
+    ])
+    const res = await POST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
+    expect(res.status).toBe(403)
   })
 
   it('retorna chamada_id quando aula já existe hoje', async () => {
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: { id: 'aula-existente' } },      // aulas de hoje
-      { data: { id: 'chamada-existente' } },   // chamada existente
+      { data: { id: DISCIPLINA_ID } },          // disciplina válida
+      { data: { id: 'f0000000-0000-4000-8000-000000000001' } }, // aula existente
+      { data: { id: 'd0000000-0000-4000-8000-000000000001' } }, // chamada existente
     ])
 
-    const res = await POST(makeRequest({ turma_id: TURMA_ID }))
+    const res = await POST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(res.status).toBe(200)
     const body = await res.json()
-    expect(body.chamada_id).toBe('chamada-existente')
+    expect(body.chamada_id).toBe('d0000000-0000-4000-8000-000000000001')
   })
 
   it('cria aula e chamada quando não existem', async () => {
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: null },                              // sem aula hoje
-      { data: { disciplina_id: 'disc-1' } },       // aula anterior (disciplina)
-      { data: { id: 'nova-aula' } },               // insert aula
-      { data: null },                              // sem chamada existente
-      { data: { id: 'nova-chamada' } },            // insert chamada
+      { data: { id: DISCIPLINA_ID } },                      // disciplina válida
+      { data: null },                                        // sem aula hoje
+      { data: { id: 'f0000000-0000-4000-8000-000000000002' } }, // insert aula
+      { data: null },                                        // sem chamada existente
+      { data: { id: 'd0000000-0000-4000-8000-000000000002' } }, // insert chamada
     ])
 
-    const res = await POST(makeRequest({ turma_id: TURMA_ID }))
+    const res = await POST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(res.status).toBe(200)
     const body = await res.json()
-    expect(body.chamada_id).toBe('nova-chamada')
+    expect(body.chamada_id).toBe('d0000000-0000-4000-8000-000000000002')
   })
 
   it('retorna 500 quando falha ao criar aula', async () => {
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: null },                                          // sem aula hoje
-      { data: null },                                          // sem disciplina anterior
-      { data: null },                                          // sem disciplina
-      { data: null, error: { message: 'DB error' } },         // falha no insert
+      { data: { id: DISCIPLINA_ID } },                              // disciplina válida
+      { data: null },                                               // sem aula hoje
+      { data: null, error: { message: 'DB error' } },              // falha no insert
     ])
 
-    const res = await POST(makeRequest({ turma_id: TURMA_ID }))
+    const res = await POST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(res.status).toBe(500)
   })
 
   it('retorna chamada existente sem criar duplicata', async () => {
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: { id: 'aula-1' } },                        // aula hoje
-      { data: { id: 'chamada-duplicada', status: 'em_andamento' } }, // chamada já existe
+      { data: { id: DISCIPLINA_ID } },                                      // disciplina válida
+      { data: { id: 'f0000000-0000-4000-8000-000000000001' } },            // aula existente
+      { data: { id: 'd0000000-0000-4000-8000-000000000001', status: 'em_andamento' } }, // chamada existente
     ])
 
-    const res = await POST(makeRequest({ turma_id: TURMA_ID }))
+    const res = await POST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(res.status).toBe(200)
     const body = await res.json()
-    expect(body.chamada_id).toBe('chamada-duplicada')
-    // Garante que não tentou criar nova chamada
-    expect(adminClientMock.from).toHaveBeenCalledTimes(2)
+    expect(body.chamada_id).toBe('d0000000-0000-4000-8000-000000000001')
+    expect(adminClientMock.from).toHaveBeenCalledTimes(3)
   })
 })

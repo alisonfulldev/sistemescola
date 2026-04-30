@@ -1,77 +1,82 @@
-// Utility functions for common operations
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+import { format, parseISO, isWithinInterval, subMinutes, addMinutes } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
-export function formatDate(date: string | Date, format: string = 'pt-BR'): string {
-  if (typeof date === 'string') {
-    date = new Date(date)
-  }
-  
-  if (format === 'pt-BR') {
-    return new Intl.DateTimeFormat('pt-BR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date)
-  }
-  
-  // Simple format string processor for dd/MM 'às' HH:mm style
-  const d = String(date.getDate()).padStart(2, '0')
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const y = date.getFullYear()
-  const h = String(date.getHours()).padStart(2, '0')
-  const min = String(date.getMinutes()).padStart(2, '0')
-  const s = String(date.getSeconds()).padStart(2, '0')
-  
-  return format
-    .replace('dd', d)
-    .replace('MM', m)
-    .replace('yyyy', String(y))
-    .replace('yy', String(y).slice(-2))
-    .replace('HH', h)
-    .replace('mm', min)
-    .replace('ss', s)
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
 
-export function formatTime(time: string): string {
+export function formatDate(date: string | Date, fmt = 'dd/MM/yyyy') {
+  const d = typeof date === 'string' ? parseISO(date) : date
+  return format(d, fmt, { locale: ptBR })
+}
+
+export function formatTime(time: string) {
   if (!time) return ''
-  const [hours, minutes] = time.split(':')
-  return `${hours}:${minutes}`
+  return time.slice(0, 5)
 }
 
-export function formatCPF(cpf: string): string {
-  return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+export function formatDateTime(dt: string) {
+  return format(parseISO(dt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
 }
 
-export function formatPhone(phone: string): string {
-  return phone.replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-$3')
+export function podeIniciarChamada(horarioInicio: string, data: string): boolean {
+  const now = new Date()
+  const [h, m] = horarioInicio.split(':').map(Number)
+  const aulaDate = parseISO(data)
+  aulaDate.setHours(h, m, 0, 0)
+  const inicio = subMinutes(aulaDate, 30)
+  const fim = addMinutes(aulaDate, 45)
+  return isWithinInterval(now, { start: inicio, end: fim })
 }
 
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ')
+export function calcularFrequencia(presencas: number, total: number): number {
+  if (total === 0) return 100
+  return Math.round((presencas / total) * 100)
 }
 
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout
-  return function (...args: Parameters<T>) {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => func(...args), wait)
+export function getCorStatusPresenca(status: string): string {
+  switch (status) {
+    case 'presente': return 'bg-green-500/20 text-green-400 border-green-500/30'
+    case 'falta': return 'bg-red-500/20 text-red-400 border-red-500/30'
+    case 'justificada': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+    default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
   }
 }
 
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle: boolean
-  return function (...args: Parameters<T>) {
-    if (!inThrottle) {
-      func(...args)
-      inThrottle = true
-      setTimeout(() => (inThrottle = false), limit)
-    }
+export function getLabelPresenca(status: string): string {
+  switch (status) {
+    case 'presente': return 'Presente'
+    case 'falta': return 'Falta'
+    case 'justificada': return 'Justificada'
+    default: return '—'
   }
+}
+
+export function getTurnoLabel(turno: string): string {
+  switch (turno) {
+    case 'matutino': return 'Matutino'
+    case 'vespertino': return 'Vespertino'
+    case 'noturno': return 'Noturno'
+    default: return turno
+  }
+}
+
+export function getTurnoBadge(turno: string): string {
+  switch (turno) {
+    case 'matutino': return 'bg-yellow-500/20 text-yellow-400'
+    case 'vespertino': return 'bg-orange-500/20 text-orange-400'
+    case 'noturno': return 'bg-purple-500/20 text-purple-400'
+    default: return 'bg-gray-500/20 text-gray-400'
+  }
+}
+
+export function gerarQRCodeData(alunoId: string): string {
+  return `escola_aluno_${alunoId}`
+}
+
+export function extrairAlunoIdDoQR(qrData: string): string | null {
+  const match = qrData.match(/^escola_aluno_(.+)$/)
+  return match ? match[1] : null
 }

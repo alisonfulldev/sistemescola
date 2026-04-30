@@ -32,17 +32,23 @@ const { POST: responderJustificativa } = await import('@/app/api/professor/justi
 const { POST: criarAvaliacao } = await import('@/app/api/avaliacoes/route')
 const { POST: lancarNotas } = await import('@/app/api/professor/notas/route')
 
-const PROFESSOR_ID = 'prof-uuid-001'
-const RESPONSAVEL_ID = 'resp-uuid-001'
-const ALUNO_ID = 'aluno-uuid-001'
-const TURMA_ID = 'turma-uuid-001'
-const DISCIPLINA_ID = 'disc-uuid-001'
+const PROFESSOR_ID = 'a0000000-0000-4000-8000-000000000001'
+const RESPONSAVEL_ID = 'a0000000-0000-4000-8000-000000000003'
+const ALUNO_ID = 'e0000000-0000-4000-8000-000000000001'
+const TURMA_ID = 'b0000000-0000-4000-8000-000000000001'
+const DISCIPLINA_ID = 'c0000000-0000-4000-8000-000000000001'
+const AULA_ID = 'f0000000-0000-4000-8000-000000000001'
+const AVALIACAO_ID = 'f0000000-0000-4000-8000-000000000002'
 const HOJE = new Date().toISOString().split('T')[0]
 
-function makeServerClient(user: any) {
+function makeServerClient(user: any, fromResponses: Array<{ data?: any; error?: any }> = []) {
+  let idx = 0
   return {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }) },
-    from: vi.fn(),
+    from: vi.fn().mockImplementation(() => {
+      const r = fromResponses[idx++] ?? { data: null, error: null }
+      return qb(r)
+    }),
   }
 }
 
@@ -85,18 +91,18 @@ describe('Fluxo Completo: Chamada → Justificativa → Aprovação', () => {
 
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
+      { data: { id: DISCIPLINA_ID } },       // disciplina pertence ao professor
       { data: null },                        // sem aula hoje
-      { data: { disciplina_id: DISCIPLINA_ID } }, // busca disciplina anterior
-      { data: { id: 'aula-001' } },         // UPSERT aula
+      { data: { id: 'f0000000-0000-4000-8000-000000000010' } }, // INSERT aula
       { data: null },                        // sem chamada existente
-      { data: { id: 'chamada-001', status: 'em_andamento' } }, // INSERT chamada
+      { data: { id: 'd0000000-0000-4000-8000-000000000010', status: 'em_andamento' } }, // INSERT chamada
     ])
 
-    const resInit = await iniciarChamada(makeRequest({ turma_id: TURMA_ID }))
+    const resInit = await iniciarChamada(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(resInit.status).toBe(200)
     const bodyInit = await resInit.json()
     const chamadaId = bodyInit.chamada_id
-    expect(chamadaId).toBe('chamada-001')
+    expect(chamadaId).toBe('d0000000-0000-4000-8000-000000000010')
 
     // ──────────────────────────────────────────────────────────────────────
     // ETAPA 2: Professor marca presença de 3 alunos (2 presentes, 1 falta)
@@ -128,7 +134,7 @@ describe('Fluxo Completo: Chamada → Justificativa → Aprovação', () => {
 
     const resMarcar2 = await marcarPresenca(makeRequest({
       chamada_id: chamadaId,
-      aluno_id: 'aluno-uuid-002',
+      aluno_id: 'e0000000-0000-4000-8000-000000000002',
       status: 'presente',
       chamada_concluida: false,
     }))
@@ -144,7 +150,7 @@ describe('Fluxo Completo: Chamada → Justificativa → Aprovação', () => {
 
     const resMarcar3 = await marcarPresenca(makeRequest({
       chamada_id: chamadaId,
-      aluno_id: 'aluno-uuid-003',
+      aluno_id: 'e0000000-0000-4000-8000-000000000003',
       status: 'falta',
       chamada_concluida: false,
     }))
@@ -171,12 +177,13 @@ describe('Fluxo Completo: Chamada → Justificativa → Aprovação', () => {
     vi.clearAllMocks()
     serverClientMock = makeServerClient({ id: RESPONSAVEL_ID })
     adminClientMock = makeAdminClient([
-      { data: { id: 'registro-003', aluno_id: 'aluno-uuid-003', status: 'falta' } }, // SELECT registro
-      { data: null, error: null }, // INSERT justificativa
+      { data: { id: 'e0000000-0000-4000-8000-000000000020', aluno_id: 'e0000000-0000-4000-8000-000000000003', status: 'falta' } }, // SELECT registro
+      { data: { aluno_id: 'e0000000-0000-4000-8000-000000000003' } }, // vinculo responsavel→aluno
+      { data: null, error: null }, // UPSERT justificativa
     ])
 
     const resJustificar = await justificar(makeRequest({
-      registro_id: 'registro-003',
+      registro_id: 'e0000000-0000-4000-8000-000000000020',
       motivo: 'Aluno com infecção — atestado médico',
       comprovante_url: 'https://storage/atestado.pdf',
     }))
@@ -189,15 +196,15 @@ describe('Fluxo Completo: Chamada → Justificativa → Aprovação', () => {
     vi.clearAllMocks()
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: { id: 'justif-001', registro_id: 'registro-003', status: 'pendente' } }, // SELECT justificativa
+      { data: { id: 'e0000000-0000-4000-8000-000000000030', registro_id: 'e0000000-0000-4000-8000-000000000020', status: 'pendente', responsavel_id: RESPONSAVEL_ID, registros_chamada: { chamada_id: chamadaId, chamadas: { aulas: { professor_id: PROFESSOR_ID } } } } }, // SELECT justificativa
       { data: null, error: null }, // UPDATE justificativa status='aprovada'
       { data: null, error: null }, // UPDATE registro status='justificada'
     ])
 
     const resAprovar = await responderJustificativa(makeRequest({
-      justificativa_id: 'justif-001',
-      aprovado: true,
-      resposta_professor: 'Atestado verificado. Falta justificada.',
+      justificativa_id: 'e0000000-0000-4000-8000-000000000030',
+      status: 'aprovada',
+      professor_resposta: 'Atestado verificado. Falta justificada.',
     }))
     expect(resAprovar.status).toBe(200)
 
@@ -220,15 +227,14 @@ describe('Fluxo Completo: Chamada → Justificativa → Aprovação', () => {
 
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: { id: 'justif-001', registro_id: 'registro-003', status: 'pendente' } },
+      { data: { id: 'e0000000-0000-4000-8000-000000000030', registro_id: 'e0000000-0000-4000-8000-000000000020', status: 'pendente', responsavel_id: RESPONSAVEL_ID, registros_chamada: { chamada_id: 'd0000000-0000-4000-8000-000000000010', chamadas: { aulas: { professor_id: PROFESSOR_ID } } } } },
       { data: null, error: null }, // UPDATE justificativa status='rejeitada'
-      { data: null, error: null }, // UPDATE registro status='falta' (volta)
     ])
 
     const resRejeitar = await responderJustificativa(makeRequest({
-      justificativa_id: 'justif-001',
-      aprovado: false,
-      resposta_professor: 'Atestado insuficiente. Falta mantida.',
+      justificativa_id: 'e0000000-0000-4000-8000-000000000030',
+      status: 'rejeitada',
+      professor_resposta: 'Atestado insuficiente. Falta mantida.',
     }))
 
     expect(resRejeitar.status).toBe(200)
@@ -257,18 +263,18 @@ describe('Fluxo Completo: Criação de Avaliação → Lançamento de Notas', ()
     // ETAPA 1: Professor cria avaliação
     // ──────────────────────────────────────────────────────────────────────
 
-    serverClientMock = makeServerClient({ id: PROFESSOR_ID })
-    adminClientMock = makeAdminClient([
-      { data: { perfil: 'professor', escola_id: 'esc-1' } },
+    serverClientMock = makeServerClient({ id: PROFESSOR_ID }, [
+      { data: { perfil: 'professor' } },         // from('usuarios')
+      { data: { professor_id: PROFESSOR_ID } },   // from('aulas') - validação professor
     ])
-
-    adminClientMock.rpc = vi.fn().mockResolvedValue({
-      data: 'avaliacao-uuid-001',
-      error: null,
-    })
+    adminClientMock = makeAdminClient([
+      { data: { id: AVALIACAO_ID } },  // from('avaliacoes') após RPC
+      { data: [] },                    // from('alunos') para contagem
+    ])
+    adminClientMock.rpc = vi.fn().mockResolvedValue({ data: AVALIACAO_ID, error: null })
 
     const resAvaliar = await criarAvaliacao(makeRequest({
-      aula_id: 'aula-uuid-001',
+      aula_id: AULA_ID,
       disciplina_id: DISCIPLINA_ID,
       turma_id: TURMA_ID,
       titulo: 'Prova Bimestral 1',
@@ -282,7 +288,7 @@ describe('Fluxo Completo: Criação de Avaliação → Lançamento de Notas', ()
     expect(resAvaliar.status).toBe(201)
     const bodyAvaliar = await resAvaliar.json()
     const avaliacaoId = bodyAvaliar.avaliacao.id
-    expect(avaliacaoId).toBe('avaliacao-uuid-001')
+    expect(avaliacaoId).toBe(AVALIACAO_ID)
 
     // ──────────────────────────────────────────────────────────────────────
     // ETAPA 2: Professor lança notas para 3 alunos
@@ -291,21 +297,16 @@ describe('Fluxo Completo: Criação de Avaliação → Lançamento de Notas', ()
     vi.clearAllMocks()
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: { perfil: 'professor' } }, // SELECT perfil
-      { data: [
-        { id: 'aluno-uuid-001', nome_completo: 'Aluno 1' },
-        { data: null, error: null }, // UPSERT nota aluno 1
-        { data: null, error: null }, // UPSERT nota aluno 2
-        { data: null, error: null }, // UPSERT nota aluno 3
-      ] },
+      { data: { id: avaliacaoId } },  // from('provas') validação
+      { data: null, error: null },    // from('notas') upsert
     ])
 
     const resNotas = await lancarNotas(makeRequest({
-      avaliacao_id: avaliacaoId,
+      prova_id: avaliacaoId,
       notas: [
-        { aluno_id: 'aluno-uuid-001', nota: 9.5 },
-        { aluno_id: 'aluno-uuid-002', nota: 8.0 },
-        { aluno_id: 'aluno-uuid-003', nota: 7.5 },
+        { aluno_id: 'e0000000-0000-4000-8000-000000000010', nota: 9.5 },
+        { aluno_id: 'e0000000-0000-4000-8000-000000000011', nota: 8.0 },
+        { aluno_id: 'e0000000-0000-4000-8000-000000000012', nota: 7.5 },
       ],
     }))
 
@@ -316,8 +317,7 @@ describe('Fluxo Completo: Criação de Avaliação → Lançamento de Notas', ()
     // ──────────────────────────────────────────────────────────────────────
     // VERIFICAÇÃO FINAL:
     // - Avaliação existe em banco
-    // - Todos 30 alunos têm registro em notas_avaliacao
-    // - 3 alunos têm notas preenchidas, 27 estão NULL
+    // - Professor consegue lançar notas via prova_id
   })
 
   it('falha ao criar avaliação — não deixa registros de nota órfãos', async () => {
@@ -327,18 +327,18 @@ describe('Fluxo Completo: Criação de Avaliação → Lançamento de Notas', ()
      * ESPERADO: RPC faz ROLLBACK, nenhum registro criado
      */
 
-    serverClientMock = makeServerClient({ id: PROFESSOR_ID })
-    adminClientMock = makeAdminClient([
-      { data: { perfil: 'professor', escola_id: 'esc-1' } },
+    serverClientMock = makeServerClient({ id: PROFESSOR_ID }, [
+      { data: { perfil: 'professor' } },
+      { data: { professor_id: PROFESSOR_ID } },
     ])
-
+    adminClientMock = makeAdminClient([])
     adminClientMock.rpc = vi.fn().mockResolvedValue({
       data: null,
       error: { message: 'constraint violation' },
     })
 
     const resAvaliar = await criarAvaliacao(makeRequest({
-      aula_id: 'aula-uuid-001',
+      aula_id: AULA_ID,
       disciplina_id: DISCIPLINA_ID,
       turma_id: TURMA_ID,
       titulo: 'Prova Bimestral 1',
@@ -367,28 +367,28 @@ describe('Integridade de Dados — Fluxos Complexos com Múltiplas Turmas', () =
     // Turma 1: Inicia chamada
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
+      { data: { id: DISCIPLINA_ID } },
       { data: null },
-      { data: { disciplina_id: DISCIPLINA_ID } },
       { data: { id: 'aula-turma-1' } },
       { data: null },
       { data: { id: 'chamada-turma-1' } },
     ])
 
-    const resTurma1 = await iniciarChamada(makeRequest({ turma_id: 'turma-uuid-001' }))
+    const resTurma1 = await iniciarChamada(makeRequest({ turma_id: 'b0000000-0000-4000-8000-000000000002', disciplina_id: DISCIPLINA_ID }))
     expect(resTurma1.status).toBe(200)
 
     // Turma 2: Inicia chamada (mesmo professor, turma diferente)
     vi.clearAllMocks()
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
+      { data: { id: DISCIPLINA_ID } },
       { data: null },
-      { data: { disciplina_id: DISCIPLINA_ID } },
       { data: { id: 'aula-turma-2' } },
       { data: null },
       { data: { id: 'chamada-turma-2' } },
     ])
 
-    const resTurma2 = await iniciarChamada(makeRequest({ turma_id: 'turma-uuid-002' }))
+    const resTurma2 = await iniciarChamada(makeRequest({ turma_id: 'b0000000-0000-4000-8000-000000000003', disciplina_id: DISCIPLINA_ID }))
     expect(resTurma2.status).toBe(200)
 
     const body1 = await resTurma1.json()
@@ -414,28 +414,28 @@ describe('Consistency Checks — Antes e Depois de Operações', () => {
     // Dia 1
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
+      { data: { id: DISCIPLINA_ID } },
       { data: null },
-      { data: { disciplina_id: DISCIPLINA_ID } },
       { data: { id: 'aula-dia-1' } },
       { data: null },
       { data: { id: 'chamada-dia-1' } },
     ])
 
-    const resDia1 = await iniciarChamada(makeRequest({ turma_id: TURMA_ID }))
+    const resDia1 = await iniciarChamada(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(resDia1.status).toBe(200)
 
     // Dia 2 (diferente)
     vi.clearAllMocks()
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: null }, // sem aula em outro dia
-      { data: { disciplina_id: DISCIPLINA_ID } },
+      { data: { id: DISCIPLINA_ID } },
+      { data: null },
       { data: { id: 'aula-dia-2' } },
       { data: null },
       { data: { id: 'chamada-dia-2' } },
     ])
 
-    const resDia2 = await iniciarChamada(makeRequest({ turma_id: TURMA_ID }))
+    const resDia2 = await iniciarChamada(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(resDia2.status).toBe(200)
 
     const body1 = await resDia1.json()

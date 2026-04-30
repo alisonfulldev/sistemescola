@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     user = authUser
 
     const validation = NotificarPresencaSchema.safeParse(await req.json())
-    if (!validation.success) return NextResponse.json({ ok: true })
+    if (!validation.success) return NextResponse.json({ error: 'chamada_id inválido' }, { status: 400 })
 
     const { chamada_id } = validation.data as any
 
@@ -27,6 +27,20 @@ export async function POST(req: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
+    // Valida que a chamada pertence a uma aula deste professor
+    const { data: chamada } = await supabase
+      .from('chamadas')
+      .select('aulas(professor_id, turmas(nome))')
+      .eq('id', chamada_id)
+      .maybeSingle()
+
+    if (!chamada || (chamada as any).aulas?.professor_id !== user.id) {
+      await logger.logAudit(user.id, 'presenca_notificar', '/api/professor/notificar-presenca', { chamada_id }, false)
+      return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    }
+
+    const turmaNome = (chamada as any).aulas?.turmas?.nome || 'aula'
+
     // Busca alunos presentes nesta chamada
     const { data: registros } = await supabase
       .from('registros_chamada')
@@ -35,15 +49,6 @@ export async function POST(req: NextRequest) {
       .eq('status', 'presente')
 
     if (!registros?.length) return NextResponse.json({ ok: true })
-
-    // Busca nome da turma via chamada
-    const { data: chamada } = await supabase
-      .from('chamadas')
-      .select('aulas(turmas(nome))')
-      .eq('id', chamada_id)
-      .single()
-
-    const turmaNome = (chamada as any)?.aulas?.turmas?.nome || 'aula'
 
     const webpush = await import('web-push')
     webpush.default.setVapidDetails(

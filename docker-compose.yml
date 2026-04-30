@@ -1,26 +1,23 @@
 services:
 
   db:
-    image: supabase/postgres:15.1.1.78
+    image: supabase/postgres:15.1.0.117
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: postgres
-      PGPASSWORD: postgres
       JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./supabase/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql
-      - ./supabase/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql
-      - ./supabase/schema.sql:/docker-entrypoint-initdb.d/zzz-schema.sql
-      - ./supabase/seed.sql:/docker-entrypoint-initdb.d/zzz-seed.sql
+      - ./supabase/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+      - ./supabase/auth-seed.sql:/docker-entrypoint-initdb.d/03-auth-seed.sql
+      - ./supabase/seed.sql:/docker-entrypoint-initdb.d/04-seed.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres && psql -U postgres -c 'SELECT 1' -q --no-align -t > /dev/null 2>&1"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
-      retries: 40
-      start_period: 30s
+      retries: 20
 
   auth:
     image: supabase/gotrue:v2.151.0
@@ -39,17 +36,15 @@ services:
       GOTRUE_DISABLE_SIGNUP: "false"
       GOTRUE_JWT_ADMIN_ROLES: service_role
       GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
       GOTRUE_JWT_EXP: 3600
       GOTRUE_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
       GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
       GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@escola.com
       GOTRUE_SMTP_HOST: ""
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:9999/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 60s
+      GOTRUE_SMTP_PORT: "587"
+      GOTRUE_SMTP_SENDER_NAME: Escola
 
   rest:
     image: postgrest/postgrest:v12.2.0
@@ -63,10 +58,12 @@ services:
       PGRST_DB_ANON_ROLE: anon
       PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
       PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
 
   realtime:
     image: supabase/realtime:v2.28.32
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -96,8 +93,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-      SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiK7kyDlQRij7y9r-3fSXFO5ZQ8vS-Vx7Wb-lw
+      SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hj04zWl196z2-SBc0
       POSTGREST_URL: http://rest:3000
       PGRST_JWT_SECRET: super-secret-jwt-token-with-at-least-32-characters-long
       DATABASE_URL: postgres://supabase_storage_admin:postgres@db:5432/postgres
@@ -107,7 +104,8 @@ services:
       TENANT_ID: stub
       REGION: local
       GLOBAL_S3_BUCKET: stub
-      ENABLE_IMAGE_TRANSFORMATION: "false"
+      ENABLE_IMAGE_TRANSFORMATION: "true"
+      IMGPROXY_URL: http://imgproxy:8080
     volumes:
       - storage_data:/var/lib/storage
 
@@ -123,35 +121,32 @@ services:
       KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
       KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
       KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
-      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiK7kyDlQRij7y9r-3fSXFO5ZQ8vS-Vx7Wb-lw
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hj04zWl196z2-SBc0
     volumes:
       - ./volumes/api/kong.yml:/var/lib/kong/kong.yml:ro
     depends_on:
       db:
         condition: service_healthy
 
-  seeder:
-    image: alpine/curl:latest
-    restart: "no"
-    depends_on:
-      auth:
-        condition: service_healthy
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3020:3020"
     volumes:
-      - ./supabase/seed-users.sh:/seed.sh
-    command: sh /seed.sh
-
-  seed-data:
-    image: supabase/postgres:15.1.1.78
-    restart: "no"
-    depends_on:
-      db:
-        condition: service_healthy
+      - .:/app
+      - /app/node_modules
     environment:
-      PGPASSWORD: postgres
-    volumes:
-      - ./supabase/seed-data.sql:/seed-data.sql
-    command: psql -h db -U postgres -f /seed-data.sql
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRFA0NiK7kyDlQRij7y9r-3fSXFO5ZQ8vS-Vx7Wb-lw
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hj04zWl196z2-SBc0
+      NEXT_PUBLIC_APP_URL: http://localhost:3020
+    depends_on:
+      - kong
+      - auth
 
 volumes:
   pgdata:

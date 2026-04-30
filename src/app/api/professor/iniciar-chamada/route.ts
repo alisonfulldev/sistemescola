@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
 
   if (chamadaExistente) {
     await logger.logAudit(user.id, 'chamada_iniciar', '/api/professor/iniciar-chamada', { turma_id, disciplina_id, chamada_id: chamadaExistente.id, reutilizada: true }, true)
-    return NextResponse.json({ chamada_id: chamadaExistente.id })
+    return NextResponse.json({ chamada_id: chamadaExistente.id, aula_id: aulaId })
   }
 
   // Cria a chamada via service_role para evitar RLS
@@ -115,5 +115,5 @@ export async function POST(req: NextRequest) {
   }
 
   await logger.logAudit(user.id, 'chamada_iniciar', '/api/professor/iniciar-chamada', { turma_id, disciplina_id, chamada_id: novaChamada.id }, true)
-  return NextResponse.json({ chamada_id: novaChamada.id })
+  return NextResponse.json({ chamada_id: novaChamada.id, aula_id: aulaId })
 }

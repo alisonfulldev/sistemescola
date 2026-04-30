@@ -1,11 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     remotePatterns: [
       {
@@ -15,7 +9,10 @@ const nextConfig = {
       },
     ],
   },
-  generateBuildId: () => null,
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['localhost:3020', '*.vercel.app'],
+    },
+  },
 }
-
 module.exports = nextConfig

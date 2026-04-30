@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     // Busca registros existentes desta chamada
     const { data: registros } = await admin
       .from('registros_chamada')
-      .select('aluno_id, status, observacao')
+      .select('aluno_id, status, observacao, motivo_alteracao, horario_evento')
       .eq('chamada_id', chamadaId)
 
     // Busca entradas de hoje

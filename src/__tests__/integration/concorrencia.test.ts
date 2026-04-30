@@ -24,18 +24,23 @@ const { POST: marcarPresencaPOST } = await import('@/app/api/professor/marcar-pr
 const { POST: confirmarChamadaPOST } = await import('@/app/api/professor/confirmar-chamada/route')
 const { POST: criarAvaliacao } = await import('@/app/api/avaliacoes/route')
 
-const PROFESSOR_ID = 'prof-uuid-123'
-const PROFESSOR_2_ID = 'prof-uuid-456'
-const TURMA_ID = 'turma-uuid-789'
-const CHAMADA_ID = 'chamada-uuid-001'
-const ALUNO_ID = 'aluno-uuid-001'
-const AULA_ID = 'aula-uuid-001'
+const PROFESSOR_ID = 'a0000000-0000-4000-8000-000000000001'
+const PROFESSOR_2_ID = 'a0000000-0000-4000-8000-000000000002'
+const TURMA_ID = 'b0000000-0000-4000-8000-000000000001'
+const DISCIPLINA_ID = 'c0000000-0000-4000-8000-000000000001'
+const CHAMADA_ID = 'd0000000-0000-4000-8000-000000000001'
+const ALUNO_ID = 'e0000000-0000-4000-8000-000000000001'
+const AULA_ID = 'f0000000-0000-4000-8000-000000000001'
 const HOJE = new Date().toISOString().split('T')[0]
 
-function makeServerClient(user: any) {
+function makeServerClient(user: any, fromResponses: Array<{ data?: any; error?: any }> = []) {
+  let idx = 0
   return {
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }) },
-    from: vi.fn(),
+    from: vi.fn().mockImplementation(() => {
+      const r = fromResponses[idx++] ?? { data: null, error: null }
+      return qb(r)
+    }),
   }
 }
 
@@ -74,14 +79,14 @@ describe('Race Conditions — Iniciar Chamada', () => {
 
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
     adminClientMock = makeAdminClient([
-      { data: null },                      // sem aula hoje (primeiro request)
-      { data: { disciplina_id: 'disc-1' } }, // disciplina anterior
-      { data: { id: AULA_ID } },          // UPSERT retorna aula criada
+      { data: { id: DISCIPLINA_ID } },     // disciplina pertence ao professor
+      { data: null },                      // sem aula hoje
+      { data: { id: AULA_ID } },          // INSERT aula
       { data: null },                      // sem chamada
       { data: { id: CHAMADA_ID } },       // INSERT chamada
     ])
 
-    const res = await iniciarChamadaPOST(makeRequest({ turma_id: TURMA_ID }))
+    const res = await iniciarChamadaPOST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
 
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -104,27 +109,28 @@ describe('Race Conditions — Iniciar Chamada', () => {
 
     // Primeiro request: cria aula e chamada
     adminClientMock = makeAdminClient([
+      { data: { id: DISCIPLINA_ID } },       // disciplina pertence ao professor
       { data: null },                        // sem aula
-      { data: { disciplina_id: 'disc-1' } },
-      { data: { id: AULA_ID } },            // UPSERT aula
+      { data: { id: AULA_ID } },            // INSERT aula
       { data: null },                        // sem chamada
       { data: { id: CHAMADA_ID, status: 'em_andamento' } }, // INSERT chamada
     ])
 
-    const res1 = await iniciarChamadaPOST(makeRequest({ turma_id: TURMA_ID }))
+    const res1 = await iniciarChamadaPOST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(res1.status).toBe(200)
     const body1 = await res1.json()
     expect(body1.chamada_id).toBe(CHAMADA_ID)
 
-    // Segundo request (duplo-click): UPSERT retorna mesma aula, SELECT retorna chamada existente
+    // Segundo request (duplo-click): retorna aula e chamada existentes
     vi.clearAllMocks()
     adminClientMock = makeAdminClient([
-      { data: { id: AULA_ID } },             // UPSERT aula retorna existente
-      { data: { id: CHAMADA_ID, status: 'em_andamento' } }, // SELECT chamada retorna existente
+      { data: { id: DISCIPLINA_ID } },        // disciplina pertence ao professor
+      { data: { id: AULA_ID } },             // aula existente
+      { data: { id: CHAMADA_ID, status: 'em_andamento' } }, // chamada existente
     ])
     serverClientMock = makeServerClient({ id: PROFESSOR_ID })
 
-    const res2 = await iniciarChamadaPOST(makeRequest({ turma_id: TURMA_ID }))
+    const res2 = await iniciarChamadaPOST(makeRequest({ turma_id: TURMA_ID, disciplina_id: DISCIPLINA_ID }))
     expect(res2.status).toBe(200)
     const body2 = await res2.json()
     expect(body2.chamada_id).toBe(CHAMADA_ID) // Mesma chamada!
@@ -284,17 +290,19 @@ describe('Atomicidade — Criar Avaliação', () => {
      * Se qualquer passo falha → ROLLBACK completo
      */
 
-    serverClientMock = makeServerClient({ id: PROFESSOR_ID })
-    adminClientMock = makeAdminClient([
-      { data: { perfil: 'professor', escola_id: 'esc-1' } }, // SELECT perfil do usuário
+    serverClientMock = makeServerClient({ id: PROFESSOR_ID }, [
+      { data: { perfil: 'professor' } },         // from('usuarios')
+      { data: { professor_id: PROFESSOR_ID } },   // from('aulas') - validação professor
     ])
-
-    // Mock RPC
+    adminClientMock = makeAdminClient([
+      { data: { id: AULA_ID } },  // from('avaliacoes') após RPC
+      { data: [] },               // from('alunos') para contagem
+    ])
     adminClientMock.rpc = vi.fn().mockResolvedValue({ data: AULA_ID, error: null })
 
     const res = await criarAvaliacao(makeRequest({
       aula_id: AULA_ID,
-      disciplina_id: 'disc-1',
+      disciplina_id: DISCIPLINA_ID,
       turma_id: TURMA_ID,
       titulo: 'Prova Bimestral 1',
       tipo: 'prova',
@@ -317,12 +325,11 @@ describe('Atomicidade — Criar Avaliação', () => {
      * ESPERADO: Rollback completo — nenhum registro criado
      */
 
-    serverClientMock = makeServerClient({ id: PROFESSOR_ID })
-    adminClientMock = makeAdminClient([
-      { data: { perfil: 'professor', escola_id: 'esc-1' } },
+    serverClientMock = makeServerClient({ id: PROFESSOR_ID }, [
+      { data: { perfil: 'professor' } },
+      { data: { professor_id: PROFESSOR_ID } },
     ])
-
-    // Mock RPC com erro
+    adminClientMock = makeAdminClient([])
     adminClientMock.rpc = vi.fn().mockResolvedValue({
       data: null,
       error: { message: 'constraint violation' },
@@ -330,7 +337,7 @@ describe('Atomicidade — Criar Avaliação', () => {
 
     const res = await criarAvaliacao(makeRequest({
       aula_id: AULA_ID,
-      disciplina_id: 'disc-1',
+      disciplina_id: DISCIPLINA_ID,
       turma_id: TURMA_ID,
       titulo: 'Prova Bimestral 1',
       tipo: 'prova',
@@ -352,6 +359,7 @@ describe('Soft Delete — Excluir Usuário', () => {
   // 2. DELETE auth.users (irreversível)
   // 3. Se step 2 falha, pelo menos step 1 foi feito
   // 4. Não tenta reverter step 1 (operação já concluída)
+  it.todo('testa soft delete via E2E')
 })
 
 // ────────────────────────────────────────────────────────────────────────────

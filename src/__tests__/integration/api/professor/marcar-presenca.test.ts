@@ -9,9 +9,9 @@ vi.mock('@supabase/supabase-js', () => ({ createClient: () => adminClientMock })
 
 const { POST } = await import('@/app/api/professor/marcar-presenca/route')
 
-const PROFESSOR_ID = 'prof-uuid-123'
-const CHAMADA_ID = 'chamada-uuid-1'
-const ALUNO_ID = 'aluno-uuid-1'
+const PROFESSOR_ID = 'a0000000-0000-4000-8000-000000000001'
+const CHAMADA_ID = 'd0000000-0000-4000-8000-000000000001'
+const ALUNO_ID = 'e0000000-0000-4000-8000-000000000001'
 
 function makeAdminClient(responses: Array<{ data?: any; error?: any }>) {
   let idx = 0
@@ -41,7 +41,7 @@ describe('POST /api/professor/marcar-presenca', () => {
     const res = await POST(makeRequest({ chamada_id: CHAMADA_ID, aluno_id: ALUNO_ID }))
     expect(res.status).toBe(400)
     const body = await res.json()
-    expect(body.error).toContain('Dados incompletos')
+    expect(body.error).toContain('Dados inválidos')
   })
 
   it('retorna 400 quando chamada_id ausente', async () => {
@@ -126,7 +126,7 @@ describe('POST /api/professor/marcar-presenca', () => {
 
   it('processa chamada com 1000 alunos sem degradação de lógica', async () => {
     // Simula marcação de presença de múltiplos alunos em sequência
-    const alunos = Array.from({ length: 10 }, (_, i) => `aluno-${i}`)
+    const alunos = Array.from({ length: 10 }, (_, i) => `e000000${i}-0000-4000-8000-000000000001`)
 
     for (const alunoId of alunos) {
       serverClientMock = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: PROFESSOR_ID } } }) } }

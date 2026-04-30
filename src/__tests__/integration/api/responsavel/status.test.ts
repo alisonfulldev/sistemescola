@@ -69,21 +69,14 @@ describe('GET /api/responsavel/status', () => {
   it('retorna aluno com registro de presença de hoje', async () => {
     serverClientMock = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: RESPONSAVEL_ID } } }) } }
     adminClientMock = makeAdminClient([
-      {
-        data: [{
-          aluno_id: 'aluno-1',
-          alunos: { id: 'aluno-1', nome_completo: 'Ana Lima', foto_url: null, matricula: '002', turmas: { nome: '6B' } },
-        }],
-      },
-      {
-        data: [{
-          aluno_id: 'aluno-1',
-          status: 'presente',
-          registrado_em: `${HOJE}T08:30:00.000Z`,
-          observacao: null,
-          chamadas: { aulas: { data: HOJE } },
-        }],
-      },
+      // 1. vinculos
+      { data: [{ aluno_id: 'aluno-1', alunos: { id: 'aluno-1', nome_completo: 'Ana Lima', foto_url: null, matricula: '002', turmas: { nome: '6B' } } }] },
+      // 2. chamadasHoje
+      { data: [{ id: 'chamada-1', aulas: { data: HOJE } }] },
+      // 3. registros filtrados
+      { data: [{ id: 'reg-1', aluno_id: 'aluno-1', status: 'presente', registrado_em: `${HOJE}T08:30:00.000Z`, observacao: null, chamada_id: 'chamada-1' }] },
+      // 4. justificativas
+      { data: [] },
     ])
 
     const res = await GET(makeGetRequest())
@@ -95,22 +88,17 @@ describe('GET /api/responsavel/status', () => {
   it('retorna múltiplos alunos vinculados', async () => {
     serverClientMock = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: RESPONSAVEL_ID } } }) } }
     adminClientMock = makeAdminClient([
-      {
-        data: [
-          { aluno_id: 'aluno-1', alunos: { id: 'aluno-1', nome_completo: 'Filho 1', foto_url: null, matricula: '001', turmas: { nome: '5A' } } },
-          { aluno_id: 'aluno-2', alunos: { id: 'aluno-2', nome_completo: 'Filho 2', foto_url: null, matricula: '002', turmas: { nome: '6B' } } },
-        ],
-      },
-      // registros: apenas aluno-1 presente
-      {
-        data: [{
-          aluno_id: 'aluno-1',
-          status: 'presente',
-          registrado_em: `${HOJE}T08:30:00.000Z`,
-          observacao: null,
-          chamadas: { aulas: { data: HOJE } },
-        }],
-      },
+      // 1. vinculos (2 alunos)
+      { data: [
+        { aluno_id: 'aluno-1', alunos: { id: 'aluno-1', nome_completo: 'Filho 1', foto_url: null, matricula: '001', turmas: { nome: '5A' } } },
+        { aluno_id: 'aluno-2', alunos: { id: 'aluno-2', nome_completo: 'Filho 2', foto_url: null, matricula: '002', turmas: { nome: '6B' } } },
+      ]},
+      // 2. chamadasHoje
+      { data: [{ id: 'chamada-1', aulas: { data: HOJE } }] },
+      // 3. registros: apenas aluno-1 presente
+      { data: [{ id: 'reg-1', aluno_id: 'aluno-1', status: 'presente', registrado_em: `${HOJE}T08:30:00.000Z`, observacao: null, chamada_id: 'chamada-1' }] },
+      // 4. justificativas
+      { data: [] },
     ])
 
     const res = await GET(makeGetRequest())
@@ -126,24 +114,12 @@ describe('GET /api/responsavel/status', () => {
 
   it('ignora registros de dias anteriores', async () => {
     serverClientMock = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: RESPONSAVEL_ID } } }) } }
-    const ontem = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
     adminClientMock = makeAdminClient([
-      {
-        data: [{
-          aluno_id: 'aluno-1',
-          alunos: { id: 'aluno-1', nome_completo: 'Lucas', foto_url: null, matricula: '003', turmas: { nome: '7C' } },
-        }],
-      },
-      {
-        data: [{
-          aluno_id: 'aluno-1',
-          status: 'presente',
-          registrado_em: `${ontem}T08:30:00.000Z`,
-          observacao: null,
-          chamadas: { aulas: { data: ontem } }, // data é ontem
-        }],
-      },
+      // 1. vinculos
+      { data: [{ aluno_id: 'aluno-1', alunos: { id: 'aluno-1', nome_completo: 'Lucas', foto_url: null, matricula: '003', turmas: { nome: '7C' } } }] },
+      // 2. chamadasHoje → vazio (sem chamada hoje, só ontem)
+      { data: [] },
     ])
 
     const res = await GET(makeGetRequest())
@@ -155,31 +131,17 @@ describe('GET /api/responsavel/status', () => {
   it('retorna apenas o registro mais recente quando há múltiplos no mesmo dia', async () => {
     serverClientMock = { auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: RESPONSAVEL_ID } } }) } }
     adminClientMock = makeAdminClient([
-      {
-        data: [{
-          aluno_id: 'aluno-1',
-          alunos: { id: 'aluno-1', nome_completo: 'Carla', foto_url: null, matricula: '004', turmas: { nome: '8D' } },
-        }],
-      },
-      {
-        // Ordenado por registrado_em DESC — o primeiro é o mais recente
-        data: [
-          {
-            aluno_id: 'aluno-1',
-            status: 'presente',  // mais recente
-            registrado_em: `${HOJE}T10:00:00.000Z`,
-            observacao: null,
-            chamadas: { aulas: { data: HOJE } },
-          },
-          {
-            aluno_id: 'aluno-1',
-            status: 'falta',  // mais antigo
-            registrado_em: `${HOJE}T08:00:00.000Z`,
-            observacao: null,
-            chamadas: { aulas: { data: HOJE } },
-          },
-        ],
-      },
+      // 1. vinculos
+      { data: [{ aluno_id: 'aluno-1', alunos: { id: 'aluno-1', nome_completo: 'Carla', foto_url: null, matricula: '004', turmas: { nome: '8D' } } }] },
+      // 2. chamadasHoje
+      { data: [{ id: 'chamada-1', aulas: { data: HOJE } }] },
+      // 3. registros ordenados por registrado_em DESC — primeiro é o mais recente
+      { data: [
+        { id: 'reg-2', aluno_id: 'aluno-1', status: 'presente', registrado_em: `${HOJE}T10:00:00.000Z`, observacao: null, chamada_id: 'chamada-1' },
+        { id: 'reg-1', aluno_id: 'aluno-1', status: 'falta',    registrado_em: `${HOJE}T08:00:00.000Z`, observacao: null, chamada_id: 'chamada-1' },
+      ]},
+      // 4. justificativas (reg-2 é presente, sem justificativa)
+      { data: [] },
     ])
 
     const res = await GET(makeGetRequest())

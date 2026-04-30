@@ -1,37 +1,19 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Settings, Calendar, Users, BookOpen, GraduationCap, ClipboardList, LogOut, Menu, X, Home } from 'lucide-react'
 
-const navGroups = [
-  {
-    label: 'Configuração',
-    items: [
-      { href: '/admin/escola', label: 'Escola', icon: Settings },
-      { href: '/admin/ano-letivo', label: 'Ano Letivo', icon: Calendar },
-      { href: '/admin/calendario', label: 'Calendário', icon: ClipboardList },
-      { href: '/admin/usuarios', label: 'Usuários', icon: Users },
-    ]
-  },
-  {
-    label: 'Acadêmico',
-    items: [
-      { href: '/admin/professores', label: 'Professores', icon: GraduationCap },
-      { href: '/admin/turmas', label: 'Turmas', icon: BookOpen },
-      { href: '/admin/disciplinas', label: 'Disciplinas', icon: BookOpen },
-      { href: '/admin/alunos', label: 'Alunos', icon: Users },
-      { href: '/admin/responsaveis', label: 'Responsáveis', icon: Users },
-      { href: '/admin/aulas', label: 'Aulas', icon: Calendar },
-    ]
-  },
+const nav = [
+  { href: '/admin', label: 'Dashboard', icon: '⊞', exact: true },
+  { href: '/admin/turmas', label: 'Turmas', icon: '🏫' },
+  { href: '/admin/alunos', label: 'Alunos', icon: '👥' },
+  { href: '/admin/professores', label: 'Professores', icon: '👨‍🏫' },
+  { href: '/admin/disciplinas', label: 'Disciplinas', icon: '📚' },
+  { href: '/admin/aulas', label: 'Aulas', icon: '🗓' },
+  { href: '/adm', label: 'Painel ADM', icon: '📊' },
 ]
-
-const SESSION_TIMEOUT = 10 * 60 * 1000
-const WARN_BEFORE = 1 * 60 * 1000
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -39,119 +21,63 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const supabase = createClient()
   const [usuario, setUsuario] = useState<any>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [showWarning, setShowWarning] = useState(false)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const warnRef = useRef<NodeJS.Timeout | null>(null)
-
-  const resetTimer = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    if (warnRef.current) clearTimeout(warnRef.current)
-    setShowWarning(false)
-    warnRef.current = setTimeout(() => setShowWarning(true), SESSION_TIMEOUT - WARN_BEFORE)
-    timerRef.current = setTimeout(async () => {
-      await supabase.auth.signOut()
-      router.push('/login')
-    }, SESSION_TIMEOUT)
-  }, [router, supabase])
-
-  useEffect(() => {
-    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll']
-    events.forEach(e => window.addEventListener(e, resetTimer, { passive: true }))
-    resetTimer()
-    return () => {
-      events.forEach(e => window.removeEventListener(e, resetTimer))
-      if (timerRef.current) clearTimeout(timerRef.current)
-      if (warnRef.current) clearTimeout(warnRef.current)
-    }
-  }, [resetTimer])
 
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return router.push('/login')
-      if (user.user_metadata?.force_password_reset === true && pathname !== '/admin/trocar-senha') {
-        return router.push('/admin/trocar-senha')
-      }
       const { data } = await supabase.from('usuarios').select('nome, perfil').eq('id', user.id).single()
-      if (!['admin', 'secretaria', 'diretor'].includes(data?.perfil)) return router.push('/login')
+      if (data?.perfil !== 'admin') return router.push('/login')
       setUsuario(data)
     }
     init()
-  }, [router, supabase, pathname])
+  }, [router, supabase])
 
   async function logout() {
     await supabase.auth.signOut()
     router.push('/login')
   }
 
-  const isActive = (href: string) => pathname.startsWith(href)
+  const isActive = (href: string, exact = false) => exact ? pathname === href : pathname.startsWith(href)
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-slate-900 text-white">
-      <div className="px-4 py-4 border-b border-slate-700">
-        <Image
-          src="/logo-estudapp.png"
-          alt="EstudApp"
-          width={400}
-          height={220}
-          className="w-full h-auto"
-          priority
-        />
-      </div>
-
-      <nav className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
-        <Link
-          href="/adm"
-          onClick={() => setSidebarOpen(false)}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 border-b border-slate-700 pb-4 mb-4"
-        >
-          <Home className="w-4 h-4" />
-          <span>Dashboard</span>
-        </Link>
-
-        {navGroups.map(group => (
-          <div key={group.label}>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest px-3 mb-3">{group.label}</p>
-            <div className="space-y-1">
-              {group.items.map(item => {
-                const Icon = item.icon
-                const active = isActive(item.href)
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium ${
-                      active
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                )
-              })}
-            </div>
+    <div className="flex flex-col h-full">
+      <div className="p-5 border-b border-[#30363d]">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-purple-500 rounded-xl flex items-center justify-center text-white text-lg">⚙</div>
+          <div>
+            <div className="font-bold text-white text-sm">Administração</div>
+            <div className="text-xs text-gray-400">Gestão do Sistema</div>
           </div>
+        </div>
+      </div>
+      <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
+        {nav.map(item => (
+          <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-sm ${
+              isActive(item.href, item.exact)
+                ? 'bg-purple-500/15 text-purple-300 font-medium'
+                : 'text-gray-400 hover:bg-[#21262d] hover:text-gray-200'
+            }`}
+          >
+            <span>{item.icon}</span>
+            <span>{item.label}</span>
+          </Link>
         ))}
       </nav>
-
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition-colors">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-sm">
-            {usuario?.nome?.[0]?.toUpperCase() || 'A'}
+      <div className="p-4 border-t border-[#30363d]">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center text-xs font-bold text-purple-300">
+            {usuario?.nome?.[0] || 'A'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{usuario?.nome}</p>
-            <p className="text-xs text-slate-400 truncate capitalize">{usuario?.perfil || 'Admin'}</p>
+            <p className="text-sm font-medium text-gray-200 truncate">{usuario?.nome}</p>
+            <p className="text-xs text-purple-400">Administrador</p>
           </div>
-          <button
-            onClick={logout}
-            title="Sair"
-            className="text-slate-400 hover:text-slate-200 transition-colors p-1.5 hover:bg-slate-800 rounded-lg flex-shrink-0"
-          >
-            <LogOut className="w-4 h-4" />
+          <button onClick={logout} title="Sair" className="text-gray-500 hover:text-[#f85149] transition-colors p-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
           </button>
         </div>
       </div>
@@ -159,71 +85,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   )
 
   return (
-    <div className="min-h-screen bg-slate-50" style={{ fontFamily: 'Sora, sans-serif' }}>
-
-      {showWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-amber-200">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <h3 className="text-slate-900 font-semibold">Sessão expirando</h3>
-            </div>
-            <p className="text-slate-600 text-sm mb-6">
-              Sua sessão será encerrada em <strong>1 minuto</strong> por inatividade.
-            </p>
-            <button
-              onClick={resetTimer}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
-              Continuar conectado
-            </button>
-          </div>
-        </div>
-      )}
-
-      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-72 z-20 border-r border-slate-200">
+    <div className="dark min-h-screen bg-[#0d1117] text-gray-100" style={{ fontFamily: 'Sora, sans-serif' }}>
+      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 bg-[#161b22] border-r border-[#30363d] z-20">
         <SidebarContent />
       </aside>
 
-      <header className="lg:hidden sticky top-0 z-10 bg-white border-b border-slate-200 flex items-center justify-between px-4 h-16 shadow-sm">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="text-slate-600 hover:text-slate-900 p-2 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <Menu className="w-5 h-5" />
+      <header className="lg:hidden sticky top-0 z-10 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 h-14">
+        <button onClick={() => setSidebarOpen(true)} className="text-gray-400 hover:text-white p-1">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs">SE</span>
-          </div>
-          <span className="font-semibold text-slate-900 text-sm">Sistema Escolar</span>
-        </div>
+        <span className="font-semibold text-sm text-white">Administração</span>
         <div className="w-8" />
       </header>
 
       {sidebarOpen && (
         <div className="fixed inset-0 z-30 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative w-72 h-full overflow-y-auto">
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 hover:bg-slate-700 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
+          <div className="absolute inset-0 bg-black/70" onClick={() => setSidebarOpen(false)} />
+          <aside className="relative w-64 h-full bg-[#161b22] border-r border-[#30363d]">
             <SidebarContent />
           </aside>
         </div>
       )}
 
-      <main className="lg:ml-72 min-h-screen">
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-          {children}
-        </div>
+      <main className="lg:ml-64 min-h-screen">
+        <div className="p-4 lg:p-6 max-w-6xl mx-auto">{children}</div>
       </main>
     </div>
   )

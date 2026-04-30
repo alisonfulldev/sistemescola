@@ -58,6 +58,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    const { error: insertError } = await adminClient.from('usuarios').insert({
+      id: data.user.id,
+      nome: nome.trim(),
+      email: email.trim(),
+      perfil: novoPerfil,
+    })
+
+    if (insertError) {
+      await adminClient.auth.admin.deleteUser(data.user.id)
+      return NextResponse.json({ error: 'Erro ao criar perfil do usuário' }, { status: 500 })
+    }
+
     return NextResponse.json({ id: data.user.id, email: data.user.email }, { status: 201 })
   } catch (err) {
     console.error('Erro ao criar usuário:', err)
