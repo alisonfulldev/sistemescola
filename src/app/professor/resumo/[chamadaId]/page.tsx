@@ -6,7 +6,8 @@ import Image from 'next/image'
 
 export const revalidate = 0
 
-export default async function ResumoChamadaPage({ params }: { params: { chamadaId: string } }) {
+export default async function ResumoChamadaPage({ params }: { params: Promise<{ chamadaId: string }> }) {
+  const { chamadaId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -25,7 +26,7 @@ export default async function ResumoChamadaPage({ params }: { params: { chamadaI
         alunos (id, nome_completo, foto_url)
       )
     `)
-    .eq('id', params.chamadaId)
+    .eq('id', chamadaId)
     .single()
 
   if (!chamada) redirect('/professor')
