@@ -22,7 +22,7 @@ export async function debugComSQL(supabase: SupabaseClient) {
 
   for (const { nome, query } of queries) {
     try {
-      const { data, error } = await (supabase.rpc('exec_sql', { sql: query }) as any).catch(() => ({ data: null, error: { message: 'Função RPC não disponível' } }))
+      const { data, error } = await supabase.rpc('exec_sql', { sql: query }).catch(() => ({ data: null, error: { message: 'Função RPC não disponível' } }))
 
       if (data) {
         console.log(`✓ ${nome}: ${data[0]?.total || 0}`)

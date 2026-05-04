@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const {z} = require\\('zod'\\); const u = z.string\\(\\).uuid\\(\\); console.log\\(u._def.checks.map\\(c=>c.kind+':'+c.regex\\)\\); for\\(const id of Array.from\\({length:10},\\(_,i\\)=>'e000000'+i+'-0000-4000-8000-000000000001'\\)\\) { const r=u.safeParse\\(id\\); console.log\\(id, r.success?'OK':r.error.issues[0].message\\); }\")"
+    ]
+  }
+}
