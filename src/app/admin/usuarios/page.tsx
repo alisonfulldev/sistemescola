@@ -137,19 +137,24 @@ export default function UsuariosPage() {
     if (!deletandoId) return
     setDeletando(true)
     setErroDelete('')
-    const res = await fetch('/api/admin/excluir-usuario', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: deletandoId }),
-    })
-    if (!res.ok) {
+    try {
+      const res = await fetch('/api/admin/excluir-usuario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: deletandoId }),
+      })
       const d = await res.json()
-      setErroDelete(d.error || 'Erro ao deletar usuário')
-    } else {
-      setDeletandoId(null)
-      carregar()
+      if (!res.ok) {
+        setErroDelete(d.error || `Erro ${res.status} ao deletar usuário`)
+      } else {
+        setDeletandoId(null)
+        await carregar()
+      }
+    } catch (err: any) {
+      setErroDelete('Erro de conexão: ' + (err?.message || 'tente novamente'))
+    } finally {
+      setDeletando(false)
     }
-    setDeletando(false)
   }
 
   const usuariosFiltrados = usuarios.filter(u => {
