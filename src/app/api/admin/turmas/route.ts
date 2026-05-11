@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
     }
 
-    if (!['admin', 'diretor', 'secretaria'].includes(userData?.perfil)) {
+    if (!['admin', 'ti', 'diretor', 'secretaria'].includes(userData?.perfil)) {
       await logger.logAudit(user.id, 'turmas_listar', '/api/admin/turmas', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
     }
 
-    if (!['admin', 'diretor', 'secretaria'].includes(userData?.perfil)) {
+    if (!['admin', 'ti', 'diretor', 'secretaria'].includes(userData?.perfil)) {
       await logger.logAudit(user.id, 'turmas_criar', '/api/admin/turmas', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

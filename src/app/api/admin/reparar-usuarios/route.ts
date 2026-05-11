@@ -11,7 +11,7 @@ export async function POST() {
 
   try {
     const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-    if (!['admin', 'secretaria'].includes(perfil?.perfil)) {
+    if (!['admin', 'ti', 'secretaria'].includes(perfil?.perfil)) {
       await logger.logAudit(user.id, 'reparar_usuarios', '/api/admin/reparar-usuarios', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

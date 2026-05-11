@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!userData?.ativo || !['admin', 'diretor', 'secretaria'].includes(userData?.perfil)) {
+    if (!userData?.ativo || !['admin', 'ti', 'diretor', 'secretaria'].includes(userData?.perfil)) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!userData?.ativo || !['admin', 'diretor'].includes(userData?.perfil)) {
+    if (!userData?.ativo || !['admin', 'ti', 'diretor'].includes(userData?.perfil)) {
       await logger.logAudit(user.id, 'anos_letivos_criar', '/api/admin/anos-letivos', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   // Verifica se é admin, secretaria ou diretor
   const { data: usuario } = await supabase.from('usuarios').select('perfil, ativo').eq('id', user.id).single()
-  const isAdmin = usuario?.perfil === 'admin'
+  const isAdmin = usuario?.perfil === 'admin' || usuario?.perfil === 'ti'
   const isSecretaria = usuario?.perfil === 'secretaria'
   const isDiretor = usuario?.perfil === 'diretor'
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Apenas administradores podem alterar perfis' }, { status: 403 })
   }
 
-  const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin', 'cozinha', 'diretor']
+  const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin', 'cozinha', 'diretor', 'ti']
   if (perfil && !perfisValidos.includes(perfil)) {
     return NextResponse.json({ error: 'Perfil inválido' }, { status: 400 })
   }

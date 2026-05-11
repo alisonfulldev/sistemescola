@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: { params
       .eq('id', user.id)
       .single()
 
-    if (!userData?.ativo || !['admin', 'diretor', 'secretaria'].includes(userData?.perfil)) {
+    if (!userData?.ativo || !['admin', 'ti', 'diretor', 'secretaria'].includes(userData?.perfil)) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
@@ -61,7 +61,7 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
       .eq('id', user.id)
       .single()
 
-    if (!userData?.ativo || !['admin', 'diretor'].includes(userData?.perfil)) {
+    if (!userData?.ativo || !['admin', 'ti', 'diretor'].includes(userData?.perfil)) {
       await logger.logAudit(user.id, 'anos_letivos_atualizar', '/api/admin/anos-letivos/[anoId]', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
@@ -105,7 +105,7 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: { par
       .eq('id', user.id)
       .single()
 
-    if (!userData?.ativo || !['admin', 'diretor'].includes(userData?.perfil)) {
+    if (!userData?.ativo || !['admin', 'ti', 'diretor'].includes(userData?.perfil)) {
       await logger.logAudit(user.id, 'anos_letivos_deletar', '/api/admin/anos-letivos/[anoId]', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
@@ -113,7 +113,11 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: { par
     const { anoId } = await paramsPromise
     const db = admin()
 
-    const { error } = await db.from('anos_letivos').update({ ativo: false }).eq('id', anoId)
+    // Remove entradas dependentes antes de deletar o ano letivo
+    await db.from('calendario_escolar').delete().eq('ano_letivo_id', anoId)
+    await db.from('bimestres').delete().eq('ano_letivo_id', anoId)
+
+    const { error } = await db.from('anos_letivos').delete().eq('id', anoId)
 
     if (error) {
       await logger.logError('/api/admin/anos-letivos/[anoId]', error as Error, user.id)

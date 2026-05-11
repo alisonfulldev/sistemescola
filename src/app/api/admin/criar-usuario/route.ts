@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (perfil?.perfil !== 'admin') {
+    if (!['admin', 'ti'].includes(perfil?.perfil)) {
       return NextResponse.json({ error: 'Acesso negado. Apenas administradores podem criar usuários.' }, { status: 403 })
     }
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'A senha deve ter no mínimo 8 caracteres' }, { status: 400 })
     }
 
-    const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin']
+    const perfisValidos = ['professor', 'secretaria', 'responsavel', 'admin', 'diretor', 'cozinha', 'ti']
     if (!perfisValidos.includes(novoPerfil)) {
       return NextResponse.json({ error: 'Perfil inválido' }, { status: 400 })
     }

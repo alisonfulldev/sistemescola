@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
       const meusFilhos = minhaFamilias?.map(f => f.aluno_id) || []
       query = query.in('aluno_id', meusFilhos.length > 0 ? meusFilhos : [''])
-    } else if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
+    } else if (!['admin', 'ti', 'secretaria', 'diretor'].includes(perfil)) {
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
       await logger.logAudit(user.id, 'justificativa_criar', '/api/justificativas', { aluno_id }, false)
       return NextResponse.json({ error: 'Sem permissão para justificar este aluno' }, { status: 403 })
     }
-  } else if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
+  } else if (!['admin', 'ti', 'secretaria', 'diretor'].includes(perfil)) {
     await logger.logAudit(user.id, 'justificativa_criar', '/api/justificativas', {}, false)
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }

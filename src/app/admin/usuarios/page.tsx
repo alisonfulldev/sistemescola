@@ -153,6 +153,7 @@ export default function UsuariosPage() {
   }
 
   const usuariosFiltrados = usuarios.filter(u => {
+    if (u.perfil === 'ti') return false  // perfil TI oculto da listagem
     const termo = busca.toLowerCase()
     const matchBusca = !termo || u.nome.toLowerCase().includes(termo) || u.email.toLowerCase().includes(termo)
     const matchPerfil = !filtroPerfil || u.perfil === filtroPerfil
@@ -274,6 +275,7 @@ export default function UsuariosPage() {
                 <option value="responsavel">Responsável</option>
                 <option value="cozinha">Cozinha</option>
                 <option value="admin">Administrador</option>
+                <option value="ti">TI (acesso total, oculto)</option>
               </select>
               {form.perfil === 'diretor' && escola?.codigo && (
                 <p className="text-xs text-blue-600 mt-1">🏫 Login gerado pelo INEP: <span className="font-mono">{escola.codigo}</span></p>
@@ -421,6 +423,7 @@ export default function UsuariosPage() {
                             >
                               <option value="professor">Professor</option>
                               <option value="secretaria">Secretaria</option>
+                              <option value="diretor">Diretor</option>
                               <option value="responsavel">Responsável</option>
                               <option value="cozinha">Cozinha</option>
                               <option value="admin">Administrador</option>

@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-    if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
+    if (!['admin', 'ti', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
       await logger.logAudit(user.id, 'diario_narandiba_consultar', '/api/export/diario-narandiba', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

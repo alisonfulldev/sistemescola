@@ -5,13 +5,13 @@ import { createClient } from '@/lib/supabase/server'
  * Tipos de permisos para diferentes rotas
  */
 export const ROLES = {
-  ADMIN: ['admin'],
-  SECRETARIA: ['admin', 'secretaria'],
-  DIRETOR: ['admin', 'diretor'],
-  PROFESSOR: ['admin', 'professor'],
+  ADMIN: ['admin', 'ti'],
+  SECRETARIA: ['admin', 'ti', 'secretaria'],
+  DIRETOR: ['admin', 'ti', 'diretor'],
+  PROFESSOR: ['admin', 'ti', 'professor'],
   RESPONSAVEL: ['responsavel'],
-  COZINHA: ['admin', 'cozinha'],
-  ANY: ['admin', 'secretaria', 'diretor', 'professor', 'responsavel', 'cozinha']
+  COZINHA: ['admin', 'ti', 'cozinha'],
+  ANY: ['admin', 'ti', 'secretaria', 'diretor', 'professor', 'responsavel', 'cozinha']
 }
 
 export type AllowedRoles = typeof ROLES[keyof typeof ROLES]

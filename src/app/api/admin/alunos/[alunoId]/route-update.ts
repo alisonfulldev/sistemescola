@@ -30,7 +30,7 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: { params:
       return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
     }
 
-    if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil)) {
+    if (!['admin', 'ti', 'secretaria', 'diretor'].includes(userData?.perfil)) {
       await logger.logAudit(user.id, 'alunos_atualizar', '/api/admin/alunos/[alunoId]', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
@@ -79,7 +79,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
       return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
     }
 
-    if (!['admin', 'diretor'].includes(userData?.perfil)) {
+    if (!['admin', 'ti', 'diretor'].includes(userData?.perfil)) {
       await logger.logAudit(user.id, 'alunos_deletar', '/api/admin/alunos/[alunoId]', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

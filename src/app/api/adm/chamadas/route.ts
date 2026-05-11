@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
     }
 
-    if (!['admin', 'secretaria', 'diretor'].includes(perfil)) {
+    if (!['admin', 'ti', 'secretaria', 'diretor'].includes(perfil)) {
       await logger.logAudit(user.id, 'chamadas_consultar', '/api/adm/chamadas', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

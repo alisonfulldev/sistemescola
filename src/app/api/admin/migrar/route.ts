@@ -16,7 +16,7 @@ export async function POST() {
     )
 
     const { data: usuario } = await admin.from('usuarios').select('perfil').eq('id', user.id).single()
-    if (!['admin', 'secretaria'].includes(usuario?.perfil)) {
+    if (!['admin', 'ti', 'secretaria'].includes(usuario?.perfil)) {
       await logger.logAudit(user.id, 'migrar_executar', '/api/admin/migrar', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

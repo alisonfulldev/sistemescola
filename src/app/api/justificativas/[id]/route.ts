@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: { param
 
   try {
     const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-    if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
+    if (!['admin', 'ti', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
       await logger.logAudit(user.id, 'justificativa_atualizar', '/api/justificativas/[id]', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest, { params: paramsPromise }: { params:
 
   try {
     const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-    if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
+    if (!['admin', 'ti', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
       await logger.logAudit(user.id, 'justificativa_consultar', '/api/justificativas/[id]', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
@@ -114,7 +114,7 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
 
   try {
     const { data: userData } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-    if (!['admin', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
+    if (!['admin', 'ti', 'secretaria', 'diretor'].includes(userData?.perfil || '')) {
       await logger.logAudit(user.id, 'justificativa_deletar', '/api/justificativas/[id]', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

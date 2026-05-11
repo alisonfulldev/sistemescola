@@ -179,7 +179,7 @@ describe('POST /api/admin/criar-usuario', () => {
   })
 
   // ── Todos os perfis válidos ────────────────────────────────────────────
-  it.each(['professor', 'secretaria', 'responsavel', 'admin'])(
+  it.each(['professor', 'secretaria', 'responsavel', 'admin', 'diretor', 'cozinha', 'ti'])(
     'aceita perfil válido: %s',
     async (perfil) => {
       serverClientMock = makeServerClientWithPerfil('admin')
@@ -194,4 +194,32 @@ describe('POST /api/admin/criar-usuario', () => {
       expect(res.status).toBe(201)
     }
   )
+
+  // ── Usuário TI também pode criar usuários ─────────────────────────────
+  it('permite que perfil ti crie usuários', async () => {
+    serverClientMock = makeServerClientWithPerfil('ti')
+    adminClientMock = makeAdminClientForCreate()
+
+    const res = await POST(makeRequest({
+      nome: 'Novo Usuário',
+      email: 'novo@escola.com',
+      senha: 'senha1234',
+      perfil: 'professor',
+    }))
+    expect(res.status).toBe(201)
+  })
+
+  // ── Diretor agora pode ser criado (era bug anterior) ──────────────────
+  it('cria usuário diretor com sucesso', async () => {
+    serverClientMock = makeServerClientWithPerfil('admin')
+    adminClientMock = makeAdminClientForCreate()
+
+    const res = await POST(makeRequest({
+      nome: 'Diretora Maria',
+      email: 'diretora@escola.com',
+      senha: 'senha1234',
+      perfil: 'diretor',
+    }))
+    expect(res.status).toBe(201)
+  })
 })

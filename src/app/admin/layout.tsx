@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Settings, Calendar, Users, BookOpen, GraduationCap, ClipboardList, LogOut, Menu, X, Home } from 'lucide-react'
+import { Settings, Calendar, Users, BookOpen, ClipboardList, LogOut, Menu, X, Home } from 'lucide-react'
 
 const navGroups = [
   {
@@ -20,7 +20,6 @@ const navGroups = [
   {
     label: 'Acadêmico',
     items: [
-      { href: '/admin/professores', label: 'Professores', icon: GraduationCap },
       { href: '/admin/turmas', label: 'Turmas', icon: BookOpen },
       { href: '/admin/disciplinas', label: 'Disciplinas', icon: BookOpen },
       { href: '/admin/alunos', label: 'Alunos', icon: Users },
@@ -73,7 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return router.push('/admin/trocar-senha')
       }
       const { data } = await supabase.from('usuarios').select('nome, perfil').eq('id', user.id).single()
-      if (!['admin', 'secretaria', 'diretor'].includes(data?.perfil)) return router.push('/login')
+      if (!['admin', 'secretaria', 'diretor', 'ti'].includes(data?.perfil)) return router.push('/login')
       setUsuario(data)
     }
     init()

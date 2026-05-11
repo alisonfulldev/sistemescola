@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
   }
 
-  if (!['admin', 'secretaria', 'diretor'].includes(perfil?.perfil)) {
+  if (!['admin', 'ti', 'secretaria', 'diretor'].includes(perfil?.perfil)) {
     await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', {}, false)
     return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
   }
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     .eq('id', user_id)
     .single()
 
-  if (['admin', 'diretor', 'secretaria'].includes(usuarioDeletar?.perfil)) {
+  if (['admin', 'ti', 'diretor', 'secretaria'].includes(usuarioDeletar?.perfil)) {
     await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id }, false)
     return NextResponse.json({ error: 'Este perfil não pode ser deletado' }, { status: 403 })
   }

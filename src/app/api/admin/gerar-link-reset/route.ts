@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { data: perfil } = await supabase.from('usuarios').select('perfil').eq('id', user.id).single()
-    if (!['admin', 'secretaria', 'diretor'].includes(perfil?.perfil)) {
+    if (!['admin', 'ti', 'secretaria', 'diretor'].includes(perfil?.perfil)) {
       await logger.logAudit(user.id, 'gerar_link_reset', '/api/admin/gerar-link-reset', {}, false)
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }

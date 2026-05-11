@@ -36,6 +36,8 @@ export default function CalendarioPage() {
   const [modal, setModal] = useState<{ data: string; tipo: string; descricao: string } | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erroModal, setErroModal] = useState('')
+  const [savedMsg, setSavedMsg] = useState('')
+  const [autoMarcando, setAutoMarcando] = useState(false)
   useEffect(() => {
     async function init() {
       const { data, error } = await supabase
@@ -154,6 +156,38 @@ export default function CalendarioPage() {
     await carregarDias()
     setModal(null)
     setSalvando(false)
+    setSavedMsg('Dia salvo! Dias letivos recalculados automaticamente.')
+    setTimeout(() => setSavedMsg(''), 3000)
+  }
+
+  async function autoMarcarNaoLetivos() {
+    if (!anoLetivoId) return
+    const al = anosLetivos.find((a: any) => a.id === anoLetivoId)
+    if (!al?.data_inicio || !al?.data_fim) return
+    setAutoMarcando(true)
+    const inicio = new Date(al.data_inicio + 'T12:00:00')
+    const fim = new Date(al.data_fim + 'T12:00:00')
+    const recesso_inicio = al.recesso_inicio ? new Date(al.recesso_inicio + 'T12:00:00') : null
+    const recesso_fim = al.recesso_fim ? new Date(al.recesso_fim + 'T12:00:00') : null
+    const entradas: any[] = []
+    const d = new Date(inicio)
+    while (d <= fim) {
+      const dow = d.getDay()
+      const key = toKey(d)
+      if ((dow === 0 || dow === 6) && !diasEspeciais[key]) {
+        entradas.push({ ano_letivo_id: anoLetivoId, data: key, tipo_dia: 'recesso', descricao: dow === 0 ? 'Domingo' : 'Sábado' })
+      } else if (recesso_inicio && recesso_fim && d >= recesso_inicio && d <= recesso_fim && !isWeekend(d) && !diasEspeciais[key]) {
+        entradas.push({ ano_letivo_id: anoLetivoId, data: key, tipo_dia: 'recesso', descricao: 'Recesso escolar' })
+      }
+      d.setDate(d.getDate() + 1)
+    }
+    if (entradas.length > 0) {
+      await supabase.from('calendario_escolar').upsert(entradas, { onConflict: 'ano_letivo_id,data' })
+    }
+    await carregarDias()
+    setAutoMarcando(false)
+    setSavedMsg(`Auto-preenchimento concluído! ${entradas.length} dias não letivos marcados.`)
+    setTimeout(() => setSavedMsg(''), 4000)
   }
 
   const diasMes = getDiasDoMes()
@@ -164,18 +198,34 @@ export default function CalendarioPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Calendário Escolar</h1>
           <p className="text-slate-600 text-sm">Marque feriados, recessos e eventos — dias letivos calculados automaticamente</p>
         </div>
-        <select value={anoLetivoId} onChange={e => setAnoLetivoId(e.target.value)}
-          className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-          {anosLetivos.map((a: any) => (
-            <option key={a.id} value={a.id}>{a.ano}{a.ativo ? ' (ativo)' : ''}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={autoMarcarNaoLetivos}
+            disabled={autoMarcando || !anoLetivoId}
+            title="Marca automaticamente fins de semana e período de recesso do ano letivo"
+            className="px-3 py-2 text-xs font-medium rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition-colors"
+          >
+            {autoMarcando ? 'Preenchendo...' : '⚡ Auto-preencher dias não letivos'}
+          </button>
+          <select value={anoLetivoId} onChange={e => setAnoLetivoId(e.target.value)}
+            className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            {anosLetivos.map((a: any) => (
+              <option key={a.id} value={a.id}>{a.ano}{a.ativo ? ' (ativo)' : ''}</option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {savedMsg && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+          ✓ {savedMsg}
+        </div>
+      )}
 
       {/* Dias letivos por bimestre */}
       {bimsSorted.length > 0 && (
