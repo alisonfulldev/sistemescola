@@ -22,9 +22,31 @@ export default function AlunosAdminPage() {
   const [buscaTexto, setBuscaTexto] = useState('')
   const [uploadFoto, setUploadFoto] = useState<File | null>(null)
   const [numerosUsados, setNumerosUsados] = useState<number[]>([])
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deletando, setDeletando] = useState(false)
+  const [erroDelete, setErroDelete] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
   const { escolaId, ready } = useEscola()
+
+  async function excluirAluno(id: string) {
+    setDeletando(true)
+    setErroDelete('')
+    try {
+      const res = await fetch(`/api/admin/alunos/${id}`, { method: 'DELETE' })
+      const d = await res.json()
+      if (!res.ok) {
+        setErroDelete(d.error || `Erro ${res.status}`)
+      } else {
+        setConfirmDelete(null)
+        await carregar()
+      }
+    } catch (err: any) {
+      setErroDelete('Erro de conexão: ' + (err?.message || 'tente novamente'))
+    } finally {
+      setDeletando(false)
+    }
+  }
 
   async function carregar() {
     let qt = supabase.from('turmas').select('id, nome').eq('ativo', true).order('nome')
@@ -277,7 +299,10 @@ export default function AlunosAdminPage() {
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        <button onClick={() => iniciarEditar(a)} className="text-xs text-blue-600 border border-blue-200 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all">Editar</button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button onClick={() => iniciarEditar(a)} className="text-xs text-blue-600 border border-blue-200 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all">Editar</button>
+                          <button onClick={() => { setConfirmDelete(a.id); setErroDelete('') }} className="text-xs text-red-600 border border-red-200 hover:bg-red-50 px-2 py-1 rounded-lg transition-all">Excluir</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -285,6 +310,28 @@ export default function AlunosAdminPage() {
           </table>
         </div>
       </div>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-red-200">
+            <h3 className="text-slate-900 font-semibold mb-2">Excluir aluno?</h3>
+            <p className="text-slate-600 text-sm mb-2">
+              Isto excluirá o aluno e todo o histórico (notas, chamadas, registros de presença). Ação irreversível.
+            </p>
+            {erroDelete && <p className="text-sm text-red-600 mb-3 bg-red-50 p-2 rounded">{erroDelete}</p>}
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => excluirAluno(confirmDelete)} disabled={deletando}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
+                {deletando ? 'Excluindo...' : 'Sim, excluir'}
+              </button>
+              <button onClick={() => { setConfirmDelete(null); setErroDelete('') }} disabled={deletando}
+                className="flex-1 py-2.5 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

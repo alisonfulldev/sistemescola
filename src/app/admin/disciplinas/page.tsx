@@ -11,7 +11,29 @@ export default function DisciplinasPage() {
   const [editando, setEditando] = useState<any>(null)
   const [form, setForm] = useState({ nome: '', professor_id: '', curso: '', codigo_disciplina: '' })
   const [salvando, setSalvando] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deletando, setDeletando] = useState(false)
+  const [erroDelete, setErroDelete] = useState('')
   const supabase = createClient()
+
+  async function excluirDisciplina(id: string) {
+    setDeletando(true)
+    setErroDelete('')
+    try {
+      const res = await fetch(`/api/admin/disciplinas/${id}`, { method: 'DELETE' })
+      const d = await res.json()
+      if (!res.ok) {
+        setErroDelete(d.error || `Erro ${res.status}`)
+      } else {
+        setConfirmDelete(null)
+        await carregar()
+      }
+    } catch (err: any) {
+      setErroDelete('Erro de conexão: ' + (err?.message || 'tente novamente'))
+    } finally {
+      setDeletando(false)
+    }
+  }
 
   async function carregar() {
     const [{ data: d }, { data: p }] = await Promise.all([
@@ -100,6 +122,26 @@ export default function DisciplinasPage() {
         </div>
       )}
 
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl border border-red-200">
+            <h3 className="text-slate-900 font-semibold mb-2">Excluir disciplina?</h3>
+            <p className="text-slate-600 text-sm mb-2">Isto também excluirá todas as aulas e chamadas desta disciplina. Ação irreversível.</p>
+            {erroDelete && <p className="text-sm text-red-600 mb-3 bg-red-50 p-2 rounded">{erroDelete}</p>}
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => excluirDisciplina(confirmDelete)} disabled={deletando}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
+                {deletando ? 'Excluindo...' : 'Sim, excluir'}
+              </button>
+              <button onClick={() => { setConfirmDelete(null); setErroDelete('') }} disabled={deletando}
+                className="flex-1 py-2.5 bg-white border border-slate-300 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[480px]">
@@ -122,9 +164,14 @@ export default function DisciplinasPage() {
                   <td className="p-4 text-slate-500 text-xs hidden lg:table-cell" style={{ fontFamily: 'DM Mono, monospace' }}>{d.codigo_disciplina || '—'}</td>
                   <td className="p-4 text-slate-600">{d.usuarios?.nome}</td>
                   <td className="p-4 text-center">
-                    <button onClick={() => abrirEditar(d)}
-                      className="text-xs text-blue-600 border border-blue-200 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all"
-                    >Editar</button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => abrirEditar(d)}
+                        className="text-xs text-blue-600 border border-blue-200 hover:bg-blue-50 px-2 py-1 rounded-lg transition-all"
+                      >Editar</button>
+                      <button onClick={() => { setConfirmDelete(d.id); setErroDelete('') }}
+                        className="text-xs text-red-600 border border-red-200 hover:bg-red-50 px-2 py-1 rounded-lg transition-all"
+                      >Excluir</button>
+                    </div>
                   </td>
                 </tr>
               ))}

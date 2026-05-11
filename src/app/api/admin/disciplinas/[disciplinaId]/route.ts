@@ -113,8 +113,15 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: { par
     const { disciplinaId } = await paramsPromise
     const db = admin()
 
-    const { error } = await db.from('disciplinas').update({ ativo: false }).eq('id', disciplinaId)
+    // aulas.disciplina_id tem ON DELETE RESTRICT — deletar aulas primeiro
+    // Aulas cascateiam: chamadas → registros_chamada
+    const { error: erroAulas } = await db.from('aulas').delete().eq('disciplina_id', disciplinaId)
+    if (erroAulas) {
+      await logger.logError('/api/admin/disciplinas/[disciplinaId]', erroAulas as Error, user.id)
+      return NextResponse.json({ error: 'Erro ao remover aulas da disciplina' }, { status: 500 })
+    }
 
+    const { error } = await db.from('disciplinas').delete().eq('id', disciplinaId)
     if (error) {
       await logger.logError('/api/admin/disciplinas/[disciplinaId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao deletar disciplina' }, { status: 500 })

@@ -144,7 +144,6 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
     const { turmaId } = await paramsPromise
     const db = admin()
 
-    // Soft delete: marcar como inativo
     const { data: turma } = await db.from('turmas').select('escola_id').eq('id', turmaId).single()
     if (!turma) {
       return NextResponse.json({ error: 'Turma não encontrada' }, { status: 404 })
@@ -155,8 +154,16 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: { para
       return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     }
 
-    const { error } = await db.from('turmas').update({ ativo: false }).eq('id', turmaId)
+    // alunos.turma_id tem ON DELETE RESTRICT — precisa deletar alunos antes
+    // Deletar alunos cascateia: notas, entradas, registros_chamada, responsaveis_alunos, alertas
+    const { error: erroAlunos } = await db.from('alunos').delete().eq('turma_id', turmaId)
+    if (erroAlunos) {
+      await logger.logError('/api/admin/turmas/[turmaId]', erroAlunos as Error, user.id)
+      return NextResponse.json({ error: 'Erro ao remover alunos da turma' }, { status: 500 })
+    }
 
+    // Deletar turma cascateia: aulas → chamadas → registros_chamada
+    const { error } = await db.from('turmas').delete().eq('id', turmaId)
     if (error) {
       await logger.logError('/api/admin/turmas/[turmaId]', error as Error, user.id)
       return NextResponse.json({ error: 'Erro ao deletar turma' }, { status: 500 })
