@@ -52,25 +52,30 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Remove vínculos de responsável com alunos (sem ON DELETE CASCADE automático)
+    // Remove vínculos de responsável com alunos
     await admin.from('responsaveis_alunos').delete().eq('responsavel_id', user_id)
 
-    // Tenta hard delete via Auth: Supabase cascateia para public.usuarios automaticamente
-    // (public.usuarios.id REFERENCES auth.users ON DELETE CASCADE)
-    // Pode falhar se o usuário é professor com disciplinas/aulas vinculadas (ON DELETE RESTRICT)
+    // Tenta hard delete via Auth (cascateia para public.usuarios automaticamente via ON DELETE CASCADE)
+    // Falha se o usuário tem disciplinas/aulas vinculadas (ON DELETE RESTRICT no schema)
     const { error: authError } = await admin.auth.admin.deleteUser(user_id)
 
     if (!authError) {
-      // Hard delete bem-sucedido — usuário removido do Auth e do DB via CASCADE
       await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id, modo: 'hard' }, true)
       return NextResponse.json({ ok: true })
     }
 
-    // Hard delete falhou (usuário tem disciplinas/aulas vinculadas com ON DELETE RESTRICT)
-    // Fallback: soft delete — bane do Auth + marca inativo no DB
-    // O usuário não consegue mais logar e some da listagem
-    await admin.from('usuarios').update({ ativo: false }).eq('id', user_id)
-    await admin.auth.admin.updateUserById(user_id, { ban_duration: '876000h' })
+    // Hard delete não possível — soft delete: marca inativo + bane no Auth
+    const { error: dbError } = await admin.from('usuarios').update({ ativo: false }).eq('id', user_id)
+    if (dbError) {
+      await logger.logError('/api/admin/excluir-usuario', dbError as Error, user.id, { user_id, fase: 'soft_db' })
+      return NextResponse.json({ error: 'Erro ao desativar usuário no banco' }, { status: 500 })
+    }
+
+    const { error: banError } = await admin.auth.admin.updateUserById(user_id, { ban_duration: '876000h' })
+    if (banError) {
+      await logger.logError('/api/admin/excluir-usuario', banError as Error, user.id, { user_id, fase: 'soft_ban' })
+      // Não retorna erro: usuário já está ativo=false no DB, acesso já restrito por RLS
+    }
 
     await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id, modo: 'soft' }, true)
     return NextResponse.json({ ok: true })

@@ -157,7 +157,7 @@ export default function UsuariosPage() {
     const termo = busca.toLowerCase()
     const matchBusca = !termo || u.nome.toLowerCase().includes(termo) || u.email.toLowerCase().includes(termo)
     const matchPerfil = !filtroPerfil || u.perfil === filtroPerfil
-    const matchStatus = !filtroStatus || (filtroStatus === 'ativo' ? u.ativo : !u.ativo)
+    const matchStatus = filtroStatus ? (filtroStatus === 'ativo' ? u.ativo : !u.ativo) : u.ativo
     return matchBusca && matchPerfil && matchStatus
   })
 
@@ -181,7 +181,7 @@ export default function UsuariosPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-slate-900">Usuários</h1>
-          <p className="text-slate-600 text-sm">{usuariosFiltrados.length} de {usuarios.length} usuário(s)</p>
+          <p className="text-slate-600 text-sm">{usuariosFiltrados.length} de {usuarios.filter(u => u.perfil !== 'ti' && u.ativo).length} usuário(s) ativos</p>
 
         </div>
         <button
