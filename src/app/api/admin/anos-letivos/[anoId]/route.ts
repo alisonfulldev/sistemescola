@@ -113,7 +113,10 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: { par
     const { anoId } = await paramsPromise
     const db = admin()
 
-    // Remove entradas dependentes antes de deletar o ano letivo
+    // Remove dependentes com ON DELETE RESTRICT antes de deletar o ano letivo
+    // notas: ON DELETE RESTRICT — deve ser removida manualmente
+    await db.from('notas').delete().eq('ano_letivo_id', anoId)
+    // calendario_escolar e bimestres têm ON DELETE CASCADE mas removemos explicitamente
     await db.from('calendario_escolar').delete().eq('ano_letivo_id', anoId)
     await db.from('bimestres').delete().eq('ano_letivo_id', anoId)
 
