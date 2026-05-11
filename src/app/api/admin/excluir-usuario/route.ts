@@ -52,25 +52,27 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // FASE 1: Remove vínculos com alunos (se houver)
+    // Remove vínculos de responsável com alunos (sem ON DELETE CASCADE automático)
     await admin.from('responsaveis_alunos').delete().eq('responsavel_id', user_id)
 
-    // FASE 2: Remove da tabela public.usuarios — necessário antes de deletar do Auth
-    // pois public.usuarios tem FK referenciando auth.users (sem ON DELETE CASCADE)
-    const { error: erroDelete } = await admin.from('usuarios').delete().eq('id', user_id)
-    if (erroDelete) {
-      await logger.logError('/api/admin/excluir-usuario', erroDelete as Error, user.id, { user_id })
-      return NextResponse.json({ error: 'Erro ao remover usuário do sistema' }, { status: 500 })
-    }
-
-    // FASE 3: Remove do Auth (irreversível) — agora sem FK impedindo
+    // Tenta hard delete via Auth: Supabase cascateia para public.usuarios automaticamente
+    // (public.usuarios.id REFERENCES auth.users ON DELETE CASCADE)
+    // Pode falhar se o usuário é professor com disciplinas/aulas vinculadas (ON DELETE RESTRICT)
     const { error: authError } = await admin.auth.admin.deleteUser(user_id)
-    if (authError) {
-      await logger.logError('/api/admin/excluir-usuario', authError as Error, user.id, { user_id })
-      return NextResponse.json({ error: 'Erro ao remover autenticação do usuário' }, { status: 500 })
+
+    if (!authError) {
+      // Hard delete bem-sucedido — usuário removido do Auth e do DB via CASCADE
+      await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id, modo: 'hard' }, true)
+      return NextResponse.json({ ok: true })
     }
 
-    await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id }, true)
+    // Hard delete falhou (usuário tem disciplinas/aulas vinculadas com ON DELETE RESTRICT)
+    // Fallback: soft delete — bane do Auth + marca inativo no DB
+    // O usuário não consegue mais logar e some da listagem
+    await admin.from('usuarios').update({ ativo: false }).eq('id', user_id)
+    await admin.auth.admin.updateUserById(user_id, { ban_duration: '876000h' })
+
+    await logger.logAudit(user.id, 'usuario_excluir', '/api/admin/excluir-usuario', { user_id, modo: 'soft' }, true)
     return NextResponse.json({ ok: true })
   } catch (error) {
     await logger.logError('/api/admin/excluir-usuario', error as Error, user.id, { user_id })
