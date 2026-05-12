@@ -58,16 +58,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    const { error: insertError } = await adminClient.from('usuarios').insert({
+    // O trigger on_auth_user_created pode já ter inserido o registro.
+    // Usamos upsert para não falhar com chave duplicada e garantir os dados corretos.
+    const { error: upsertError } = await adminClient.from('usuarios').upsert({
       id: data.user.id,
       nome: nome.trim(),
       email: email.trim(),
       perfil: novoPerfil,
-    })
+    }, { onConflict: 'id' })
 
-    if (insertError) {
+    if (upsertError) {
       await adminClient.auth.admin.deleteUser(data.user.id)
-      return NextResponse.json({ error: 'Erro ao criar perfil do usuário' }, { status: 500 })
+      return NextResponse.json({ error: 'Erro ao criar perfil do usuário: ' + upsertError.message }, { status: 500 })
     }
 
     return NextResponse.json({ id: data.user.id, email: data.user.email }, { status: 201 })
