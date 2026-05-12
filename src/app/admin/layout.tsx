@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Settings, Calendar, Users, BookOpen, ClipboardList, LogOut, Menu, X, Home } from 'lucide-react'
+import { Settings, Calendar, Users, BookOpen, ClipboardList, LogOut, Menu, X, Home, Download } from 'lucide-react'
 
 const navGroups = [
   {
@@ -27,6 +27,10 @@ const navGroups = [
       { href: '/admin/aulas', label: 'Aulas', icon: Calendar },
     ]
   },
+]
+
+const navDiretor = [
+  { href: '/admin/exportar', label: 'Exportar Dados', icon: Download },
 ]
 
 const SESSION_TIMEOUT = 10 * 60 * 1000
@@ -134,6 +138,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
         ))}
+
+        {/* Menu exclusivo do diretor */}
+        {['diretor', 'admin', 'ti'].includes(usuario?.perfil) && (
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest px-3 mb-3">Relatórios</p>
+            <div className="space-y-1">
+              {navDiretor.map(item => {
+                const Icon = item.icon
+                const active = isActive(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium ${
+                      active
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </nav>
 
       <div className="p-4 border-t border-slate-700">
