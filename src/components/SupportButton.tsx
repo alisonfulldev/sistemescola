@@ -11,10 +11,7 @@ interface ErroCapturado {
   pagina: string
 }
 
-const CONTATOS = [
-  { nome: 'Alison (TI)', numero: '5518997330574' },
-  { nome: 'Leonel (TI)', numero: '5518997338672' },
-]
+const NUMERO_SUPORTE = '5518997330574'
 
 const WA_ICON = (
   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -31,7 +28,7 @@ export default function SupportButton() {
   const [descricao, setDescricao] = useState('')
   const [erros, setErros] = useState<ErroCapturado[]>([])
   const [usuario, setUsuario] = useState<{ nome: string; email: string; perfil: string } | null>(null)
-  const [enviandoPara, setEnviandoPara] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
   const errosRef = useRef<ErroCapturado[]>([])
 
   // Ocultar em páginas excluídas e sub-rotas de responsavel/cozinha
@@ -132,13 +129,13 @@ export default function SupportButton() {
     )
   }
 
-  function enviarPara(numero: string, nome: string) {
-    setEnviandoPara(nome)
+  function enviarWhatsApp() {
+    setEnviando(true)
     const msg = encodeURIComponent(gerarMensagem())
-    window.open(`https://wa.me/${numero}?text=${msg}`, '_blank')
+    window.open(`https://wa.me/${NUMERO_SUPORTE}?text=${msg}`, '_blank')
     setTimeout(() => {
       setAberto(false)
-      setEnviandoPara(null)
+      setEnviando(false)
       setDescricao('')
     }, 1200)
   }
@@ -258,26 +255,14 @@ export default function SupportButton() {
                 />
               </div>
 
-              {/* Enviar para quem */}
-              <div>
-                <p className="text-xs font-semibold text-slate-600 mb-2">Enviar para</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {CONTATOS.map(c => (
-                    <button
-                      key={c.numero}
-                      onClick={() => enviarPara(c.numero, c.nome)}
-                      disabled={enviandoPara !== null}
-                      className="flex items-center justify-center gap-2 py-2.5 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-all"
-                    >
-                      {enviandoPara === c.nome ? (
-                        <><span className="text-base">✓</span> Abrindo...</>
-                      ) : (
-                        <>{WA_ICON} {c.nome}</>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Botão enviar */}
+              <button
+                onClick={enviarWhatsApp}
+                disabled={enviando}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-all"
+              >
+                {enviando ? <><span>✓</span> Abrindo WhatsApp...</> : <>{WA_ICON} Enviar chamado via WhatsApp</>}
+              </button>
             </div>
 
             {/* Footer */}
