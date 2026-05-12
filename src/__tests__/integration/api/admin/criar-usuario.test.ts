@@ -209,6 +209,20 @@ describe('POST /api/admin/criar-usuario', () => {
     expect(res.status).toBe(201)
   })
 
+  // ── Diretor pode criar usuários ───────────────────────────────────────
+  it('permite que perfil diretor crie usuários', async () => {
+    serverClientMock = makeServerClientWithPerfil('diretor')
+    adminClientMock = makeAdminClientForCreate()
+
+    const res = await POST(makeRequest({
+      nome: 'Novo Professor',
+      email: 'prof@escola.com',
+      senha: 'senha1234',
+      perfil: 'professor',
+    }))
+    expect(res.status).toBe(201)
+  })
+
   // ── Diretor agora pode ser criado (era bug anterior) ──────────────────
   it('cria usuário diretor com sucesso', async () => {
     serverClientMock = makeServerClientWithPerfil('admin')

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!['admin', 'ti'].includes(perfil?.perfil)) {
+    if (!['admin', 'ti', 'diretor'].includes(perfil?.perfil)) {
       return NextResponse.json({ error: 'Acesso negado. Apenas administradores podem criar usuários.' }, { status: 403 })
     }
 
