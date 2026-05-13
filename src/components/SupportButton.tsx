@@ -21,9 +21,7 @@ export default function SupportButton() {
   const [usuario, setUsuario] = useState<{ nome: string; email: string; perfil: string } | null>(null)
   const [enviando, setEnviando] = useState(false)
 
-  const excluir = PAGINAS_EXCLUIDAS.some(p => pathname === p || pathname.startsWith(p + '/'))
-  if (excluir) return null
-
+  // Todos os hooks ANTES de qualquer return condicional (Regras dos Hooks)
   useEffect(() => {
     async function carregarUsuario() {
       try {
@@ -36,6 +34,9 @@ export default function SupportButton() {
     }
     carregarUsuario()
   }, [])
+
+  const excluir = PAGINAS_EXCLUIDAS.some(p => pathname === p || pathname.startsWith(p + '/'))
+  if (excluir) return null
 
   function gerarMensagem() {
     return (
