@@ -26,29 +26,30 @@ export async function GET() {
       return NextResponse.json({ error: 'Usuário inativo' }, { status: 403 })
     }
 
-    if (!usuario || !['cozinha', 'secretaria', 'admin'].includes(usuario.perfil)) {
+    if (!['cozinha', 'secretaria', 'admin'].includes(usuario.perfil)) {
       await logger.logAudit(user.id, 'presenca_cozinha_consultar', '/api/cozinha/presenca', {}, false)
       return NextResponse.json({ error: 'Acesso negado' }, { status: 403 })
     }
 
-    const hoje = new Date().toISOString().split('T')[0]
+    // Data de hoje no fuso horário do Brasil
+    const hoje = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+      .split('/').reverse().join('-')
 
-    // Busca IDs das chamadas de hoje
-    const { data: chamadasHoje } = await admin
+    const { count: totalAlunos } = await admin
+      .from('alunos')
+      .select('*', { count: 'exact', head: true })
+      .eq('ativo', true)
+
+    // Busca todas as chamadas CONCLUÍDAS de hoje, ordenadas da mais recente para a mais antiga
+    const { data: chamadasConcluidas } = await admin
       .from('chamadas')
-      .select('id, aulas!inner(data)')
+      .select('id, concluida_em, aulas!inner(data, turma_id)')
       .eq('aulas.data', hoje)
+      .eq('status', 'concluida')
+      .order('concluida_em', { ascending: false })
 
-    const chamadasIds = (chamadasHoje || []).map((c: any) => c.id)
-
-    if (chamadasIds.length === 0) {
-      const { count: totalAlunos } = await admin
-        .from('alunos')
-        .select('*', { count: 'exact', head: true })
-        .eq('ativo', true)
-
+    if (!chamadasConcluidas?.length) {
       await logger.logAudit(user.id, 'presenca_cozinha_consultar', '/api/cozinha/presenca', { totalAlunos }, true)
-
       return NextResponse.json({
         totalPresentes: 0,
         totalAlunos: totalAlunos || 0,
@@ -57,19 +58,40 @@ export async function GET() {
       })
     }
 
-    // Busca registros das chamadas de hoje
-    const { data: registrosHoje } = await admin
-      .from('registros_chamada')
-      .select('chamada_id, status, aluno_id')
-      .in('chamada_id', chamadasIds)
-      .in('status', ['presente', 'justificada'])
+    // Por turma, mantém apenas a chamada mais recente (a lista já está ordenada desc)
+    const chamadaRecentePorTurma: Record<string, string> = {}
+    for (const c of chamadasConcluidas) {
+      const turmaId = (c.aulas as any)?.turma_id
+      if (turmaId && !chamadaRecentePorTurma[turmaId]) {
+        chamadaRecentePorTurma[turmaId] = c.id
+      }
+    }
 
-    // Busca turmas dos alunos
-    const alunoIds = Array.from(new Set((registrosHoje || []).map((r: any) => r.aluno_id)))
+    const chamadaIds = Object.values(chamadaRecentePorTurma)
+
+    // Busca apenas os presentes (não justificada, pois aluno ausente não vai comer)
+    const { data: registros } = await admin
+      .from('registros_chamada')
+      .select('aluno_id')
+      .in('chamada_id', chamadaIds)
+      .eq('status', 'presente')
+
+    if (!registros?.length) {
+      await logger.logAudit(user.id, 'presenca_cozinha_consultar', '/api/cozinha/presenca', { totalAlunos, totalPresentes: 0 }, true)
+      return NextResponse.json({
+        totalPresentes: 0,
+        totalAlunos: totalAlunos || 0,
+        porTurno: {},
+        atualizadoEm: new Date().toISOString(),
+      })
+    }
+
+    // Busca turma e turno de cada aluno presente
+    const alunoIds = [...new Set(registros.map((r: any) => r.aluno_id))]
 
     const { data: alunosData } = await admin
       .from('alunos')
-      .select('id, turma_id, turmas!inner(nome, turno)')
+      .select('id, turmas!inner(nome, turno)')
       .in('id', alunoIds)
 
     const alunoMap: Record<string, { turma: string; turno: string }> = {}
@@ -84,25 +106,21 @@ export async function GET() {
     // Agrupa por turno e turma
     const porTurno: Record<string, { total: number; turmas: Record<string, number> }> = {}
 
-    for (const r of registrosHoje || []) {
-      const info = alunoMap[r.aluno_id]
-      const turno = info?.turno || 'outro'
-      const turma = info?.turma || '?'
+    for (const r of registros) {
+      const info = alunoMap[(r as any).aluno_id]
+      if (!info) continue
+      const { turno, turma } = info
       if (!porTurno[turno]) porTurno[turno] = { total: 0, turmas: {} }
       porTurno[turno].total++
       porTurno[turno].turmas[turma] = (porTurno[turno].turmas[turma] || 0) + 1
     }
 
-    const totalPresentes = (registrosHoje || []).length
-
-    const { count: totalAlunos } = await admin
-      .from('alunos')
-      .select('*', { count: 'exact', head: true })
-      .eq('ativo', true)
+    const totalPresentes = registros.length
 
     await logger.logAudit(user.id, 'presenca_cozinha_consultar', '/api/cozinha/presenca', {
       totalPresentes,
-      totalAlunos
+      totalAlunos,
+      turmasComChamada: chamadaIds.length,
     }, true)
 
     return NextResponse.json({
