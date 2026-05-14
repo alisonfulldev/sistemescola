@@ -30,7 +30,8 @@ export default function ProfessorDashboard() {
   const supabase = createClient()
   const router = useRouter()
 
-  const hoje = new Date().toISOString().split('T')[0]
+  const _today = new Date()
+  const hoje = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padStart(2, '0')}-${String(_today.getDate()).padStart(2, '0')}`
 
   async function carregarJustificativas() {
     const res = await fetch('/api/professor/justificativas')

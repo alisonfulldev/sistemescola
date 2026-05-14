@@ -4,13 +4,23 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Home, BookOpen, BarChart3, LogOut, Menu, X } from 'lucide-react'
 
 export default function ProfessorLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [nomeProfessor, setNomeProfessor] = useState('')
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase.from('usuarios').select('nome').eq('id', user.id).single().then(({ data }) => {
+        if (data?.nome) setNomeProfessor(data.nome)
+      })
+    })
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -96,8 +106,8 @@ export default function ProfessorLayout({ children }: { children: React.ReactNod
             <button onClick={() => setSidebarOpen(true)} className="md:hidden p-1.5">
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="font-semibold text-slate-900 text-sm md:text-lg">Gestor Acadêmico</h2>
-            <div className="text-xs md:text-sm text-slate-500 hidden sm:block">Sistema Escolar</div>
+            <h2 className="font-semibold text-slate-900 text-sm md:text-lg truncate">{nomeProfessor || 'Carregando...'}</h2>
+            <div className="text-xs md:text-sm text-slate-500 hidden sm:block flex-shrink-0">Professor</div>
           </div>
         </header>
 

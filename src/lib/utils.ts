@@ -2,7 +2,13 @@
 
 export function formatDate(date: string | Date, format: string = 'pt-BR'): string {
   if (typeof date === 'string') {
-    date = new Date(date)
+    // YYYY-MM-DD strings must be parsed as local date, not UTC midnight
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const [year, month, day] = date.split('-').map(Number)
+      date = new Date(year, month - 1, day)
+    } else {
+      date = new Date(date)
+    }
   }
   
   if (format === 'pt-BR') {
