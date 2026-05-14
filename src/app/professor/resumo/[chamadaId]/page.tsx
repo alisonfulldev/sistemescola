@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { formatDate, formatTime } from '@/lib/utils'
 import Image from 'next/image'
+import PrintButton from '@/components/PrintButton'
 
 export const revalidate = 0
 
@@ -111,9 +112,7 @@ export default async function ResumoChamadaPage({ params }: { params: Promise<{ 
         <Link href="/professor" className="flex-1 py-3 bg-slate-100 text-gray-700 rounded-xl font-medium text-center hover:bg-slate-200 transition-colors text-sm">
           ← Dashboard
         </Link>
-        <button onClick={() => window.print()} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors text-sm">
-          🖨 Imprimir
-        </button>
+        <PrintButton />
       </div>
     </div>
   )

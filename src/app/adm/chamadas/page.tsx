@@ -35,7 +35,7 @@ export default function ChamadasPage() {
       const { chamadas: data } = await res.json()
       setChamadas(data || [])
       setPaginaAtual(novaPagina)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
     }
     setLoading(false)
   }
